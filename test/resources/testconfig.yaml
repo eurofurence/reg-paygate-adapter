@@ -1,7 +1,7 @@
 service:
-  name: 'Registration Concardis Adapter Unit Testing Configuration'
-  concardis_instance: 'myinstance'
-  concardis_api_secret: 'mydemosecret'
+  name: 'Registration Nexi Adapter Unit Testing Configuration'
+  nexi_instance: 'myinstance'
+  nexi_api_secret: 'mydemosecret'
   transaction_id_prefix: "221216"
 database:
   use: inmemory

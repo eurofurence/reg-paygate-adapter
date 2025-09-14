@@ -26,18 +26,18 @@ func setConfigurationDefaults(c *Application) {
 }
 
 const (
-	envConcardisApiSecret             = "REG_SECRET_CONCARDIS_API_SECRET"
-	envConcardisIncomingWebhookSecret = "REG_SECRET_CONCARDIS_INCOMING_WEBHOOK_SECRET"
+	envNexiApiSecret             = "REG_SECRET_CONCARDIS_API_SECRET"
+	envNexiIncomingWebhookSecret = "REG_SECRET_CONCARDIS_INCOMING_WEBHOOK_SECRET"
 	envApiToken                       = "REG_SECRET_API_TOKEN"
 	envDbPassword                     = "REG_SECRET_DB_PASSWORD"
 )
 
 func applyEnvVarOverrides(c *Application) {
-	if concardisApiSecret := os.Getenv(envConcardisApiSecret); concardisApiSecret != "" {
-		c.Service.ConcardisApiSecret = concardisApiSecret
+	if nexiApiSecret := os.Getenv(envNexiApiSecret); nexiApiSecret != "" {
+		c.Service.NexiApiSecret = nexiApiSecret
 	}
-	if concardisIncomingWebhookSecret := os.Getenv(envConcardisIncomingWebhookSecret); concardisIncomingWebhookSecret != "" {
-		c.Security.Fixed.Webhook = concardisIncomingWebhookSecret
+	if nexiIncomingWebhookSecret := os.Getenv(envNexiIncomingWebhookSecret); nexiIncomingWebhookSecret != "" {
+		c.Security.Fixed.Webhook = nexiIncomingWebhookSecret
 	}
 	if apiToken := os.Getenv(envApiToken); apiToken != "" {
 		c.Security.Fixed.Api = apiToken
@@ -89,17 +89,17 @@ func validateServiceConfiguration(errs url.Values, c ServiceConfig) {
 	if violatesPattern(downstreamPattern, c.PaymentService) {
 		errs.Add("service.payment_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
 	}
-	if violatesPattern(downstreamPattern, c.ConcardisDownstream) {
-		errs.Add("service.concardis_downstream", "base url must be empty (enables local simulator) or start with http:// or https:// and may not end in a /")
+	if violatesPattern(downstreamPattern, c.NexiDownstream) {
+		errs.Add("service.nexi_downstream", "base url must be empty (enables local simulator) or start with http:// or https:// and may not end in a /")
 	}
 	if violatesPattern(downstreamPattern, c.PublicURL) {
 		errs.Add("service.public_url", "public url must be empty or start with http:// or https:// and may not end in a /")
 	}
-	if c.ConcardisDownstream != "" && c.PublicURL != "" {
-		errs.Add("service.public_url", "cannot set both public_url (for simulated paylinks) and concardis_downstream (to talk to actual api). Make up your mind!")
+	if c.NexiDownstream != "" && c.PublicURL != "" {
+		errs.Add("service.public_url", "cannot set both public_url (for simulated paylinks) and nexi_downstream (to talk to actual api). Make up your mind!")
 	}
-	checkLength(&errs, 1, 256, "service.concardis_instance", c.ConcardisInstance)
-	checkLength(&errs, 1, 256, "service.concardis_api_secret", c.ConcardisApiSecret)
+	checkLength(&errs, 1, 256, "service.nexi_instance", c.NexiInstance)
+	checkLength(&errs, 1, 256, "service.nexi_api_secret", c.NexiApiSecret)
 }
 
 func validateInvoiceConfiguration(errs url.Values, c InvoiceConfig) {

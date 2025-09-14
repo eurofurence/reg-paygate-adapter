@@ -6,12 +6,12 @@ import (
 	"errors"
 	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/service/paymentlinksrv"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctlutil"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctxvalues"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/attendeeservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/service/paymentlinksrv"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctlutil"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
 	"net/http"
@@ -49,7 +49,7 @@ func createPaylinkHandler(w http.ResponseWriter, r *http.Request) {
 
 	dto, id, err := paymentLinkService.CreatePaymentLink(ctx, request)
 	if err != nil {
-		if errors.Is(err, concardis.DownstreamError) {
+		if errors.Is(err, nexi.DownstreamError) {
 			downstreamErrorHandler(ctx, w, r, "paylink", err)
 		} else if errors.Is(err, attendeeservice.DownstreamError) {
 			downstreamErrorHandler(ctx, w, r, "attsrv", err)
@@ -78,9 +78,9 @@ func getPaylinkHandler(w http.ResponseWriter, r *http.Request) {
 
 	dto, err := paymentLinkService.GetPaymentLink(ctx, id)
 	if err != nil {
-		if errors.Is(err, concardis.DownstreamError) {
+		if errors.Is(err, nexi.DownstreamError) {
 			downstreamErrorHandler(ctx, w, r, "paylink", err)
-		} else if errors.Is(err, concardis.NoSuchID404Error) {
+		} else if errors.Is(err, nexi.NoSuchID404Error) {
 			paylinkNotFoundErrorHandler(ctx, w, r, id)
 		} else {
 			ctlutil.UnexpectedError(ctx, w, r, err)
@@ -105,9 +105,9 @@ func deletePaylinkHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = paymentLinkService.DeletePaymentLink(ctx, id)
 	if err != nil {
-		if errors.Is(err, concardis.DownstreamError) {
+		if errors.Is(err, nexi.DownstreamError) {
 			downstreamErrorHandler(ctx, w, r, "paylink", err)
-		} else if errors.Is(err, concardis.NoSuchID404Error) {
+		} else if errors.Is(err, nexi.NoSuchID404Error) {
 			paylinkNotFoundErrorHandler(ctx, w, r, id)
 		} else {
 			ctlutil.UnexpectedError(ctx, w, r, err)
@@ -118,10 +118,10 @@ func deletePaylinkHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func parseBodyToPaymentLinkRequestDto(ctx context.Context, w http.ResponseWriter, r *http.Request) (cncrdapi.PaymentLinkRequestDto, error) {
+func parseBodyToPaymentLinkRequestDto(ctx context.Context, w http.ResponseWriter, r *http.Request) (nexiapi.PaymentLinkRequestDto, error) {
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
-	dto := cncrdapi.PaymentLinkRequestDto{}
+	dto := nexiapi.PaymentLinkRequestDto{}
 	err := decoder.Decode(&dto)
 	if err != nil {
 		paylinkRequestParseErrorHandler(ctx, w, r, err)

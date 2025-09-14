@@ -1,12 +1,12 @@
 package app
 
 import (
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/mailservice"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/attendeeservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/paymentservice"
 )
 
 type Application interface {
@@ -48,7 +48,7 @@ func (i *Impl) Run() int {
 		return 1
 	}
 
-	if err := concardis.Create(); err != nil {
+	if err := nexi.Create(); err != nil {
 		return 1
 	}
 

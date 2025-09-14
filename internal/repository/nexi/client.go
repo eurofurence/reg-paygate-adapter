@@ -1,4 +1,4 @@
-package concardis
+package nexi
 
 import (
 	"context"
@@ -8,9 +8,9 @@ import (
 	"encoding/json"
 	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctxvalues"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
 	"net/http"
 	"net/url"
 	"strings"
@@ -20,7 +20,7 @@ import (
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
 	auresthttpclient "github.com/StephanHCB/go-autumn-restclient/implementation/httpclient"
 	aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 	"github.com/go-http-utils/headers"
 )
 
@@ -35,7 +35,7 @@ func requestManipulator(ctx context.Context, r *http.Request) {
 	r.Header.Set(headers.ContentType, aurestclientapi.ContentTypeApplicationXWwwFormUrlencoded)
 }
 
-func newClient() (ConcardisDownstream, error) {
+func newClient() (NexiDownstream, error) {
 	httpClient, err := auresthttpclient.New(0, nil, requestManipulator)
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func newClient() (ConcardisDownstream, error) {
 	requestLoggingClient := aurestlogging.New(httpClient)
 
 	circuitBreakerClient := aurestbreaker.New(requestLoggingClient,
-		"concardis-downstream-breaker",
+		"nexi-downstream-breaker",
 		10,
 		2*time.Minute,
 		30*time.Second,
@@ -53,16 +53,16 @@ func newClient() (ConcardisDownstream, error) {
 
 	return &Impl{
 		client:       circuitBreakerClient,
-		baseUrl:      config.ConcardisDownstreamBaseUrl(),
-		instanceName: config.ConcardisInstanceName(),
+		baseUrl:      config.NexiDownstreamBaseUrl(),
+		instanceName: config.NexiInstanceName(),
 	}, nil
 }
 
-func NewTestingClient(verifierClient aurestclientapi.Client) ConcardisDownstream {
+func NewTestingClient(verifierClient aurestclientapi.Client) NexiDownstream {
 	return &Impl{
 		client:       verifierClient,
-		baseUrl:      config.ConcardisDownstreamBaseUrl(),
-		instanceName: config.ConcardisInstanceName(),
+		baseUrl:      config.NexiDownstreamBaseUrl(),
+		instanceName: config.NexiInstanceName(),
 	}
 }
 
@@ -112,7 +112,7 @@ func constructBufferWithEncoding(request PaymentLinkCreateRequest, encode func(k
 	buf.WriteString(encode("psp", fmt.Sprintf("%d", request.PSP)) + "&")
 	buf.WriteString(encode("referenceId", request.ReferenceId) + "&")
 	// leaving this one out because it leads to duplicate problems when re-trying a payment after a failure (which we can't really prevent)
-	// buf.WriteString(encode("concardisOrderId", request.OrderId) + "&")
+	// buf.WriteString(encode("nexiOrderId", request.OrderId) + "&")
 	buf.WriteString(encode("purpose", request.Purpose) + "&")
 	buf.WriteString(encode("amount", fmt.Sprintf("%d", request.Amount)) + "&")
 	buf.WriteString(encode("vatRate", fmt.Sprintf("%.1f", request.VatRate)) + "&")
@@ -138,7 +138,7 @@ func constructBufferWithEncoding(request PaymentLinkCreateRequest, encode func(k
 }
 
 func buildCreateRequestBody(ctx context.Context, request PaymentLinkCreateRequest) string {
-	// Note: the Concardis PayLink API uses PathEncoding for the Body,
+	// Note: the Nexi PayLink API uses PathEncoding for the Body,
 	// but QueryEncoding to calculate the signature. (don't ask)
 	// This is relevant for values with spaces, question marks, etc.
 	pathEncodedPayload := constructBufferWithEncoding(request, pathEncode)
@@ -149,14 +149,14 @@ func buildCreateRequestBody(ctx context.Context, request PaymentLinkCreateReques
 		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
 			ReferenceId: request.ReferenceId,
 			Kind:        "raw",
-			Message:     "concardis request",
+			Message:     "nexi request",
 			Details:     pathEncodedPayload,
 			RequestId:   ctxvalues.RequestId(ctx),
 		})
-		aulogging.Logger.Ctx(ctx).Info().Print("concardis request: " + pathEncodedPayload)
+		aulogging.Logger.Ctx(ctx).Info().Print("nexi request: " + pathEncodedPayload)
 	}
 
-	signature := signRequest(queryEncodedPayloadForSigning, config.ConcardisInstanceApiSecret())
+	signature := signRequest(queryEncodedPayloadForSigning, config.NexiInstanceApiSecret())
 	return pathEncodedPayload + "&" + queryEncode(signatureKey, signature)
 }
 
@@ -180,7 +180,7 @@ func (i *Impl) performWithRawResponseLogging(ctx context.Context, logName string
 		bodyStr := string(*rawResponseBody)
 		bodyStr = strings.ReplaceAll(bodyStr, "\r", "")
 		bodyStr = strings.ReplaceAll(bodyStr, "\n", "\\n")
-		aulogging.Logger.Ctx(ctx).Info().Print("concardis response: " + bodyStr)
+		aulogging.Logger.Ctx(ctx).Info().Print("nexi response: " + bodyStr)
 
 		bodyStrDB := string(*rawResponseBody)
 		bodyStrDB = strings.ReplaceAll(bodyStrDB, "\r", "")
@@ -191,7 +191,7 @@ func (i *Impl) performWithRawResponseLogging(ctx context.Context, logName string
 			ReferenceId: refId,
 			ApiId:       apiId,
 			Kind:        "raw",
-			Message:     "concardis response",
+			Message:     "nexi response",
 			Details:     bodyStrDB,
 			RequestId:   ctxvalues.RequestId(ctx),
 		})
@@ -237,7 +237,7 @@ type queryLowlevelResponseBody struct {
 }
 
 func buildEmptyRequestBody() string {
-	signature := signRequest("", config.ConcardisInstanceApiSecret())
+	signature := signRequest("", config.NexiInstanceApiSecret())
 	return queryEncode(signatureKey, signature)
 }
 

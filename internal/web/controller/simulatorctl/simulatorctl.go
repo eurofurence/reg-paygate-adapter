@@ -9,11 +9,11 @@ import (
 	"context"
 	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/self"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/service/paymentlinksrv"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/media"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/self"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/service/paymentlinksrv"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
 	"github.com/google/uuid"
@@ -43,30 +43,30 @@ func useSimulator(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mock := concardis.Get().(concardis.Mock)
-	tx := concardis.TransactionData{
+	mock := nexi.Get().(nexi.Mock)
+	tx := nexi.TransactionData{
 		UUID:        uuid.New().String(),
 		Amount:      paylink.AmountDue,
 		Status:      "confirmed",
 		Time:        "2022-10-15 15:50:20",
 		Lang:        "de",
 		PageUUID:    "",
-		Payment:     concardis.Payment{Brand: "visa"},
+		Payment:     nexi.Payment{Brand: "visa"},
 		Psp:         "ConCardis_PayEngine_3",
 		PspID:       29,
 		Mode:        "TEST",
 		ReferenceID: paylink.ReferenceId,
-		Invoice: concardis.Invoice{
+		Invoice: nexi.Invoice{
 			Currency: "EUR",
 		},
 	}
 	mock.InjectTransaction(tx)
 
 	selfCaller := self.Get()
-	event := cncrdapi.WebhookEventDto{
-		Transaction: cncrdapi.WebhookEventTransaction{
+	event := nexiapi.WebhookEventDto{
+		Transaction: nexiapi.WebhookEventTransaction{
 			Id: tx.ID,
-			Invoice: cncrdapi.WebhookEventTransactionInvoice{
+			Invoice: nexiapi.WebhookEventTransactionInvoice{
 				ReferenceId:      paylink.ReferenceId,
 				PaymentRequestId: int64(id),
 			},

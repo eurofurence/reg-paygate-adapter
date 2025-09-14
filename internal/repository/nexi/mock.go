@@ -1,16 +1,16 @@
-package concardis
+package nexi
 
 import (
 	"context"
 	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 	"sync/atomic"
 	"time"
 )
 
 type Mock interface {
-	ConcardisDownstream
+	NexiDownstream
 
 	Reset()
 	Recording() []string

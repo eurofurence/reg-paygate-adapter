@@ -6,8 +6,8 @@ import (
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
 	auresthttpclient "github.com/StephanHCB/go-autumn-restclient/implementation/httpclient"
 	aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 	"net/http"
 )
 
@@ -40,7 +40,7 @@ func errByStatus(err error, status int) error {
 	return nil
 }
 
-func (i *Impl) CallWebhook(ctx context.Context, event cncrdapi.WebhookEventDto) error {
+func (i *Impl) CallWebhook(ctx context.Context, event nexiapi.WebhookEventDto) error {
 	url := fmt.Sprintf("%s/api/rest/v1/webhook/%s", i.baseUrl, config.WebhookSecret())
 	response := aurestclientapi.ParsedResponse{}
 	err := i.client.Perform(ctx, http.MethodPost, url, event, &response)

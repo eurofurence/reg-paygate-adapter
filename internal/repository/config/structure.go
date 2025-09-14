@@ -31,17 +31,19 @@ type ServerConfig struct {
 // ServiceConfig contains configuration values
 // for service related tasks. E.g. URLs to downstream services
 type ServiceConfig struct {
-	Name                string `yaml:"name"`
-	PublicURL           string `yaml:"public_url"`           // my own public base url, without a trailing slash
-	AttendeeService     string `yaml:"attendee_service"`     // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
-	MailService         string `yaml:"mail_service"`         // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
-	PaymentService      string `yaml:"payment_service"`      // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
-	ConcardisDownstream string `yaml:"concardis_downstream"` // base url, usually https://api.pay-link.eu, will use in-memory-mock if unset
-	ConcardisInstance   string `yaml:"concardis_instance"`   // your instance name, required
-	ConcardisApiSecret  string `yaml:"concardis_api_secret"` // your instance's api secret, required
-	SuccessRedirect     string `yaml:"success_redirect"`
-	FailureRedirect     string `yaml:"failure_redirect"`
-	TransactionIDPrefix string `yaml:"transaction_id_prefix"`
+	Name                    string `yaml:"name"`
+	PublicURL               string `yaml:"public_url"`                     // my own public base url, without a trailing slash
+	AttendeeService         string `yaml:"attendee_service"`               // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
+	MailService             string `yaml:"mail_service"`                   // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
+	PaymentService          string `yaml:"payment_service"`                // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
+	NexiDownstream          string `yaml:"nexi_downstream"`                // base url, usually https://api.dibspayment.eu for new API, will use in-memory-mock if unset
+	NexiInstance            string `yaml:"nexi_instance"`                  // your instance name for old API, for new API use NexiApiKey if needed
+	NexiApiSecret           string `yaml:"nexi_api_secret"`                // for old API: api secret, for new API: authorization token
+	NexiCommercePlatformTag string `yaml:"nexi_commerce_platform_tag"`     // for new API: CommercePlatformTag header
+	NexiMerchantNumber      string `yaml:"nexi_merchant_number"`           // for new API: merchant number
+	SuccessRedirect         string `yaml:"success_redirect"`
+	FailureRedirect         string `yaml:"failure_redirect"`
+	TransactionIDPrefix     string `yaml:"transaction_id_prefix"`
 }
 
 // DatabaseConfig configures which db to use (mysql, inmemory)
@@ -67,7 +69,7 @@ type CorsConfig struct {
 
 type FixedTokenConfig struct {
 	Api     string `yaml:"api"`     // shared-secret for server-to-server backend authentication
-	Webhook string `yaml:"webhook"` // shared-secret for the webhook coming in from concardis
+	Webhook string `yaml:"webhook"` // shared-secret for the webhook coming in from nexi
 }
 
 // LoggingConfig configures logging

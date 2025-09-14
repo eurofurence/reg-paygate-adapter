@@ -2,11 +2,11 @@ package acceptance
 
 import (
 	"encoding/json"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database/inmemorydb"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/mailservice"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/inmemorydb"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/paymentservice"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,8 +14,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/media"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/media"
 	"github.com/go-http-utils/headers"
 	"github.com/stretchr/testify/require"
 )
@@ -119,7 +119,7 @@ func tstParseJson(body string, dto interface{}) {
 
 func tstRequireErrorResponse(t *testing.T, response tstWebResponse, expectedStatus int, expectedMessage string, expectedDetails interface{}) {
 	require.Equal(t, expectedStatus, response.status, "unexpected http response status")
-	errorDto := cncrdapi.ErrorDto{}
+	errorDto := nexiapi.ErrorDto{}
 	tstParseJson(response.body, &errorDto)
 	require.Equal(t, expectedMessage, errorDto.Message, "unexpected error code")
 	expectedDetailsStr, ok := expectedDetails.(string)
@@ -132,15 +132,15 @@ func tstRequireErrorResponse(t *testing.T, response tstWebResponse, expectedStat
 	}
 }
 
-func tstRequirePaymentLinkResponse(t *testing.T, response tstWebResponse, expectedStatus int, expectedBody cncrdapi.PaymentLinkDto) {
+func tstRequirePaymentLinkResponse(t *testing.T, response tstWebResponse, expectedStatus int, expectedBody nexiapi.PaymentLinkDto) {
 	require.Equal(t, expectedStatus, response.status, "unexpected http response status")
-	actualBody := cncrdapi.PaymentLinkDto{}
+	actualBody := nexiapi.PaymentLinkDto{}
 	tstParseJson(response.body, &actualBody)
 	require.EqualValues(t, expectedBody, actualBody)
 }
 
-func tstRequireConcardisRecording(t *testing.T, expectedEntries ...string) {
-	actual := concardisMock.Recording()
+func tstRequireNexiRecording(t *testing.T, expectedEntries ...string) {
+	actual := nexiMock.Recording()
 	require.Equal(t, len(expectedEntries), len(actual))
 	for i := range expectedEntries {
 		require.Equal(t, expectedEntries[i], actual[i])
@@ -165,8 +165,8 @@ func tstRequirePaymentServiceRecording(t *testing.T, expectedEntries []paymentse
 
 // --- data ---
 
-func tstBuildValidPaymentLinkRequest() cncrdapi.PaymentLinkRequestDto {
-	return cncrdapi.PaymentLinkRequestDto{
+func tstBuildValidPaymentLinkRequest() nexiapi.PaymentLinkRequestDto {
+	return nexiapi.PaymentLinkRequestDto{
 		ReferenceId: "221216-122218-000001",
 		DebitorId:   1,
 		AmountDue:   390,
@@ -175,8 +175,8 @@ func tstBuildValidPaymentLinkRequest() cncrdapi.PaymentLinkRequestDto {
 	}
 }
 
-func tstBuildValidPaymentLink() cncrdapi.PaymentLinkDto {
-	return cncrdapi.PaymentLinkDto{
+func tstBuildValidPaymentLink() nexiapi.PaymentLinkDto {
+	return nexiapi.PaymentLinkDto{
 		Title:       "some page title",
 		Description: "some page description",
 		ReferenceId: "221216-122218-000001",
@@ -189,8 +189,8 @@ func tstBuildValidPaymentLink() cncrdapi.PaymentLinkDto {
 	}
 }
 
-func tstBuildValidPaymentLinkGetResponse() cncrdapi.PaymentLinkDto {
-	return cncrdapi.PaymentLinkDto{
+func tstBuildValidPaymentLinkGetResponse() nexiapi.PaymentLinkDto {
+	return nexiapi.PaymentLinkDto{
 		ReferenceId: "221216-122218-000001",
 		Purpose:     "some payment purpose",
 		AmountDue:   390,
@@ -225,7 +225,7 @@ func tstBuildValidWebhookRequest() string {
 
 func tstExpectedMailNotification(operation string, status string) mailservice.MailSendDto {
 	return mailservice.MailSendDto{
-		CommonID: "payment-cncrd-adapter-error",
+		CommonID: "payment-nexi-adapter-error",
 		Lang:     "en-US",
 		To: []string{
 			"errors@example.com",

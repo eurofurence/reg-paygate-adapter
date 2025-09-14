@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
-  title: Payment Concardis Adapter Service
+  title: Payment Nexi Adapter Service
   description: |-
-    This services provides methods to create and managed Concardis Payment Links.
-    It also provides a valid callback endpoint for the Concardis Payment Link
+    This services provides methods to create and managed Nexi Payment Links.
+    It also provides a valid callback endpoint for the Nexi Payment Link
     service to notify us of change events.
   license:
     name: MIT
@@ -18,7 +18,7 @@ tags:
   - name: transactions
     description: Transactions management
   - name: callback
-    description: Interface towards Concardis (callback)
+    description: Interface towards Nexi (callback)
   - name: info
     description: Health and other public status information
 paths:
@@ -28,7 +28,7 @@ paths:
         - paylinks
       summary: Create a new payment link
       description: |-
-        Create a new payment link with Concardis. The link can then be used for
+        Create a new payment link with Nexi. The link can then be used for
         paying the defined amount and can be presented to the user in various
         ways, including as a link in an email or as an embedded modal dialog in
         our shop page.
@@ -74,7 +74,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '502':
-          description: The Concardis backend could not be reached or returned an unexpected error.
+          description: The Nexi backend could not be reached or returned an unexpected error.
           content:
             application/json:
               schema:
@@ -88,7 +88,7 @@ paths:
       summary: Find payment link by id
       description: |-
         Returns a single payment link, fetching the current status from
-        the downstream Concardis payment link backend.
+        the downstream Nexi payment link backend.
       operationId: getPaymentLinkById
       parameters:
         - name: id
@@ -131,7 +131,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '502':
-          description: The Concardis backend could not be reached or returned an unexpected error.
+          description: The Nexi backend could not be reached or returned an unexpected error.
           content:
             application/json:
               schema:
@@ -142,7 +142,7 @@ paths:
       tags:
         - paylinks
       summary: Delete a payment link by id
-      description: Removes a payment link from the upstream Concardis backend
+      description: Removes a payment link from the upstream Nexi backend
       operationId: deletePaymentLinkById
       parameters:
         - name: id
@@ -187,7 +187,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '502':
-          description: The Concardis backend could not be reached.
+          description: The Nexi backend could not be reached.
           content:
             application/json:
               schema:
@@ -245,7 +245,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '502':
-          description: The Concardis backend could not be reached.
+          description: The Nexi backend could not be reached.
           content:
             application/json:
               schema:
@@ -295,7 +295,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '502':
-          description: The Concardis backend could not be reached (but then who is calling this webhook?)
+          description: The Nexi backend could not be reached (but then who is calling this webhook?)
           content:
             application/json:
               schema:
@@ -307,7 +307,7 @@ paths:
       summary: Replay n days of transactions
       description: |-
         Replay n days of transactions to the payment service, reading them from
-        the Concardis backend. This is intended as a safety measure in case
+        the Nexi backend. This is intended as a safety measure in case
         transaction events were lost and need to be repeated. The payment service
         is required to be idempotent regarding transaction event notifications.
       operationId: transactionReplay
@@ -347,7 +347,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '502':
-          description: The Concardis backend could not be reached.
+          description: The Nexi backend could not be reached.
           content:
             application/json:
               schema:
@@ -542,7 +542,7 @@ components:
             At this time, there are these values:
             - paylink.parse.error (json body parse error)
             - paylink.data.invalid (field data failed to validate, see details for more information)
-            - paylink.id.notfound (no such paylink number in the Concardis service)
+            - paylink.id.notfound (no such paylink number in the Nexi service)
             - paylink.id.invalid (syntactically invalid paylink id, must be positive integer)
             - paylink.downstream.error (downstream api failure)
             - attsrv.downstream.error (failed to call attendee service, and it isn't not found)

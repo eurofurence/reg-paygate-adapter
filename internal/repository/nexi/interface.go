@@ -1,4 +1,4 @@
-package concardis
+package nexi
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type ConcardisDownstream interface {
+type NexiDownstream interface {
 	CreatePaymentLink(ctx context.Context, request PaymentLinkCreateRequest) (PaymentLinkCreated, error)
 	QueryPaymentLink(ctx context.Context, id uint) (PaymentLinkQueryResponse, error)
 	DeletePaymentLink(ctx context.Context, id uint) error
@@ -24,14 +24,14 @@ var (
 
 // PaymentLinkCreateRequest contains the data to construct the paylink create request body.
 //
-// Note that the json field names are not actually used because the Concardis API doesn't
+// Note that the json field names are not actually used because the Nexi API doesn't
 // accept JSON, and instead insists on a slightly unusual XWwwFormUrlencoded request.
 type PaymentLinkCreateRequest struct {
 	Title       string  `json:"title"`
 	Description string  `json:"description"`
 	PSP         uint64  `json:"psp"`
 	ReferenceId string  `json:"referenceId"`
-	OrderId     string  `json:"concardisOrderId"`
+	OrderId     string  `json:"nexiOrderId"`
 	Purpose     string  `json:"purpose"`
 	Amount      int64   `json:"amount"`  // in cents
 	VatRate     float64 `json:"vatRate"` // in %

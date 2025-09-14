@@ -1,4 +1,4 @@
-package cncrdapi
+package nexiapi
 
 import (
 	"net/url"
@@ -10,7 +10,7 @@ type ErrorDto struct {
 	Timestamp string `json:"timestamp"`
 	// An internal trace id assigned to the error. Used to find logs associated with errors across our services. Display to the user as something to communicate to us with inquiries about the error.
 	RequestId string `json:"requestid"`
-	// A keyed description of the error. We do not write human readable text here because the user interface will be multi language.  At this time, there are these values: - paylink.parse.error (json body parse error) - paylink.data.invalid (field data failed to validate, see details for more information) - paylink.id.notfound (no such paylink number in the Concardis service) - paylink.id.invalid (syntactically invalid paylink id, must be positive integer) - auth.unauthorized (token missing completely or invalid) - auth.forbidden (permissions missing)
+	// A keyed description of the error. We do not write human readable text here because the user interface will be multi language.  At this time, there are these values: - paylink.parse.error (json body parse error) - paylink.data.invalid (field data failed to validate, see details for more information) - paylink.id.notfound (no such paylink number in the Nexi service) - paylink.id.invalid (syntactically invalid paylink id, must be positive integer) - auth.unauthorized (token missing completely or invalid) - auth.forbidden (permissions missing)
 	Message string `json:"message"`
 	// Optional list of additional details about the error. If available, will usually contain English language technobabble.
 	Details url.Values `json:"details,omitempty"`

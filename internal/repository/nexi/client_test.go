@@ -1,4 +1,4 @@
-package concardis
+package nexi
 
 import (
 	"crypto/hmac"

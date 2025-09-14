@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/app"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/app"
 	"os"
 )
 

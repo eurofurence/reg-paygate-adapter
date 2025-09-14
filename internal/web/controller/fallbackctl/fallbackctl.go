@@ -1,7 +1,7 @@
 package fallbackctl
 
 import (
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctlutil"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctlutil"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 )

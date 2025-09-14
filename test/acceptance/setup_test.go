@@ -3,14 +3,14 @@ package acceptance
 import (
 	"context"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/mailservice"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/service/paymentlinksrv"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/app"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/attendeeservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/paymentservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/service/paymentlinksrv"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/app"
 	"net/http/httptest"
 	"time"
 )
@@ -22,7 +22,7 @@ var (
 	attendeeMock  attendeeservice.Mock
 	mailMock      mailservice.Mock
 	paymentMock   paymentservice.Mock
-	concardisMock concardis.Mock
+	nexiMock nexi.Mock
 )
 
 const tstConfigFile = "../resources/testconfig.yaml"
@@ -40,7 +40,7 @@ func tstSetup(configFilePath string) {
 	attendeeMock = attendeeservice.CreateMock()
 	mailMock = mailservice.CreateMock()
 	paymentMock = paymentservice.CreateMock()
-	concardisMock = concardis.CreateMock()
+	nexiMock = nexi.CreateMock()
 	paymentlinksrv.NowFunc = tstMockNow
 	tstSetupHttpTestServer()
 }
@@ -61,5 +61,5 @@ func tstShutdown() {
 	attendeeMock.Reset()
 	mailMock.Reset()
 	paymentMock.Reset()
-	concardisMock.Reset()
+	nexiMock.Reset()
 }

@@ -2,11 +2,11 @@ package acceptance
 
 import (
 	"fmt"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/docs"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/mailservice"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/paymentservice"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"testing"
@@ -130,7 +130,7 @@ func TestWebhook_DownstreamError(t *testing.T) {
 	url := "/api/rest/v1/webhook/demosecret"
 
 	docs.When("when they attempt to trigger our webhook endpoint while the downstream api is down")
-	concardisMock.SimulateError(concardis.DownstreamError)
+	nexiMock.SimulateError(nexi.DownstreamError)
 	response := tstPerformPost(url, tstBuildValidWebhookRequest(), tstNoToken())
 
 	docs.Then("then the request fails with the appropriate error")
@@ -163,8 +163,8 @@ func TestWebhook_Success_Status_WrongPrefix(t *testing.T) {
 	docs.Then("then the request is successful")
 	require.Equal(t, http.StatusOK, response.status)
 
-	docs.Then("and the expected downstream requests have been made to the concardis api")
-	tstRequireConcardisRecording(t,
+	docs.Then("and the expected downstream requests have been made to the nexi api")
+	tstRequireNexiRecording(t,
 		"QueryPaymentLink 4242",
 	)
 
@@ -174,7 +174,7 @@ func TestWebhook_Success_Status_WrongPrefix(t *testing.T) {
 	docs.Then("and the expected error notification emails have been sent")
 	tstRequireMailServiceRecording(t, []mailservice.MailSendDto{
 		{
-			CommonID: "payment-cncrd-adapter-error",
+			CommonID: "payment-nexi-adapter-error",
 			Lang:     "en-US",
 			To: []string{
 				"errors@example.com",
@@ -205,7 +205,7 @@ func tstWebhookSuccessCase(t *testing.T, status string, expectedPaymentServiceRe
 
 	docs.Given(fmt.Sprintf("given the payment provider has a transaction in status %s", status))
 	if status != "confirmed" {
-		concardisMock.ManipulateStatus(42, status)
+		nexiMock.ManipulateStatus(42, status)
 	}
 
 	docs.Given("and an anonymous caller who knows the secret url")
@@ -217,8 +217,8 @@ func tstWebhookSuccessCase(t *testing.T, status string, expectedPaymentServiceRe
 	docs.Then("then the request is successful")
 	require.Equal(t, http.StatusOK, response.status)
 
-	docs.Then("and the expected downstream requests have been made to the concardis api")
-	tstRequireConcardisRecording(t,
+	docs.Then("and the expected downstream requests have been made to the nexi api")
+	tstRequireNexiRecording(t,
 		"QueryPaymentLink 42",
 	)
 

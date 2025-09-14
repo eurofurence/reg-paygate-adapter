@@ -1,10 +1,10 @@
-# reg-payment-cncrd-adapter
+# reg-payment-nexi-adapter
 
-<img src="https://github.com/eurofurence/reg-payment-cncrd-adapter/actions/workflows/go.yml/badge.svg" alt="test status"/>
+<img src="https://github.com/eurofurence/reg-payment-nexi-adapter/actions/workflows/go.yml/badge.svg" alt="test status"/>
 
 ## Overview
 
-A backend service that provides payment functionality via the Concardis payment provider.
+A backend service that provides payment functionality via the Nexi payment provider.
 
 Implemented in Go.
 

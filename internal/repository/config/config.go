@@ -79,16 +79,16 @@ func PaymentServiceBaseUrl() string {
 	return Configuration().Service.PaymentService
 }
 
-func ConcardisDownstreamBaseUrl() string {
-	return Configuration().Service.ConcardisDownstream
+func NexiDownstreamBaseUrl() string {
+	return Configuration().Service.NexiDownstream
 }
 
-func ConcardisInstanceName() string {
-	return Configuration().Service.ConcardisInstance
+func NexiInstanceName() string {
+	return Configuration().Service.NexiInstance
 }
 
-func ConcardisInstanceApiSecret() string {
-	return Configuration().Service.ConcardisApiSecret
+func NexiInstanceApiSecret() string {
+	return Configuration().Service.NexiApiSecret
 }
 
 func WebhookSecret() string {
@@ -117,4 +117,12 @@ func SuccessRedirect() string {
 
 func FailureRedirect() string {
 	return Configuration().Service.FailureRedirect
+}
+
+func CommercePlatformTag() string {
+	return Configuration().Service.NexiCommercePlatformTag
+}
+
+func NexiMerchantNumber() string {
+	return Configuration().Service.NexiMerchantNumber
 }

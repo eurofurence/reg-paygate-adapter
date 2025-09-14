@@ -4,23 +4,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctxvalues"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
 	"strconv"
 	"strings"
 	"time"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/paymentservice"
 )
 
 const isoDateFormat = "2006-01-02"
 
-func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventDto) error {
+func (i *Impl) HandleWebhook(ctx context.Context, webhook nexiapi.WebhookEventDto) error {
 	aulogging.Logger.Ctx(ctx).Info().Printf("webhook id=%d invoice.paymentRequestId=%d invoice.referenceId=%s", webhook.Transaction.Id, webhook.Transaction.Invoice.PaymentRequestId, webhook.Transaction.Invoice.ReferenceId)
 
 	paylinkId, err := idValidate(webhook.Transaction.Invoice.PaymentRequestId)
@@ -39,9 +39,9 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 		return err
 	}
 
-	paylink, err := concardis.Get().QueryPaymentLink(ctx, paylinkId)
+	paylink, err := nexi.Get().QueryPaymentLink(ctx, paylinkId)
 	if err != nil {
-		aulogging.Logger.Ctx(ctx).Error().Printf("can't query payment link from concardis. err=%s", err.Error())
+		aulogging.Logger.Ctx(ctx).Error().Printf("can't query payment link from nexi. err=%s", err.Error())
 		db := database.GetRepository()
 		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
 			ReferenceId: webhook.Transaction.Invoice.ReferenceId,
@@ -106,7 +106,7 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 
 	if paylink.Status != "confirmed" {
 		_ = i.SendErrorNotifyMail(ctx, "webhook", paylink.ReferenceID, paylink.Status)
-		// send 200 so concardis doesn't keep trying the webhook - we've done all we can
+		// send 200 so nexi doesn't keep trying the webhook - we've done all we can
 		return nil
 	}
 
@@ -126,11 +126,11 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 	}
 
 	// matching transaction was found in the payment service database.
-	// update the values with data from Concardis.
+	// update the values with data from Nexi.
 	return i.updateTransaction(ctx, paylink, transaction)
 }
 
-func (i *Impl) createTransaction(ctx context.Context, paylink concardis.PaymentLinkQueryResponse) error {
+func (i *Impl) createTransaction(ctx context.Context, paylink nexi.PaymentLinkQueryResponse) error {
 	debitor_id, err := debitorIdFromReferenceID(paylink.ReferenceID)
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Warn().Printf("webhook couldn't parse debitor_id from reference_id. reference_id=%s", paylink.ReferenceID)
@@ -166,7 +166,7 @@ func (i *Impl) createTransaction(ctx context.Context, paylink concardis.PaymentL
 	return err
 }
 
-func (i *Impl) updateTransaction(ctx context.Context, paylink concardis.PaymentLinkQueryResponse, transaction paymentservice.Transaction) error {
+func (i *Impl) updateTransaction(ctx context.Context, paylink nexi.PaymentLinkQueryResponse, transaction paymentservice.Transaction) error {
 	if transaction.Status == paymentservice.Valid {
 		aulogging.Logger.Ctx(ctx).Warn().Printf("aborting transaction update - already in status valid! reference_id=%s", paylink.ReferenceID)
 		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("refId: %s", paylink.ReferenceID), "abort-update-for-valid")
@@ -192,7 +192,7 @@ func (i *Impl) updateTransaction(ctx context.Context, paylink concardis.PaymentL
 	return nil
 }
 
-func (i *Impl) effectiveISODateOrToday(paylink concardis.PaymentLinkQueryResponse) string {
+func (i *Impl) effectiveISODateOrToday(paylink nexi.PaymentLinkQueryResponse) string {
 	today := time.Now().Format(isoDateFormat)
 	effective := today
 
@@ -211,7 +211,7 @@ func (i *Impl) effectiveISODateOrToday(paylink concardis.PaymentLinkQueryRespons
 	return effective
 }
 
-func (i *Impl) transactionUuid(paylink concardis.PaymentLinkQueryResponse) string {
+func (i *Impl) transactionUuid(paylink nexi.PaymentLinkQueryResponse) string {
 	result := "unknown"
 
 	if len(paylink.Invoices) > 0 {

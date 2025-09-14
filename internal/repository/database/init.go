@@ -2,10 +2,10 @@ package database
 
 import (
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database/dbrepo"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database/inmemorydb"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database/mysqldb"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/dbrepo"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/inmemorydb"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/mysqldb"
 	"os"
 )
 

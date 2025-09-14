@@ -1,18 +1,18 @@
 service:
-  name: 'Registration Concardis Adapter'
+  name: 'Registration Nexi Adapter'
   # my own public URL, needed if you want the simulator to generate valid paylinks, leave unset for the very basic mock used in unit tests
-  # setting is completely ignored if you set concardis_downstream, because that turns off the simulator completely
-  public_url: 'http://localhost:10000/cncrdsrv' # do not add trailing /
+  # setting is completely ignored if you set nexi_downstream, because that turns off the simulator completely
+  public_url: 'http://localhost:10000/nexisrv' # do not add trailing /
   # base url of the attendee service, leave blank to use simple in-memory simulator (not useful for production)
   attendee_service: 'http://localhost:9091' # do not add trailing /
   # base url of the mail service, leave blank to use simple in-memory simulator (not useful for production)
   mail_service: 'http://localhost:9093' # no trailing slash
   # base url of the payment service, leave blank to use simple in-memory simulator (not useful for production)
   payment_service: 'http://localhost:9092' # do not add trailing /
-  # base url for the concardis downstream, leave blank to use the local simulator (should set public_url or generated paylinks will not work)
-  # concardis_downstream: 'https://api.pay-link.eu'
-  concardis_instance: 'demo'
-  concardis_api_secret: 'demosecret'
+  # base url for the Nexi downstream, leave blank to use the local simulator (should set public_url or generated paylinks will not work)
+  # nexi_downstream: 'https://api.pay-link.eu'
+  nexi_instance: 'demo'
+  nexi_api_secret: 'demosecret'
   # if set, will add these redirects to the request for the paylink
   success_redirect: 'http://localhost:10000/app/register'
   failure_redirect: 'http://localhost:10000/app/register'

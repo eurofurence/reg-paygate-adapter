@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/eurofurence/reg-payment-cncrd-adapter/docs"
+	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
 	"github.com/stretchr/testify/require"
 )
 
@@ -50,7 +50,7 @@ func TestParseAndOverwriteConfigValidationErrors1(t *testing.T) {
 service:
   public_url: 'https://invalid.has.trailing.slash/'
   payment_service: 'also not a valid url'
-  concardis_downstream: 'another invalid url'
+  nexi_downstream: 'another invalid url'
 server:
   port: 14
 logging:
@@ -69,9 +69,9 @@ logging:
 		"configuration error: security.fixed.api: security.fixed.api field must be at least 16 and at most 256 characters long",
 		"configuration error: security.fixed.webhook: security.fixed.webhook field must be at least 8 and at most 64 characters long",
 		"configuration error: server.port: server.port field must be an integer at least 1024 and at most 65535",
-		"configuration error: service.concardis_api_secret: service.concardis_api_secret field must be at least 1 and at most 256 characters long",
-		"configuration error: service.concardis_downstream: base url must be empty (enables local simulator) or start with http:// or https:// and may not end in a /",
-		"configuration error: service.concardis_instance: service.concardis_instance field must be at least 1 and at most 256 characters long",
+		"configuration error: service.nexi_api_secret: service.nexi_api_secret field must be at least 1 and at most 256 characters long",
+		"configuration error: service.nexi_downstream: base url must be empty (enables local simulator) or start with http:// or https:// and may not end in a /",
+		"configuration error: service.nexi_instance: service.nexi_instance field must be at least 1 and at most 256 characters long",
 		"configuration error: service.payment_service: base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /",
 		"configuration error: service.public_url: public url must be empty or start with http:// or https:// and may not end in a /",
 	}, recording)
@@ -87,8 +87,8 @@ security:
 database:
   use: inmemory
 service:
-  concardis_instance: 'my-demo-instance'
-  concardis_api_secret: 'my-demo-secret'
+  nexi_instance: 'my-demo-instance'
+  nexi_api_secret: 'my-demo-secret'
 invoice:
   title: 'demo title'
   description: 'demo description'

@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/service/paymentlinksrv"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctlutil"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/service/paymentlinksrv"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctlutil"
 	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
@@ -41,9 +41,9 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, paymentlinksrv.WebhookValidationErr) {
 			webhookRequestInvalidErrorHandler(ctx, w, r, err)
-		} else if errors.Is(err, concardis.NoSuchID404Error) {
+		} else if errors.Is(err, nexi.NoSuchID404Error) {
 			paylinkNotFoundErrorHandler(ctx, w, r)
-		} else if errors.Is(err, concardis.DownstreamError) {
+		} else if errors.Is(err, nexi.DownstreamError) {
 			downstreamErrorHandler(ctx, w, r, err)
 		} else {
 			ctlutil.UnexpectedError(ctx, w, r, err)
@@ -53,8 +53,8 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func parseBodyToWebhookEventDtoTolerant(ctx context.Context, w http.ResponseWriter, r *http.Request) (cncrdapi.WebhookEventDto, error) {
-	dto := cncrdapi.WebhookEventDto{}
+func parseBodyToWebhookEventDtoTolerant(ctx context.Context, w http.ResponseWriter, r *http.Request) (nexiapi.WebhookEventDto, error) {
+	dto := nexiapi.WebhookEventDto{}
 
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {

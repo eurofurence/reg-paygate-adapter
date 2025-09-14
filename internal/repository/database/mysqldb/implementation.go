@@ -3,9 +3,9 @@ package mysqldb
 import (
 	"context"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database/dbrepo"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/dbrepo"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -27,7 +27,7 @@ func Create() dbrepo.Repository {
 func (r *MysqlRepository) Open() error {
 	gormConfig := gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
-			TablePrefix: "cncrd_",
+			TablePrefix: "nexi_",
 		},
 		Logger: logger.Default.LogMode(logger.Silent),
 	}

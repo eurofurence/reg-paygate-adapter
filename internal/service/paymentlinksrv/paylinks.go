@@ -3,19 +3,19 @@ package paymentlinksrv
 import (
 	"context"
 	"fmt"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctxvalues"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/attendeeservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
 	"net/url"
 	"strings"
 
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 )
 
-func (i *Impl) ValidatePaymentLinkRequest(ctx context.Context, data cncrdapi.PaymentLinkRequestDto) url.Values {
+func (i *Impl) ValidatePaymentLinkRequest(ctx context.Context, data nexiapi.PaymentLinkRequestDto) url.Values {
 	errs := url.Values{}
 
 	if data.DebitorId == 0 {
@@ -38,46 +38,46 @@ func (i *Impl) ValidatePaymentLinkRequest(ctx context.Context, data cncrdapi.Pay
 	}
 }
 
-func (i *Impl) CreatePaymentLink(ctx context.Context, data cncrdapi.PaymentLinkRequestDto) (cncrdapi.PaymentLinkDto, uint, error) {
+func (i *Impl) CreatePaymentLink(ctx context.Context, data nexiapi.PaymentLinkRequestDto) (nexiapi.PaymentLinkDto, uint, error) {
 	attendee, err := attendeeservice.Get().GetAttendee(ctx, uint(data.DebitorId))
 	if err != nil {
-		return cncrdapi.PaymentLinkDto{}, 0, err
+		return nexiapi.PaymentLinkDto{}, 0, err
 	}
 
-	concardisRequest := i.concardisCreateRequestFromApiRequest(data, attendee)
-	concardisResponse, err := concardis.Get().CreatePaymentLink(ctx, concardisRequest)
+	nexiRequest := i.nexiCreateRequestFromApiRequest(data, attendee)
+	nexiResponse, err := nexi.Get().CreatePaymentLink(ctx, nexiRequest)
 	if err != nil {
 		db := database.GetRepository()
 		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-			ReferenceId: concardisRequest.ReferenceId,
-			ApiId:       concardisResponse.ID,
+			ReferenceId: nexiRequest.ReferenceId,
+			ApiId:       nexiResponse.ID,
 			Kind:        "error",
 			Message:     "create-pay-link failed",
 			Details:     err.Error(),
 			RequestId:   ctxvalues.RequestId(ctx),
 		})
 		_ = i.SendErrorNotifyMail(ctx, "create-pay-link", data.ReferenceId, err.Error())
-		return cncrdapi.PaymentLinkDto{}, 0, err
+		return nexiapi.PaymentLinkDto{}, 0, err
 	}
 	db := database.GetRepository()
 	_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-		ReferenceId: concardisRequest.ReferenceId,
-		ApiId:       concardisResponse.ID,
+		ReferenceId: nexiRequest.ReferenceId,
+		ApiId:       nexiResponse.ID,
 		Kind:        "success",
 		Message:     "create-pay-link",
-		Details:     concardisResponse.Link,
+		Details:     nexiResponse.Link,
 		RequestId:   ctxvalues.RequestId(ctx),
 	})
-	output := i.apiResponseFromConcardisResponse(concardisResponse, concardisRequest)
-	return output, concardisResponse.ID, nil
+	output := i.apiResponseFromNexiResponse(nexiResponse, nexiRequest)
+	return output, nexiResponse.ID, nil
 }
 
-func (i *Impl) concardisCreateRequestFromApiRequest(data cncrdapi.PaymentLinkRequestDto, attendee attendeeservice.AttendeeDto) concardis.PaymentLinkCreateRequest {
+func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDto, attendee attendeeservice.AttendeeDto) nexi.PaymentLinkCreateRequest {
 	shortenedOrderId := strings.ReplaceAll(data.ReferenceId, "-", "")
 	if len(shortenedOrderId) > 30 {
 		shortenedOrderId = shortenedOrderId[:30]
 	}
-	return concardis.PaymentLinkCreateRequest{
+	return nexi.PaymentLinkCreateRequest{
 		Title:       config.InvoiceTitle(),
 		Description: config.InvoiceDescription(),
 		PSP:         1,
@@ -95,8 +95,8 @@ func (i *Impl) concardisCreateRequestFromApiRequest(data cncrdapi.PaymentLinkReq
 	}
 }
 
-func (i *Impl) apiResponseFromConcardisResponse(response concardis.PaymentLinkCreated, request concardis.PaymentLinkCreateRequest) cncrdapi.PaymentLinkDto {
-	return cncrdapi.PaymentLinkDto{
+func (i *Impl) apiResponseFromNexiResponse(response nexi.PaymentLinkCreated, request nexi.PaymentLinkCreateRequest) nexiapi.PaymentLinkDto {
+	return nexiapi.PaymentLinkDto{
 		Title:       request.Title,
 		Description: request.Description,
 		ReferenceId: response.ReferenceID,
@@ -109,8 +109,8 @@ func (i *Impl) apiResponseFromConcardisResponse(response concardis.PaymentLinkCr
 	}
 }
 
-func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (cncrdapi.PaymentLinkDto, error) {
-	data, err := concardis.Get().QueryPaymentLink(ctx, id)
+func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (nexiapi.PaymentLinkDto, error) {
+	data, err := nexi.Get().QueryPaymentLink(ctx, id)
 	if err != nil {
 		db := database.GetRepository()
 		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
@@ -122,7 +122,7 @@ func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (cncrdapi.PaymentLin
 			RequestId:   ctxvalues.RequestId(ctx),
 		})
 		_ = i.SendErrorNotifyMail(ctx, "get-pay-link", fmt.Sprintf("paylink id %d", id), err.Error())
-		return cncrdapi.PaymentLinkDto{}, err
+		return nexiapi.PaymentLinkDto{}, err
 	}
 
 	db := database.GetRepository()
@@ -137,7 +137,7 @@ func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (cncrdapi.PaymentLin
 
 	// TODO lots of missing fields, can we get them from downstream?
 
-	result := cncrdapi.PaymentLinkDto{
+	result := nexiapi.PaymentLinkDto{
 		ReferenceId: data.ReferenceID,
 		Purpose:     data.Purpose["1"],
 		AmountDue:   data.Amount,
@@ -150,7 +150,7 @@ func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (cncrdapi.PaymentLin
 }
 
 func (i *Impl) DeletePaymentLink(ctx context.Context, id uint) error {
-	err := concardis.Get().DeletePaymentLink(ctx, id)
+	err := nexi.Get().DeletePaymentLink(ctx, id)
 	if err != nil {
 		db := database.GetRepository()
 		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{

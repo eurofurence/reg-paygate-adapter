@@ -1,4 +1,4 @@
-module github.com/eurofurence/reg-payment-cncrd-adapter
+module github.com/eurofurence/reg-payment-nexi-adapter
 
 go 1.21
 

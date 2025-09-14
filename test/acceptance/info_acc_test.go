@@ -1,8 +1,8 @@
 package acceptance
 
 import (
-	"github.com/eurofurence/reg-payment-cncrd-adapter/docs"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/media"
+	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/media"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"strings"

@@ -15,20 +15,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Check out reg-payment-cncrd-adapter (primary)
+    - name: Check out reg-payment-nexi-adapter (primary)
       uses: actions/checkout@v2
       with:
-        path: ./reg-payment-cncrd-adapter
+        path: ./reg-payment-nexi-adapter
 
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
         go-version: '1.20'
 
-    - name: Build reg-payment-cncrd-adapter (primary)
+    - name: Build reg-payment-nexi-adapter (primary)
       run: go build -v ./...
-      working-directory: ./reg-payment-cncrd-adapter
+      working-directory: ./reg-payment-nexi-adapter
 
-    - name: Test reg-payment-cncrd-adapter (primary)
+    - name: Test reg-payment-nexi-adapter (primary)
       run: go test -v ./...
-      working-directory: ./reg-payment-cncrd-adapter
+      working-directory: ./reg-payment-nexi-adapter

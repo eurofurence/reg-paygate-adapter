@@ -2,8 +2,8 @@ package inmemorydb
 
 import (
 	"context"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database/dbrepo"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/dbrepo"
 	"sync/atomic"
 	"time"
 )

@@ -1,12 +1,12 @@
 package acceptance
 
 import (
-	"github.com/eurofurence/reg-payment-cncrd-adapter/docs"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/attendeeservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/url"
@@ -30,7 +30,7 @@ func TestCreatePaylink_Success(t *testing.T) {
 	tstRequirePaymentLinkResponse(t, response, http.StatusCreated, tstBuildValidPaymentLink())
 
 	docs.Then("and the expected request for a payment link has been made")
-	tstRequireConcardisRecording(t,
+	tstRequireNexiRecording(t,
 		"CreatePaymentLink {some page title some page description 1 221216-122218-000001 221216122218000001 some payment purpose 390 19 EUR registration jsquirrel_github_9a6d@packetloss.de  }",
 	)
 
@@ -58,7 +58,7 @@ func TestCreatePaylink_InvalidJson(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "paylink.parse.error", nil)
 
 	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, concardisMock.Recording())
+	require.Empty(t, nexiMock.Recording())
 
 	docs.Then("and no protocol entries have been written")
 	tstRequireProtocolEntries(t)
@@ -78,7 +78,7 @@ func TestCreatePaylink_ValidJsonWrongFields(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "paylink.parse.error", nil)
 
 	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, concardisMock.Recording())
+	require.Empty(t, nexiMock.Recording())
 
 	docs.Then("and no protocol entries have been written")
 	tstRequireProtocolEntries(t)
@@ -92,7 +92,7 @@ func TestCreatePaylink_InvalidData(t *testing.T) {
 	token := tstValidApiToken()
 
 	docs.When("when they attempt to create a payment link but supply invalid field values")
-	requestBody := cncrdapi.PaymentLinkRequestDto{
+	requestBody := nexiapi.PaymentLinkRequestDto{
 		DebitorId: 0,
 		AmountDue: -53,
 		Currency:  "CHF",
@@ -109,7 +109,7 @@ func TestCreatePaylink_InvalidData(t *testing.T) {
 	})
 
 	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, concardisMock.Recording())
+	require.Empty(t, nexiMock.Recording())
 
 	docs.Then("and no protocol entries have been written")
 	tstRequireProtocolEntries(t)
@@ -130,7 +130,7 @@ func TestCreatePaylink_Anonymous(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
 
 	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, concardisMock.Recording())
+	require.Empty(t, nexiMock.Recording())
 
 	docs.Then("and no protocol entries have been written")
 	tstRequireProtocolEntries(t)
@@ -151,7 +151,7 @@ func TestCreatePaylink_WrongToken(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "invalid api token")
 
 	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, concardisMock.Recording())
+	require.Empty(t, nexiMock.Recording())
 
 	docs.Then("and no protocol entries have been written")
 	tstRequireProtocolEntries(t)
@@ -173,7 +173,7 @@ func TestCreatePaylink_DownstreamErrorAttSrv(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusBadGateway, "attsrv.downstream.error", nil)
 
 	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, concardisMock.Recording())
+	require.Empty(t, nexiMock.Recording())
 
 	docs.Then("and no protocol entries have been written")
 	tstRequireProtocolEntries(t)
@@ -187,7 +187,7 @@ func TestCreatePaylink_DownstreamErrorCncrd(t *testing.T) {
 	token := tstValidApiToken()
 
 	docs.When("when they attempt to create a payment link with valid information while the paylink api is down")
-	concardisMock.SimulateError(concardis.DownstreamError)
+	nexiMock.SimulateError(nexi.DownstreamError)
 	requestBody := tstBuildValidPaymentLinkRequest()
 	response := tstPerformPost("/api/rest/v1/paylinks", tstRenderJson(requestBody), token)
 
@@ -225,7 +225,7 @@ func TestGetPaylink_Success(t *testing.T) {
 	tstRequirePaymentLinkResponse(t, response, http.StatusOK, tstBuildValidPaymentLinkGetResponse())
 
 	docs.Then("and the expected request for a payment link has been made")
-	tstRequireConcardisRecording(t,
+	tstRequireNexiRecording(t,
 		"QueryPaymentLink 42",
 	)
 
@@ -253,7 +253,7 @@ func TestGetPaylink_InvalidId(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "paylink.id.invalid", nil)
 
 	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, concardisMock.Recording())
+	require.Empty(t, nexiMock.Recording())
 
 	docs.Then("and no protocol entries have been written")
 	tstRequireProtocolEntries(t)
@@ -273,7 +273,7 @@ func TestGetPaylink_NotFound(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusNotFound, "paylink.id.notfound", nil)
 
 	docs.Then("and the expected request for a payment link has been made")
-	tstRequireConcardisRecording(t,
+	tstRequireNexiRecording(t,
 		"QueryPaymentLink 13",
 	)
 
@@ -301,7 +301,7 @@ func TestGetPaylink_Anonymous(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
 
 	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, concardisMock.Recording())
+	require.Empty(t, nexiMock.Recording())
 
 	docs.Then("and no protocol entries have been written")
 	tstRequireProtocolEntries(t)
@@ -321,7 +321,7 @@ func TestGetPaylink_WrongToken(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "invalid api token")
 
 	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, concardisMock.Recording())
+	require.Empty(t, nexiMock.Recording())
 
 	docs.Then("and no protocol entries have been written")
 	tstRequireProtocolEntries(t)
@@ -335,7 +335,7 @@ func TestGetPaylink_DownstreamError(t *testing.T) {
 	token := tstValidApiToken()
 
 	docs.When("when they attempt to get a payment link while the paylink api is down")
-	concardisMock.SimulateError(concardis.DownstreamError)
+	nexiMock.SimulateError(nexi.DownstreamError)
 	response := tstPerformGet("/api/rest/v1/paylinks/42", token)
 
 	docs.Then("then the request fails with the appropriate error")
@@ -373,7 +373,7 @@ func TestDeletePaylink_Success(t *testing.T) {
 	require.Equal(t, "", response.body)
 
 	docs.Then("and the expected request for payment link deletion has been made")
-	tstRequireConcardisRecording(t,
+	tstRequireNexiRecording(t,
 		"DeletePaymentLink 42",
 	)
 
@@ -401,7 +401,7 @@ func TestDeletePaylink_InvalidId(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "paylink.id.invalid", nil)
 
 	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, concardisMock.Recording())
+	require.Empty(t, nexiMock.Recording())
 
 	docs.Then("and no protocol entries have been written")
 	tstRequireProtocolEntries(t)
@@ -421,7 +421,7 @@ func TestDeletePaylink_NotFound(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusNotFound, "paylink.id.notfound", nil)
 
 	docs.Then("and the expected request for payment link deletion has been made")
-	tstRequireConcardisRecording(t,
+	tstRequireNexiRecording(t,
 		"DeletePaymentLink 13",
 	)
 
@@ -449,7 +449,7 @@ func TestDeletePaylink_Anonymous(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
 
 	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, concardisMock.Recording())
+	require.Empty(t, nexiMock.Recording())
 
 	docs.Then("and no protocol entries have been written")
 	tstRequireProtocolEntries(t)
@@ -469,7 +469,7 @@ func TestDeletePaylink_WrongToken(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "invalid api token")
 
 	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, concardisMock.Recording())
+	require.Empty(t, nexiMock.Recording())
 
 	docs.Then("and no protocol entries have been written")
 	tstRequireProtocolEntries(t)
@@ -483,7 +483,7 @@ func TestDeletePaylink_DownstreamError(t *testing.T) {
 	token := tstValidApiToken()
 
 	docs.When("when they attempt to delete a payment link while the paylink api is down")
-	concardisMock.SimulateError(concardis.DownstreamError)
+	nexiMock.SimulateError(nexi.DownstreamError)
 	response := tstPerformDelete("/api/rest/v1/paylinks/42", token)
 
 	docs.Then("then the request fails with the appropriate error")

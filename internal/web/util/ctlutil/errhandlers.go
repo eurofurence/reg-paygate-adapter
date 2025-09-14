@@ -3,9 +3,9 @@ package ctlutil
 import (
 	"context"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctxvalues"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/media"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/media"
 	"github.com/go-http-utils/headers"
 	"net/http"
 	"net/url"
@@ -33,7 +33,7 @@ func UnexpectedError(ctx context.Context, w http.ResponseWriter, r *http.Request
 
 func ErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, msg string, status int, details url.Values) {
 	timestamp := time.Now().Format(time.RFC3339)
-	response := cncrdapi.ErrorDto{Message: msg, Timestamp: timestamp, Details: details, RequestId: ctxvalues.RequestId(ctx)}
+	response := nexiapi.ErrorDto{Message: msg, Timestamp: timestamp, Details: details, RequestId: ctxvalues.RequestId(ctx)}
 	w.Header().Set(headers.ContentType, media.ContentTypeApplicationJson)
 	w.WriteHeader(status)
 	WriteJson(ctx, w, response)

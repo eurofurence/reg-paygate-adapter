@@ -8,14 +8,14 @@ if [[ "$RUNTIME_USER" == "" ]]; then
 fi
 
 mkdir -p tmp
-cp payment-cncrd-adapter tmp/
+cp payment-nexi-adapter tmp/
 cp config.yaml tmp/
-cp run-payment-cncrd-adapter.sh tmp/
+cp run-payment-nexi-adapter.sh tmp/
 
 chgrp $RUNTIME_USER tmp/*
 chmod 640 tmp/config.yaml
-chmod 750 tmp/payment-cncrd-adapter
-chmod 750 tmp/payment-cncrd-adapter.sh
-mv tmp/payment-cncrd-adapter /home/$RUNTIME_USER/work/payment-cncrd-adapter/
-mv tmp/config.yaml /home/$RUNTIME_USER/work/payment-cncrd-adapter/
-mv tmp/run-payment-cncrd-adapter.sh /home/$RUNTIME_USER/work/
+chmod 750 tmp/payment-nexi-adapter
+chmod 750 tmp/payment-nexi-adapter.sh
+mv tmp/payment-nexi-adapter /home/$RUNTIME_USER/work/payment-nexi-adapter/
+mv tmp/config.yaml /home/$RUNTIME_USER/work/payment-nexi-adapter/
+mv tmp/run-payment-nexi-adapter.sh /home/$RUNTIME_USER/work/

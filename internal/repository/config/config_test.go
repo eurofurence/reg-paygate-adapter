@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/eurofurence/reg-payment-cncrd-adapter/docs"
+	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"

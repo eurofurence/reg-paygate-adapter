@@ -1,18 +1,18 @@
-package mailservice
+package nexi
 
 import (
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 )
 
-var activeInstance MailService
+var activeInstance NexiDownstream
 
 func Create() (err error) {
-	if config.MailServiceBaseUrl() != "" {
+	if config.NexiDownstreamBaseUrl() != "" {
 		activeInstance, err = newClient()
 		return err
 	} else {
-		aulogging.Logger.NoCtx().Warn().Printf("service.mail_service not configured. Using in-memory simulator for mail service (not useful for production!)")
+		aulogging.Logger.NoCtx().Warn().Print("service.nexi_downstream not configured. Using in-memory simulator for nexi downstream (not useful for production!)")
 		activeInstance = newMock()
 		return nil
 	}
@@ -24,6 +24,6 @@ func CreateMock() Mock {
 	return instance
 }
 
-func Get() MailService {
+func Get() NexiDownstream {
 	return activeInstance
 }

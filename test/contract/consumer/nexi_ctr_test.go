@@ -5,32 +5,32 @@ import (
 	auzerolog "github.com/StephanHCB/go-autumn-logging-zerolog"
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
 	aurestverifier "github.com/StephanHCB/go-autumn-restclient/implementation/verifier"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/docs"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database/inmemorydb"
+	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/inmemorydb"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"testing"
 	"time"
 )
 
-func TestConcardisApiClient(t *testing.T) {
+func TestNexiApiClient(t *testing.T) {
 	auzerolog.SetupPlaintextLogging()
 
 	db := inmemorydb.Create()
 	database.SetRepository(db)
 
-	docs.Given("given the concardis adapter is correctly configured (not in local mock mode)")
+	docs.Given("given the nexi adapter is correctly configured (not in local mock mode)")
 	// set up basic configuration
 	config.LoadTestingConfigurationFromPathOrAbort("../../resources/testconfig.yaml")
 
 	// prepare dtos
 
 	// STEP 1: create
-	createRequest := concardis.PaymentLinkCreateRequest{
+	createRequest := nexi.PaymentLinkCreateRequest{
 		Title:       "Convention Registration",
 		Description: "Please pay for your registration",
 		PSP:         1,
@@ -224,7 +224,7 @@ func TestConcardisApiClient(t *testing.T) {
 	ctx := auzerolog.AddLoggerToCtx(context.Background())
 
 	// set a server url so local simulator mode is off
-	config.Configuration().Service.ConcardisDownstream = "http://localhost:8000"
+	config.Configuration().Service.NexiDownstream = "http://localhost:8000"
 
 	docs.When("when requests to create, then read, then delete a paylink are made")
 	docs.Then("then all three requests are successful")
@@ -277,9 +277,9 @@ func TestConcardisApiClient(t *testing.T) {
 	}, nil)
 
 	// set up downstream client
-	client := concardis.NewTestingClient(verifierClient)
+	client := nexi.NewTestingClient(verifierClient)
 	// verifier does not support regex matchers for x-www-form-urlencoded
-	concardis.FixedSignatureValue = "omitted"
+	nexi.FixedSignatureValue = "omitted"
 
 	// STEP 1: create a new payment link
 	created, err := client.CreatePaymentLink(ctx, createRequest)
@@ -308,19 +308,19 @@ func TestConcardisApiClient(t *testing.T) {
 		ReferenceId: "220118-150405-000004",
 		ApiId:       0,
 		Kind:        "raw",
-		Message:     "concardis request",
+		Message:     "nexi request",
 		Details:     "title=Convention%20Registration&description=Please%20pay%20for%20your%20registration&psp=1&referenceId=220118-150405-000004&purpose=EF%202022%20REG%20000004&amount=10550&vatRate=19.0&currency=EUR&sku=REG2022V01AT000004&preAuthorization=0&reservation=0&fields%5Bemail%5D%5Bmandatory%5D=1&fields%5Bemail%5D%5BdefaultValue%5D=test@example.com",
 	}, entity.ProtocolEntry{
 		ReferenceId: "220118-150405-000004",
 		ApiId:       0,
 		Kind:        "raw",
-		Message:     "concardis response",
+		Message:     "nexi response",
 		Details:     `{"status":"success","data":[{"id":42,"status":"waiting","hash":"77871ec636d239b136e4d79d32c376ad","referenceId":"220118-150405-000004","link":"http://localhost/some/pay/link","invoices":[],"preAuthorization":false,"name":"","title":"ConventionRegistration","description":"Pleasepayforyourregistration","buttonText":"","api":true,"fields":{"header":{"active":true,"mandatory":false,"names":{"de":"Kontaktdaten"}}},"psp":[],"pm":[],"purpose":{"1":"EF2022REG000004"},"amount":10550,"currency":"EUR","vatRate":"19.0","sku":"REG2022V01AT000004","subscriptionState":false,"subscriptionInterval":"","subscriptionPeriod":"","subscriptionPeriodMinAmount":"","subscriptionCancellationInterval":"","createdAt":1665838673,"requestId":7489378}]}`,
 	}, entity.ProtocolEntry{
 		ReferenceId: "",
 		ApiId:       42,
 		Kind:        "raw",
-		Message:     "concardis response",
+		Message:     "nexi response",
 		Details:     `{"status":"success","data":[{"id":424242,"status":"confirmed","hash":"77871ec636d239b136e4d79d32c376ad","referenceId":"220118-150405-000004","link":"http://localhost/some/pay/link","invoices":[{"number":"EF2022REG000004","products":[{"name":"EF2022REG000004","price":10550,"quantity":1,"sku":"REG2022V01AT000004","vatRate":null}],"amount":10550,"discount":{"code":null,"amount":0,"percentage":null},"shippingAmount":null,"currency":"EUR","test":1,"referenceId":"220118-150405-000004","paymentRequestId":42,"paymentLink":{"hash":"77871ec636d239b136e4d79d32c376ad","referenceId":"220118-150405-000004","email":""},"transactions":[{"id":777777,"uuid":"b9bee580","amount":10550,"referenceId":"220118-150405-000004","time":"2022-10-1515:50:20","status":"confirmed","lang":"de","psp":"ConCardis_PayEngine_3","pspId":29,"mode":"TEST","metadata":[],"contact":{"id":888888,"uuid":"50659dad","title":"","firstname":"","lastname":"","company":"","street":"","zip":"","place":"","country":"","countryISO":"","phone":"","email":"","date_of_birth":"","delivery_title":"","delivery_firstname":"","delivery_lastname":"","delivery_company":"","delivery_street":"","delivery_zip":"","delivery_place":"","delivery_country":"","delivery_countryISO":""},"subscription":null,"pageUuid":null,"payment":{"brand":"visa"}}],"custom_fields":[{"type":"header","name":"Kontaktdaten","value":"Kontaktdaten"}]}],"preAuthorization":false,"name":"","title":"ConventionRegistration","description":"Pleasepayforyourregistration","buttonText":"","api":true,"fields":{"header":{"active":true,"mandatory":false,"names":{"de":"Kontaktdaten"}}},"psp":[],"pm":[],"purpose":{"1":"EF2022REG000004"},"amount":10550,"currency":"EUR","vatRate":19.0,"sku":"REG2022V01AT000004","subscriptionState":false,"subscriptionInterval":"","subscriptionPeriod":"","subscriptionPeriodMinAmount":0,"subscriptionCancellationInterval":"","createdAt":1665838673}]}`,
 	})
 }

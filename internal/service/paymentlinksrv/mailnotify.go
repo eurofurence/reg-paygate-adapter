@@ -3,8 +3,8 @@ package paymentlinksrv
 import (
 	"context"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
 )
 
 func (i *Impl) SendErrorNotifyMail(ctx context.Context, operation string, referenceId string, status string) error {
@@ -17,7 +17,7 @@ func (i *Impl) SendErrorNotifyMail(ctx context.Context, operation string, refere
 	}
 
 	mailDto := mailservice.MailSendDto{
-		CommonID: "payment-cncrd-adapter-error",
+		CommonID: "payment-nexi-adapter-error",
 		Lang:     "en-US",
 		Variables: map[string]string{
 			"operation":   operation,

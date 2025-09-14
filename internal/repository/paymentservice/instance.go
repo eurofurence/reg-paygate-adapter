@@ -2,7 +2,7 @@ package paymentservice
 
 import (
 	"github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 )
 
 var activeInstance PaymentService
