@@ -16,61 +16,63 @@ type Mock interface {
 	Recording() []string
 	SimulateError(err error)
 	InjectTransaction(tx TransactionData)
-	ManipulateStatus(paylinkId uint, status string)
+	ManipulateStatus(paylinkId string, status string)
 }
 
 type mockImpl struct {
 	recording     []string
 	simulateError error
-	simulatorData map[uint]PaymentLinkQueryResponse
+	simulatorData map[string]NexiPaymentQueryResponse
 	idSequence    uint32
 	simulatorTx   []TransactionData
 }
 
 func newMock() Mock {
-	simData := make(map[uint]PaymentLinkQueryResponse)
+	simData := make(map[string]NexiPaymentQueryResponse)
 	// used by some testcases
-	simData[42] = PaymentLinkQueryResponse{
-		ID:          42,
+	simData["42"] = NexiPaymentQueryResponse{
+		ID:          "42",
 		Status:      "confirmed",
 		ReferenceID: "221216-122218-000001",
 		Link:        constructSimulatedPaylink("42"),
-		Name:        "Online-Shop payment #001",
-		Purpose:     map[string]string{"1": "some payment purpose"},
 		Amount:      390,
 		Currency:    "EUR",
 		CreatedAt:   1418392958,
-		Invoices: []PaymentLinkInvoice{
-			{
-				Transactions: []TransactionData{
-					{
-						Time: "2023-01-08 12:22:58",
-						UUID: "d3adb33f",
-					},
-				},
-			},
+		VatRate:     19.0,
+		Order: NexiOrderDetails{
+			Reference: "221216-122218-000001",
+			Amount:    390,
+			Currency:  "EUR",
 		},
+		Summary: NexiSummary{
+			ChargedAmount: 390,
+		},
+		Consumer: NexiConsumerFull{},
+		Payments: []NexiPaymentDetails{},
+		Refunds:  []NexiRefund{},
+		Charges:  []NexiCharge{},
 	}
-	simData[4242] = PaymentLinkQueryResponse{
-		ID:          4242,
+	simData["4242"] = NexiPaymentQueryResponse{
+		ID:          "4242",
 		Status:      "confirmed",
 		ReferenceID: "230001-122218-000001",
 		Link:        constructSimulatedPaylink("4242"),
-		Name:        "Online-Shop payment #002",
-		Purpose:     map[string]string{"1": "some payment purpose"},
 		Amount:      390,
 		Currency:    "EUR",
 		CreatedAt:   1418392958,
-		Invoices: []PaymentLinkInvoice{
-			{
-				Transactions: []TransactionData{
-					{
-						Time: "2023-01-08 12:22:58",
-						UUID: "d3adb33f",
-					},
-				},
-			},
+		VatRate:     19.0,
+		Order: NexiOrderDetails{
+			Reference: "230001-122218-000001",
+			Amount:    390,
+			Currency:  "EUR",
 		},
+		Summary: NexiSummary{
+			ChargedAmount: 390,
+		},
+		Consumer: NexiConsumerFull{},
+		Payments: []NexiPaymentDetails{},
+		Refunds:  []NexiRefund{},
+		Charges:  []NexiCharge{},
 	}
 	return &mockImpl{
 		recording:     make([]string, 0),
@@ -89,54 +91,67 @@ func constructSimulatedPaylink(referenceId string) string {
 	}
 }
 
-func (m *mockImpl) CreatePaymentLink(ctx context.Context, request PaymentLinkCreateRequest) (PaymentLinkCreated, error) {
+func (m *mockImpl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentRequest) (NexiPaymentLinkCreated, error) {
 	if m.simulateError != nil {
-		return PaymentLinkCreated{}, m.simulateError
+		return NexiPaymentLinkCreated{}, m.simulateError
 	}
 	m.recording = append(m.recording, fmt.Sprintf("CreatePaymentLink %v", request))
 
-	newId := uint(atomic.AddUint32(&m.idSequence, 1))
-	response := PaymentLinkCreated{
+	newIdNum := atomic.AddUint32(&m.idSequence, 1)
+	newId := fmt.Sprintf("mock-%d", newIdNum)
+	response := NexiPaymentLinkCreated{
 		ID:          newId,
-		ReferenceID: request.ReferenceId,
-		Link:        constructSimulatedPaylink(fmt.Sprintf("%d", newId)),
+		ReferenceID: request.Order.Reference,
+		Link:        constructSimulatedPaylink(newId),
 	}
-	data := PaymentLinkQueryResponse{
-		ID:          newId,
-		Status:      "confirmed",
-		ReferenceID: request.ReferenceId,
-		Link:        response.Link,
-		Name:        "Online-Shop payment #001",
-		Purpose:     map[string]string{"1": "some payment purpose"},
-		Amount:      request.Amount,
-		Currency:    request.Currency,
-		CreatedAt:   1418392958,
+	data := NexiPaymentQueryResponse{
+		ID:       newId,
+		Status:   "confirmed",
+		ReferenceID: request.Order.Reference,
+		Link:     response.Link,
+		Amount:   request.Order.Amount,
+		Currency: request.Order.Currency,
+		CreatedAt: 1418392958,
+		VatRate:  19.0,
+		Order: NexiOrderDetails{
+			Reference: request.Order.Reference,
+			Amount:    request.Order.Amount,
+			Currency:  request.Order.Currency,
+			Items:     request.Order.Items,
+		},
+		Summary: NexiSummary{
+			ChargedAmount: request.Order.Amount,
+		},
+		Consumer: NexiConsumerFull{},
+		Payments: []NexiPaymentDetails{},
+		Refunds:  []NexiRefund{},
+		Charges:  []NexiCharge{},
 	}
 
-	aulogging.Logger.Ctx(ctx).Info().Printf("mock creating payment link id=%d amount=%d curr=%s email=%s", newId, request.Amount, request.Currency, request.Email)
+	aulogging.Logger.Ctx(ctx).Info().Printf("mock creating payment link id=%s amount=%d curr=%s", newId, request.Order.Amount, request.Order.Currency)
 
 	m.simulatorData[newId] = data
 	return response, nil
 }
 
-func (m *mockImpl) QueryPaymentLink(ctx context.Context, id uint) (PaymentLinkQueryResponse, error) {
+func (m *mockImpl) QueryPaymentLink(ctx context.Context, id string) (NexiPaymentQueryResponse, error) {
 	if m.simulateError != nil {
-		return PaymentLinkQueryResponse{}, m.simulateError
+		return NexiPaymentQueryResponse{}, m.simulateError
 	}
-	m.recording = append(m.recording, fmt.Sprintf("QueryPaymentLink %d", id))
+	m.recording = append(m.recording, fmt.Sprintf("QueryPaymentLink %s", id))
 
 	copiedData, ok := m.simulatorData[id]
 	if !ok {
-		return PaymentLinkQueryResponse{}, NoSuchID404Error
+		return NexiPaymentQueryResponse{}, NoSuchID404Error
 	}
 	return copiedData, nil
 }
 
-func (m *mockImpl) DeletePaymentLink(ctx context.Context, id uint) error {
+func (m *mockImpl) DeletePaymentLink(ctx context.Context, id string) error {
 	if m.simulateError != nil {
 		return m.simulateError
 	}
-	m.recording = append(m.recording, fmt.Sprintf("DeletePaymentLink %d", id))
+	m.recording = append(m.recording, fmt.Sprintf("DeletePaymentLink %s", id))
 
 	_, ok := m.simulatorData[id]
 	if !ok {
@@ -178,23 +193,11 @@ func (m *mockImpl) InjectTransaction(tx TransactionData) {
 	tx.ID = newId
 	m.simulatorTx = append(m.simulatorTx, tx)
 
-	// add transaction to paylink
-	for id, paylink := range m.simulatorData {
-		if paylink.ReferenceID == tx.ReferenceID {
-			paylink.Invoices = make([]PaymentLinkInvoice, 1)
-			paylink.Invoices[0] = PaymentLinkInvoice{
-				ReferenceID:      tx.ReferenceID,
-				PaymentRequestId: id,
-				Currency:         paylink.Currency,
-				Amount:           paylink.Amount,
-				Transactions:     []TransactionData{tx},
-			}
-			m.simulatorData[id] = paylink
-		}
-	}
+	// TODO: adapt to new NexiPaymentQueryResponse structure if needed
+	// For now, just add to the transaction list
 }
 
-func (m *mockImpl) ManipulateStatus(paylinkId uint, status string) {
+func (m *mockImpl) ManipulateStatus(paylinkId string, status string) {
 	copiedData, ok := m.simulatorData[paylinkId]
 	if !ok {
 		return

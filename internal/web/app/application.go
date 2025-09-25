@@ -2,10 +2,10 @@ package app
 
 import (
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/attendeeservice"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/paymentservice"
 )
 

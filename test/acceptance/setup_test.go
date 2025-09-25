@@ -4,10 +4,10 @@ import (
 	"context"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/attendeeservice"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/service/paymentlinksrv"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/app"
@@ -18,11 +18,11 @@ import (
 // placing these here because they are package global
 
 var (
-	ts            *httptest.Server
-	attendeeMock  attendeeservice.Mock
-	mailMock      mailservice.Mock
-	paymentMock   paymentservice.Mock
-	nexiMock nexi.Mock
+	ts           *httptest.Server
+	attendeeMock attendeeservice.Mock
+	mailMock     mailservice.Mock
+	paymentMock  paymentservice.Mock
+	nexiMock     nexi.Mock
 )
 
 const tstConfigFile = "../resources/testconfig.yaml"

@@ -52,3 +52,8 @@ func (r *InMemoryRepository) WriteProtocolEntry(ctx context.Context, e *entity.P
 func (r *InMemoryRepository) ProtocolEntries() []*entity.ProtocolEntry {
 	return r.protocol
 }
+
+func (r *InMemoryRepository) Clear() {
+	r.protocol = make([]*entity.ProtocolEntry, 0)
+	r.idSequence = 0
+}

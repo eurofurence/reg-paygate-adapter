@@ -59,7 +59,7 @@ func createPaylinkHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set(headers.Location, fmt.Sprintf("/api/rest/v1/paylinks/%d", id))
+	w.Header().Set(headers.Location, fmt.Sprintf("/api/rest/v1/paylinks/%s", id))
 	w.WriteHeader(http.StatusCreated)
 	ctlutil.WriteJson(ctx, w, dto)
 }
@@ -129,13 +129,18 @@ func parseBodyToPaymentLinkRequestDto(ctx context.Context, w http.ResponseWriter
 	return dto, err
 }
 
-func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (uint, error) {
+func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, error) {
 	idStr := chi.URLParam(r, "id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
+	if idStr == "" {
 		invalidPaylinkIdErrorHandler(ctx, w, r, idStr)
+		return "", fmt.Errorf("empty id")
 	}
-	return uint(id), err
+	// Validate that id looks like a valid uint for backward compatibility
+	if _, err := strconv.ParseUint(idStr, 10, 32); err != nil {
+		invalidPaylinkIdErrorHandler(ctx, w, r, idStr)
+		return "", fmt.Errorf("invalid id")
+	}
+	return idStr, nil
 }
 
 func paylinkRequestParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
@@ -158,7 +163,7 @@ func invalidPaylinkIdErrorHandler(ctx context.Context, w http.ResponseWriter, r 
 	ctlutil.ErrorHandler(ctx, w, r, "paylink.id.invalid", http.StatusBadRequest, url.Values{})
 }
 
-func paylinkNotFoundErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, id uint) {
-	aulogging.Logger.Ctx(ctx).Warn().Printf("paylink id %d not found", id)
+func paylinkNotFoundErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, id string) {
+	aulogging.Logger.Ctx(ctx).Warn().Printf("paylink id %s not found", id)
 	ctlutil.ErrorHandler(ctx, w, r, "paylink.id.notfound", http.StatusNotFound, url.Values{})
 }

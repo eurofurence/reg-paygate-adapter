@@ -9,7 +9,7 @@ import (
 type ProtocolEntry struct {
 	gorm.Model
 	ReferenceId string `gorm:"type:varchar(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;NOT NULL;index:nexi_ref_id_idx"`
-	ApiId       uint
+	ApiId       string
 	Kind        string `gorm:"type:varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;NOT NULL"`
 	Message     string `gorm:"type:varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"`
 	Details     string `gorm:"type:longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"`   // usually: json message

@@ -5,8 +5,8 @@ import (
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/attendeeservice"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/url"
@@ -18,6 +18,7 @@ import (
 func TestCreatePaylink_Success(t *testing.T) {
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
+	tstClearDatabase() // ensure clean database for protocol entry checks
 
 	docs.Given("given a caller who supplies a correct api token")
 	token := tstValidApiToken()
@@ -31,16 +32,16 @@ func TestCreatePaylink_Success(t *testing.T) {
 
 	docs.Then("and the expected request for a payment link has been made")
 	tstRequireNexiRecording(t,
-		"CreatePaymentLink {some page title some page description 1 221216-122218-000001 221216122218000001 some payment purpose 390 19 EUR registration jsquirrel_github_9a6d@packetloss.de  }",
+		"CreatePaymentLink {some page title some page description 221216-122218-000001 221216122218000001 some payment purpose 390 19 EUR registration jsquirrel_github_9a6d@packetloss.de  }",
 	)
 
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
 		ReferenceId: "221216-122218-000001",
-		ApiId:       101,
+		ApiId:       "",
 		Kind:        "success",
 		Message:     "create-pay-link",
-		Details:     "http://localhost:1111/some/paylink/101",
+		Details:     "http://localhost:1111/some/paylink/mock-101",
 	})
 }
 
@@ -202,7 +203,7 @@ func TestCreatePaylink_DownstreamErrorCncrd(t *testing.T) {
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
 		ReferenceId: "221216-122218-000001",
-		ApiId:       0,
+		ApiId:       "",
 		Kind:        "error",
 		Message:     "create-pay-link failed",
 		Details:     "downstream unavailable - see log for details",
@@ -232,7 +233,7 @@ func TestGetPaylink_Success(t *testing.T) {
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
 		ReferenceId: "221216-122218-000001",
-		ApiId:       42,
+		ApiId:       "42",
 		Kind:        "success",
 		Message:     "get-pay-link",
 		Details:     "http://localhost:1111/some/paylink/42",
@@ -280,7 +281,7 @@ func TestGetPaylink_NotFound(t *testing.T) {
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
 		ReferenceId: "",
-		ApiId:       13,
+		ApiId:       "13",
 		Kind:        "error",
 		Message:     "get-pay-link failed",
 		Details:     "payment link id not found",
@@ -349,7 +350,7 @@ func TestGetPaylink_DownstreamError(t *testing.T) {
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
 		ReferenceId: "",
-		ApiId:       42,
+		ApiId:       "42",
 		Kind:        "error",
 		Message:     "get-pay-link failed",
 		Details:     "downstream unavailable - see log for details",
@@ -380,7 +381,7 @@ func TestDeletePaylink_Success(t *testing.T) {
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
 		ReferenceId: "",
-		ApiId:       42,
+		ApiId:       "42",
 		Kind:        "success",
 		Message:     "delete-pay-link",
 		Details:     "",
@@ -428,7 +429,7 @@ func TestDeletePaylink_NotFound(t *testing.T) {
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
 		ReferenceId: "",
-		ApiId:       13,
+		ApiId:       "13",
 		Kind:        "error",
 		Message:     "delete-pay-link failed",
 		Details:     "payment link id not found",
@@ -497,7 +498,7 @@ func TestDeletePaylink_DownstreamError(t *testing.T) {
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
 		ReferenceId: "",
-		ApiId:       42,
+		ApiId:       "42",
 		Kind:        "error",
 		Message:     "delete-pay-link failed",
 		Details:     "downstream unavailable - see log for details",

@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
 )
 
 func (i *Impl) ValidatePaymentLinkRequest(ctx context.Context, data nexiapi.PaymentLinkRequestDto) url.Values {
@@ -38,10 +38,10 @@ func (i *Impl) ValidatePaymentLinkRequest(ctx context.Context, data nexiapi.Paym
 	}
 }
 
-func (i *Impl) CreatePaymentLink(ctx context.Context, data nexiapi.PaymentLinkRequestDto) (nexiapi.PaymentLinkDto, uint, error) {
+func (i *Impl) CreatePaymentLink(ctx context.Context, data nexiapi.PaymentLinkRequestDto) (nexiapi.PaymentLinkDto, string, error) {
 	attendee, err := attendeeservice.Get().GetAttendee(ctx, uint(data.DebitorId))
 	if err != nil {
-		return nexiapi.PaymentLinkDto{}, 0, err
+		return nexiapi.PaymentLinkDto{}, "", err
 	}
 
 	nexiRequest := i.nexiCreateRequestFromApiRequest(data, attendee)
@@ -49,20 +49,18 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, data nexiapi.PaymentLinkRe
 	if err != nil {
 		db := database.GetRepository()
 		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-			ReferenceId: nexiRequest.ReferenceId,
-			ApiId:       nexiResponse.ID,
+			ReferenceId: nexiRequest.Order.Reference,
 			Kind:        "error",
 			Message:     "create-pay-link failed",
 			Details:     err.Error(),
 			RequestId:   ctxvalues.RequestId(ctx),
 		})
 		_ = i.SendErrorNotifyMail(ctx, "create-pay-link", data.ReferenceId, err.Error())
-		return nexiapi.PaymentLinkDto{}, 0, err
+		return nexiapi.PaymentLinkDto{}, "", err
 	}
 	db := database.GetRepository()
 	_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-		ReferenceId: nexiRequest.ReferenceId,
-		ApiId:       nexiResponse.ID,
+		ReferenceId: nexiRequest.Order.Reference,
 		Kind:        "success",
 		Message:     "create-pay-link",
 		Details:     nexiResponse.Link,
@@ -72,44 +70,89 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, data nexiapi.PaymentLinkRe
 	return output, nexiResponse.ID, nil
 }
 
-func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDto, attendee attendeeservice.AttendeeDto) nexi.PaymentLinkCreateRequest {
+func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDto, attendee attendeeservice.AttendeeDto) nexi.NexiCreatePaymentRequest {
 	shortenedOrderId := strings.ReplaceAll(data.ReferenceId, "-", "")
 	if len(shortenedOrderId) > 30 {
 		shortenedOrderId = shortenedOrderId[:30]
 	}
-	return nexi.PaymentLinkCreateRequest{
-		Title:       config.InvoiceTitle(),
-		Description: config.InvoiceDescription(),
-		PSP:         1,
-		ReferenceId: data.ReferenceId,
-		OrderId:     shortenedOrderId,
-		Purpose:     config.InvoicePurpose(),
-		Amount:      data.AmountDue,
-		VatRate:     data.VatRate,
-		Currency:    data.Currency,
-		SKU:         "registration",
-		Email:       attendee.Email,
-
-		SuccessRedirectUrl: config.SuccessRedirect(),
-		FailedRedirectUrl:  config.FailureRedirect(),
+	return nexi.NexiCreatePaymentRequest{
+		Order: nexi.NexiOrder{
+			Items: []nexi.NexiOrderItem{
+				{
+					Reference:        config.InvoicePurpose(),
+					Name:             config.InvoiceTitle(),
+					Quantity:         1.0,
+					Unit:             "qty",
+					UnitPrice:        data.AmountDue,
+					TaxRate:          data.VatRate,
+					TaxAmount:        0, // calculate if needed
+					GrossTotalAmount: data.AmountDue,
+					NetTotalAmount:   data.AmountDue,
+					ImageUrl:         "",
+				},
+			},
+			Amount:    data.AmountDue,
+			Currency:  data.Currency,
+			Reference: data.ReferenceId,
+		},
+		Checkout: nexi.NexiCheckout{
+			Url:             "",
+			IntegrationType: "hostedPaymentPage",
+			ReturnUrl:       config.SuccessRedirect(),
+			CancelUrl:       config.FailureRedirect(),
+			Consumer: nexi.NexiConsumer{
+				Reference: attendee.Email,
+				Email:     attendee.Email,
+			},
+			TermsUrl:         "",
+			MerchantTermsUrl: "",
+			ShippingCountries: []nexi.NexiCountry{
+				{CountryCode: "DE"},
+			},
+			Shipping: nexi.NexiShipping{
+				Countries: []nexi.NexiCountry{
+					{CountryCode: "DE"},
+				},
+				MerchantHandlesShippingCost: false,
+				EnableBillingAddress:        true,
+			},
+			ConsumerType: nexi.NexiConsumerType{
+				Default:        "b2c",
+				SupportedTypes: []string{"b2c", "b2b"},
+			},
+			Charge:                      true,
+			PublicDevice:                false,
+			MerchantHandlesConsumerData: false,
+			Appearance: nexi.NexiAppearance{
+				DisplayOptions: nexi.NexiDisplayOptions{
+					ShowMerchantName: true,
+					ShowOrderSummary: true,
+				},
+				TextOptions: nexi.NexiTextOptions{
+					CompletePaymentButtonText: "Complete Payment",
+				},
+			},
+			CountryCode: "DE",
+		},
+		MerchantNumber: config.NexiMerchantNumber(),
 	}
 }
 
-func (i *Impl) apiResponseFromNexiResponse(response nexi.PaymentLinkCreated, request nexi.PaymentLinkCreateRequest) nexiapi.PaymentLinkDto {
+func (i *Impl) apiResponseFromNexiResponse(response nexi.NexiPaymentLinkCreated, request nexi.NexiCreatePaymentRequest) nexiapi.PaymentLinkDto {
 	return nexiapi.PaymentLinkDto{
-		Title:       request.Title,
-		Description: request.Description,
+		Title:       config.InvoiceTitle(),
+		Description: config.InvoiceDescription(),
 		ReferenceId: response.ReferenceID,
-		Purpose:     request.Purpose,
-		AmountDue:   request.Amount,
+		Purpose:     config.InvoicePurpose(),
+		AmountDue:   request.Order.Amount,
 		AmountPaid:  0,
-		Currency:    request.Currency,
-		VatRate:     request.VatRate,
+		Currency:    request.Order.Currency,
+		VatRate:     request.Order.Items[0].TaxRate,
 		Link:        response.Link,
 	}
 }
 
-func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (nexiapi.PaymentLinkDto, error) {
+func (i *Impl) GetPaymentLink(ctx context.Context, id string) (nexiapi.PaymentLinkDto, error) {
 	data, err := nexi.Get().QueryPaymentLink(ctx, id)
 	if err != nil {
 		db := database.GetRepository()
@@ -121,7 +164,7 @@ func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (nexiapi.PaymentLink
 			Details:     err.Error(),
 			RequestId:   ctxvalues.RequestId(ctx),
 		})
-		_ = i.SendErrorNotifyMail(ctx, "get-pay-link", fmt.Sprintf("paylink id %d", id), err.Error())
+		_ = i.SendErrorNotifyMail(ctx, "get-pay-link", fmt.Sprintf("paylink id %s", id), err.Error())
 		return nexiapi.PaymentLinkDto{}, err
 	}
 
@@ -139,17 +182,22 @@ func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (nexiapi.PaymentLink
 
 	result := nexiapi.PaymentLinkDto{
 		ReferenceId: data.ReferenceID,
-		Purpose:     data.Purpose["1"],
+		Purpose:     config.InvoicePurpose(),
 		AmountDue:   data.Amount,
-		AmountPaid:  0,
+		AmountPaid:  0, // TODO calculate paid amount from summary
 		Currency:    data.Currency,
 		Link:        data.Link,
+	}
+	if len(data.Order.Items) > 0 {
+		result.VatRate = data.Order.Items[0].TaxRate
+		result.Title = data.Order.Items[0].Name
+		result.Description = "" // TODO
 	}
 
 	return result, nil
 }
 
-func (i *Impl) DeletePaymentLink(ctx context.Context, id uint) error {
+func (i *Impl) DeletePaymentLink(ctx context.Context, id string) error {
 	err := nexi.Get().DeletePaymentLink(ctx, id)
 	if err != nil {
 		db := database.GetRepository()
@@ -161,7 +209,7 @@ func (i *Impl) DeletePaymentLink(ctx context.Context, id uint) error {
 			Details:     err.Error(),
 			RequestId:   ctxvalues.RequestId(ctx),
 		})
-		_ = i.SendErrorNotifyMail(ctx, "delete-pay-link", fmt.Sprintf("paylink id %d", id), err.Error())
+		_ = i.SendErrorNotifyMail(ctx, "delete-pay-link", fmt.Sprintf("paylink id %s", id), err.Error())
 		return err
 	}
 

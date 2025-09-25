@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/paymentservice"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -28,7 +28,7 @@ func TestWebhook_Success_TolerantReader(t *testing.T) {
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
 		ReferenceId: "221216-122218-000001",
-		ApiId:       42,
+		ApiId:       "42",
 		Kind:        "success",
 		Message:     "webhook query-pay-link",
 		Details:     "status=confirmed amount=390",
@@ -45,12 +45,12 @@ func TestWebhook_Success_Status_Confirmed(t *testing.T) {
 			},
 			Status:        "valid",
 			EffectiveDate: "2023-01-08",
-			Comment:       "CC orderId d3adb33f",
+			Comment:       "CC orderId 42",
 		},
 	}, []mailservice.MailSendDto{}, []entity.ProtocolEntry{
 		{
 			ReferenceId: "221216-122218-000001",
-			ApiId:       42,
+			ApiId:       "42",
 			Kind:        "success",
 			Message:     "webhook query-pay-link",
 			Details:     "status=confirmed amount=390",
@@ -65,7 +65,7 @@ func TestWebhook_Success_Status_Ignored(t *testing.T) {
 			tstWebhookSuccessCase(t, status, []paymentservice.Transaction{}, []mailservice.MailSendDto{}, []entity.ProtocolEntry{
 				{
 					ReferenceId: "221216-122218-000001",
-					ApiId:       42,
+					ApiId:       "42",
 					Kind:        "success",
 					Message:     "webhook query-pay-link",
 					Details:     fmt.Sprintf("status=%s amount=390", status),
@@ -84,7 +84,7 @@ func TestWebhook_Success_Status_NotifyMail(t *testing.T) {
 			}, []entity.ProtocolEntry{
 				{
 					ReferenceId: "221216-122218-000001",
-					ApiId:       42,
+					ApiId:       "42",
 					Kind:        "success",
 					Message:     "webhook query-pay-link",
 					Details:     fmt.Sprintf("status=%s amount=390", status),
@@ -190,7 +190,7 @@ func TestWebhook_Success_Status_WrongPrefix(t *testing.T) {
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
 		ReferenceId: "230001-122218-000001",
-		ApiId:       4242,
+		ApiId:       "4242",
 		Kind:        "error",
 		Message:     "webhook ref-id-prefix",
 		Details:     "ref-id=230001-122218-000001",
@@ -205,7 +205,7 @@ func tstWebhookSuccessCase(t *testing.T, status string, expectedPaymentServiceRe
 
 	docs.Given(fmt.Sprintf("given the payment provider has a transaction in status %s", status))
 	if status != "confirmed" {
-		nexiMock.ManipulateStatus(42, status)
+		nexiMock.ManipulateStatus("42", status)
 	}
 
 	docs.Given("and an anonymous caller who knows the secret url")

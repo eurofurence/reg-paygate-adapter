@@ -39,13 +39,13 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook nexiapi.WebhookEventDt
 		return err
 	}
 
-	paylink, err := nexi.Get().QueryPaymentLink(ctx, paylinkId)
+	paylink, err := nexi.Get().QueryPaymentLink(ctx, fmt.Sprintf("%d", paylinkId)) // convert to string
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Error().Printf("can't query payment link from nexi. err=%s", err.Error())
 		db := database.GetRepository()
 		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
 			ReferenceId: webhook.Transaction.Invoice.ReferenceId,
-			ApiId:       paylinkId,
+			ApiId:       fmt.Sprintf("%d", paylinkId),
 			Kind:        "error",
 			Message:     "webhook query-pay-link failed",
 			Details:     err.Error(),
@@ -61,7 +61,7 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook nexiapi.WebhookEventDt
 		db := database.GetRepository()
 		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
 			ReferenceId: webhook.Transaction.Invoice.ReferenceId,
-			ApiId:       paylinkId,
+			ApiId:       fmt.Sprintf("%d", paylinkId),
 			Kind:        "error",
 			Message:     "webhook ref-id-mismatch",
 			Details:     fmt.Sprintf("response ref-id=%s vs webhook ref-id=%s", paylink.ReferenceID, webhook.Transaction.Invoice.ReferenceId),
@@ -77,7 +77,7 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook nexiapi.WebhookEventDt
 		db := database.GetRepository()
 		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
 			ReferenceId: webhook.Transaction.Invoice.ReferenceId,
-			ApiId:       paylinkId,
+			ApiId:       fmt.Sprintf("%d", paylinkId),
 			Kind:        "error",
 			Message:     "webhook ref-id-prefix",
 			Details:     fmt.Sprintf("ref-id=%s", paylink.ReferenceID),
@@ -92,7 +92,7 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook nexiapi.WebhookEventDt
 	db := database.GetRepository()
 	_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
 		ReferenceId: paylink.ReferenceID,
-		ApiId:       paylinkId,
+		ApiId:       fmt.Sprintf("%d", paylinkId),
 		Kind:        "success",
 		Message:     "webhook query-pay-link",
 		Details:     fmt.Sprintf("status=%s amount=%d", paylink.Status, paylink.Amount),
@@ -130,7 +130,7 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook nexiapi.WebhookEventDt
 	return i.updateTransaction(ctx, paylink, transaction)
 }
 
-func (i *Impl) createTransaction(ctx context.Context, paylink nexi.PaymentLinkQueryResponse) error {
+func (i *Impl) createTransaction(ctx context.Context, paylink nexi.NexiPaymentQueryResponse) error {
 	debitor_id, err := debitorIdFromReferenceID(paylink.ReferenceID)
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Warn().Printf("webhook couldn't parse debitor_id from reference_id. reference_id=%s", paylink.ReferenceID)
@@ -166,7 +166,7 @@ func (i *Impl) createTransaction(ctx context.Context, paylink nexi.PaymentLinkQu
 	return err
 }
 
-func (i *Impl) updateTransaction(ctx context.Context, paylink nexi.PaymentLinkQueryResponse, transaction paymentservice.Transaction) error {
+func (i *Impl) updateTransaction(ctx context.Context, paylink nexi.NexiPaymentQueryResponse, transaction paymentservice.Transaction) error {
 	if transaction.Status == paymentservice.Valid {
 		aulogging.Logger.Ctx(ctx).Warn().Printf("aborting transaction update - already in status valid! reference_id=%s", paylink.ReferenceID)
 		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("refId: %s", paylink.ReferenceID), "abort-update-for-valid")
@@ -192,41 +192,27 @@ func (i *Impl) updateTransaction(ctx context.Context, paylink nexi.PaymentLinkQu
 	return nil
 }
 
-func (i *Impl) effectiveISODateOrToday(paylink nexi.PaymentLinkQueryResponse) string {
+func (i *Impl) effectiveISODateOrToday(paylink nexi.NexiPaymentQueryResponse) string {
 	today := time.Now().Format(isoDateFormat)
 	effective := today
 
-	if len(paylink.Invoices) > 0 {
-		lastInvoice := paylink.Invoices[len(paylink.Invoices)-1]
-
-		if len(lastInvoice.Transactions) > 0 {
-			lastTransaction := lastInvoice.Transactions[len(lastInvoice.Transactions)-1]
-
-			if len(lastTransaction.Time) >= 10 {
-				effective = lastTransaction.Time[0:10]
-			}
+	// In the new structure, use CreatedAt or Charges[0].Created
+	if paylink.CreatedAt > 0 {
+		// Convert timestamp to date
+		t := time.Unix(paylink.CreatedAt, 0)
+		effective = t.Format(isoDateFormat)
+	} else if len(paylink.Charges) > 0 {
+		// Parse the Created time from the first charge
+		if t, err := time.Parse(time.RFC3339, paylink.Charges[0].Created); err == nil {
+			effective = t.Format(isoDateFormat)
 		}
 	}
 
 	return effective
 }
 
-func (i *Impl) transactionUuid(paylink nexi.PaymentLinkQueryResponse) string {
-	result := "unknown"
-
-	if len(paylink.Invoices) > 0 {
-		lastInvoice := paylink.Invoices[len(paylink.Invoices)-1]
-
-		if len(lastInvoice.Transactions) > 0 {
-			lastTransaction := lastInvoice.Transactions[len(lastInvoice.Transactions)-1]
-
-			if lastTransaction.UUID != "" {
-				result = lastTransaction.UUID
-			}
-		}
-	}
-
-	return result
+func (i *Impl) transactionUuid(paylink nexi.NexiPaymentQueryResponse) string {
+	return paylink.ID
 }
 
 func debitorIdFromReferenceID(ref_id string) (uint, error) {

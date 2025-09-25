@@ -185,7 +185,7 @@ func tstBuildValidPaymentLink() nexiapi.PaymentLinkDto {
 		AmountPaid:  0,
 		Currency:    "EUR",
 		VatRate:     19.0,
-		Link:        "http://localhost:1111/some/paylink/101",
+		Link:        "http://localhost:1111/some/paylink/mock-101",
 	}
 }
 
@@ -236,6 +236,11 @@ func tstExpectedMailNotification(operation string, status string) mailservice.Ma
 			"referenceId": "221216-122218-000001",
 		},
 	}
+}
+
+func tstClearDatabase() {
+	db := database.GetRepository().(*inmemorydb.InMemoryRepository)
+	db.Clear()
 }
 
 func tstRequireProtocolEntries(t *testing.T, expectedProtocol ...entity.ProtocolEntry) {

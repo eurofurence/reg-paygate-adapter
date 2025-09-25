@@ -18,13 +18,13 @@ type PaymentLinkService interface {
 	// CreatePaymentLink expects an already validated nexiapi.PaymentLinkRequestDto, and makes a downstream
 	// request to create a payment link, returning the nexiapi.PaymentLinkDto with all its information and the
 	// id under which to manage the payment link.
-	CreatePaymentLink(ctx context.Context, request nexiapi.PaymentLinkRequestDto) (nexiapi.PaymentLinkDto, uint, error)
+	CreatePaymentLink(ctx context.Context, request nexiapi.PaymentLinkRequestDto) (nexiapi.PaymentLinkDto, string, error)
 
 	// GetPaymentLink obtains the payment link information from the downstream api.
-	GetPaymentLink(ctx context.Context, id uint) (nexiapi.PaymentLinkDto, error)
+	GetPaymentLink(ctx context.Context, id string) (nexiapi.PaymentLinkDto, error)
 
 	// DeletePaymentLink asks the downstream api to delete the given payment link.
-	DeletePaymentLink(ctx context.Context, id uint) error
+	DeletePaymentLink(ctx context.Context, id string) error
 
 	// HandleWebhook requests the payment link referenced in the webhook data and reacts to any new payments
 	HandleWebhook(ctx context.Context, webhook nexiapi.WebhookEventDto) error

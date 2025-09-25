@@ -39,7 +39,7 @@ func useSimulator(w http.ResponseWriter, r *http.Request) {
 
 	paylink, err := paymentLinkService.GetPaymentLink(ctx, id)
 	if err != nil {
-		errorHandler(ctx, w, http.StatusNotFound, "not found", fmt.Sprintf("simulator paylink with id %d not found (may be lost from memory after restart)", id))
+		errorHandler(ctx, w, http.StatusNotFound, "not found", fmt.Sprintf("simulator paylink with id %s not found (may be lost from memory after restart)", id))
 		return
 	}
 
@@ -63,12 +63,17 @@ func useSimulator(w http.ResponseWriter, r *http.Request) {
 	mock.InjectTransaction(tx)
 
 	selfCaller := self.Get()
+	// For simulator, use a dummy id since webhook expects int
+	var paymentReqId int64 = 42
+	if parsed, err := strconv.ParseInt(id, 10, 64); err == nil {
+		paymentReqId = parsed
+	}
 	event := nexiapi.WebhookEventDto{
 		Transaction: nexiapi.WebhookEventTransaction{
 			Id: tx.ID,
 			Invoice: nexiapi.WebhookEventTransactionInvoice{
 				ReferenceId:      paylink.ReferenceId,
-				PaymentRequestId: int64(id),
+				PaymentRequestId: paymentReqId,
 			},
 		},
 	}
@@ -87,13 +92,13 @@ func useSimulator(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (uint, error) {
+func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, error) {
 	idStr := chi.URLParam(r, "id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
+	if idStr == "" {
 		errorHandler(ctx, w, http.StatusBadRequest, "bad id", fmt.Sprintf("simulator received invalid id '%s'", url.QueryEscape(idStr)))
+		return "", fmt.Errorf("empty id")
 	}
-	return uint(id), err
+	return idStr, nil
 }
 
 func successHandler(ctx context.Context, w http.ResponseWriter, message string, logmessage string) {
