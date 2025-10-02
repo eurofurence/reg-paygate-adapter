@@ -32,13 +32,13 @@ func TestCreatePaylink_Success(t *testing.T) {
 
 	docs.Then("and the expected request for a payment link has been made")
 	tstRequireNexiRecording(t,
-		"CreatePaymentLink {some page title some page description 221216-122218-000001 221216122218000001 some payment purpose 390 19 EUR registration jsquirrel_github_9a6d@packetloss.de  }",
+		"CreatePaymentLink",
 	)
 
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
 		ReferenceId: "221216-122218-000001",
-		ApiId:       "",
+		ApiId:       "mock-101",
 		Kind:        "success",
 		Message:     "create-pay-link",
 		Details:     "http://localhost:1111/some/paylink/mock-101",

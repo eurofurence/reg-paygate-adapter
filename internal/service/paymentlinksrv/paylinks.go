@@ -61,6 +61,7 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, data nexiapi.PaymentLinkRe
 	db := database.GetRepository()
 	_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
 		ReferenceId: nexiRequest.Order.Reference,
+		ApiId:       nexiResponse.ID,
 		Kind:        "success",
 		Message:     "create-pay-link",
 		Details:     nexiResponse.Link,

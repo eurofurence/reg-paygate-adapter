@@ -130,10 +130,6 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentR
 	}, nil
 }
 
-
-
-
-
 func (i *Impl) QueryPaymentLink(ctx context.Context, paymentId string) (NexiPaymentQueryResponse, error) {
 	requestUrl := fmt.Sprintf("%s/v1/payments/%s", i.baseUrl, paymentId)
 	response := aurestclientapi.ParsedResponse{

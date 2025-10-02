@@ -1,0 +1,23 @@
+service:
+  name: 'Registration Nexi Adapter Integration Testing Configuration'
+  nexi_instance: 'your-test-instance'
+  nexi_api_secret: 'your-api-secret-here'
+  nexi_commerce_platform_tag: 'your-commerce-tag'
+  nexi_merchant_number: 'your-merchant-number'
+  transaction_id_prefix: "INT"
+  # IMPORTANT: Set these to your Nexi test environment URLs
+  nexi_downstream: 'https://test-api.dibspayment.eu'
+database:
+  use: inmemory
+security:
+  fixed_token:
+    api: 'integration-test-api-token'
+    webhook: 'integration-test-webhook-secret'
+logging:
+  severity: INFO
+  full_requests: true
+  error_notify_mail: 'errors@example.com'
+invoice:
+  title: 'Integration Test Payment'
+  description: 'Integration test payment description'
+  purpose: 'Integration test purpose'

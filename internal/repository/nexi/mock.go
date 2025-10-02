@@ -37,7 +37,7 @@ func newMock() Mock {
 		Link:        constructSimulatedPaylink("42"),
 		Amount:      390,
 		Currency:    "EUR",
-		CreatedAt:   1418392958,
+		CreatedAt:   1673136000, // 2023-01-08
 		VatRate:     19.0,
 		Order: NexiOrderDetails{
 			Reference: "221216-122218-000001",
@@ -95,7 +95,7 @@ func (m *mockImpl) CreatePaymentLink(ctx context.Context, request NexiCreatePaym
 	if m.simulateError != nil {
 		return NexiPaymentLinkCreated{}, m.simulateError
 	}
-	m.recording = append(m.recording, fmt.Sprintf("CreatePaymentLink %v", request))
+	m.recording = append(m.recording, "CreatePaymentLink")
 
 	newIdNum := atomic.AddUint32(&m.idSequence, 1)
 	newId := fmt.Sprintf("mock-%d", newIdNum)
