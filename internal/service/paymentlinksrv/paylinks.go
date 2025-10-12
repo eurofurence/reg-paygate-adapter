@@ -108,11 +108,11 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 			TermsUrl:         "",
 			MerchantTermsUrl: "",
 			ShippingCountries: []nexi.NexiCountry{
-				{CountryCode: "DE"},
+				{CountryCode: "DEU"},
 			},
 			Shipping: nexi.NexiShipping{
 				Countries: []nexi.NexiCountry{
-					{CountryCode: "DE"},
+					{CountryCode: "DEU"},
 				},
 				MerchantHandlesShippingCost: false,
 				EnableBillingAddress:        true,
@@ -124,7 +124,7 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 			Charge:                      true,
 			PublicDevice:                false,
 			MerchantHandlesConsumerData: false,
-			CountryCode: "DE",
+			CountryCode: "DEU",
 		},
 		Appearance: nexi.NexiAppearance{
 			DisplayOptions: nexi.NexiDisplayOptions{

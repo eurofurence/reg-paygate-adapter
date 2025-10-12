@@ -49,7 +49,7 @@ func useSimulator(w http.ResponseWriter, r *http.Request) {
 		Amount:      paylink.AmountDue,
 		Status:      "confirmed",
 		Time:        "2022-10-15 15:50:20",
-		Lang:        "de",
+		Lang:        "DEU",
 		PageUUID:    "",
 		Payment:     nexi.Payment{Brand: "visa"},
 		Psp:         "ConCardis_PayEngine_3",

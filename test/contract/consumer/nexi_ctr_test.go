@@ -62,11 +62,11 @@ func TestNexiApiClient(t *testing.T) {
 			TermsUrl:         "",
 			MerchantTermsUrl: "",
 			ShippingCountries: []nexi.NexiCountry{
-				{CountryCode: "DE"},
+				{CountryCode: "DEU"},
 			},
 			Shipping: nexi.NexiShipping{
 				Countries: []nexi.NexiCountry{
-					{CountryCode: "DE"},
+					{CountryCode: "DEU"},
 				},
 				MerchantHandlesShippingCost: false,
 				EnableBillingAddress:        true,
@@ -78,7 +78,7 @@ func TestNexiApiClient(t *testing.T) {
 			Charge:                      true,
 			PublicDevice:                false,
 			MerchantHandlesConsumerData: false,
-			CountryCode: "DE",
+			CountryCode: "DEU",
 		},
 		Appearance: nexi.NexiAppearance{
 			DisplayOptions: nexi.NexiDisplayOptions{
@@ -90,7 +90,13 @@ func TestNexiApiClient(t *testing.T) {
 			},
 		},
 		Notifications: nexi.NexiNotifications{
-			Webhooks: []nexi.NexiWebhook{},
+			Webhooks: []nexi.NexiWebhook{
+				{
+					EventName: "payment.created",
+					Url:       "http://localhost:8080/api/rest/v1/webhook/1234",
+					Authorization: "",
+				},
+			},
 		},
 	}
 
@@ -112,9 +118,12 @@ func TestNexiApiClient(t *testing.T) {
 			"Content-Type": []string{"application/json"},
 		},
 		Url:  "http://localhost:8000/v1/payments",
-		Body: `{"order":{"items":[{"reference":"EF 2022 REG 000004","name":"Convention Registration","quantity":1,"unit":"qty","unitPrice":10550,"taxRate":19,"taxAmount":0,"grossTotalAmount":10550,"netTotalAmount":10550,"imageUrl":""}],"amount":10550,"currency":"EUR","reference":"220118-150405-000004"},"checkout":{"url":"","integrationType":"hostedPaymentPage","returnUrl":"https://example.com/success","cancelUrl":"https://example.com/failure","consumer":{"reference":"test@example.com","email":"test@example.com","shippingAddress":{"addressLine1":"","addressLine2":"","postalCode":"","city":"","country":""},"billingAddress":{"addressLine1":"","addressLine2":"","postalCode":"","city":"","country":""},"phoneNumber":{"prefix":"","number":""},"privatePerson":{"firstName":"","lastName":""},"company":{"name":"","contact":{"firstName":"","lastName":""}}},"termsUrl":"","merchantTermsUrl":"","shippingCountries":[{"countryCode":"DE"}],"shipping":{"countries":[{"countryCode":"DE"}],"merchantHandlesShippingCost":false,"enableBillingAddress":true},"consumerType":{"default":"b2c","supportedTypes":["b2c","b2b"]},"charge":true,"publicDevice":false,"merchantHandlesConsumerData":false,"countryCode":"DE"},"merchantNumber":"1234","appearance":{"displayOptions":{"showMerchantName":true,"showOrderSummary":true},"textOptions":{"completePaymentButtonText":"Complete Payment"}},"notifications":{"webhooks":[]}}`,
+		Body: `{"order":{"items":[{"reference":"EF 2022 REG 000004","name":"Convention Registration","quantity":1,"unit":"qty","unitPrice":10550,"taxRate":19,"taxAmount":0,"grossTotalAmount":10550,"netTotalAmount":10550,"imageUrl":""}],"amount":10550,"currency":"EUR","reference":"220118-150405-000004"},"checkout":{"url":"","integrationType":"hostedPaymentPage","returnUrl":"https://example.com/success","cancelUrl":"https://example.com/failure","consumer":{"reference":"test@example.com","email":"test@example.com","shippingAddress":{"addressLine1":"","addressLine2":"","postalCode":"","city":"","country":""},"billingAddress":{"addressLine1":"","addressLine2":"","postalCode":"","city":"","country":""},"phoneNumber":{"prefix":"","number":""},"privatePerson":{"firstName":"","lastName":""},"company":{"name":"","contact":{"firstName":"","lastName":""}}},"termsUrl":"","merchantTermsUrl":"","shippingCountries":[{"countryCode":"DEU"}],"shipping":{"countries":[{"countryCode":"DEU"}],"merchantHandlesShippingCost":false,"enableBillingAddress":true},"consumerType":{"default":"b2c","supportedTypes":["b2c","b2b"]},"charge":true,"publicDevice":false,"merchantHandlesConsumerData":false,"appearance":{"displayOptions":{"showMerchantName":false,"showOrderSummary":false},"textOptions":{"completePaymentButtonText":""}},"countryCode":"DEU"},"appearance":{"displayOptions":{"showMerchantName":true,"showOrderSummary":true},"textOptions":{"completePaymentButtonText":"Complete Payment"}},"notifications":{"webhooks":[{"eventName":"payment.created","url":"http://localhost:8080/api/rest/v1/webhook/1234","authorization":""}]}}`,
 	}, aurestclientapi.ParsedResponse{
-		Body:   `{"paymentId":"42","hostedPaymentPageUrl":"http://localhost/some/pay/link"}`,
+		Body: &nexi.NexiCreateLowlevelResponseBody{
+			PaymentId:            "42",
+			HostedPaymentPageUrl: "http://localhost/some/pay/link",
+		},
 		Status: http.StatusOK,
 		Header: http.Header{
 			"Content-Type": []string{"application/json"},
@@ -128,7 +137,96 @@ func TestNexiApiClient(t *testing.T) {
 		Url:  "http://localhost:8000/v1/payments/42",
 		Body: "",
 	}, aurestclientapi.ParsedResponse{
-		Body:   `{"payment":{"paymentId":"42","summary":{"reservedAmount":0,"reservedSurchargeAmount":0,"chargedAmount":10550,"chargedSurchargeAmount":0,"refundedAmount":0,"refundedSurchargeAmount":0,"cancelledAmount":0,"cancelledSurchargeAmount":0},"consumer":{"shippingAddress":{"addressLine1":"","addressLine2":"","receiverLine":"","postalCode":"","city":"","country":"","phoneNumber":{"prefix":"","number":""}},"company":{"merchantReference":"","name":"","registrationNumber":"","contactDetails":{"firstName":"","lastName":"","email":"","phoneNumber":{"prefix":"","number":""}}},"privatePerson":{"merchantReference":"","dateOfBirth":"","firstName":"","lastName":"","email":"","phoneNumber":{"prefix":"","number":""}},"billingAddress":{"addressLine1":"","addressLine2":"","receiverLine":"","postalCode":"","city":"","country":"","phoneNumber":{"prefix":"","number":""}}},"paymentDetails":{"paymentType":"card","paymentMethod":"visa","invoiceDetails":{"invoiceNumber":""},"cardDetails":{"maskedPan":"411111******1111","expiryDate":"12/25"}},"orderDetails":{"amount":10550,"currency":"EUR","reference":"220118-150405-000004"},"checkout":{"url":"http://localhost/some/pay/link","cancelUrl":"https://example.com/failure"},"created":"2024-10-15T15:50:20Z","refunds":[],"charges":[],"terminated":""}}}`,
+		Body: &nexi.NexiQueryLowlevelResponseBody{
+			Payment: nexi.NexiPayment{
+				PaymentId: "42",
+				Summary: nexi.NexiSummary{
+					ReservedAmount:           0,
+					ReservedSurchargeAmount:  0,
+					ChargedAmount:            10550,
+					ChargedSurchargeAmount:   0,
+					RefundedAmount:           0,
+					RefundedSurchargeAmount:  0,
+					CancelledAmount:          0,
+					CancelledSurchargeAmount: 0,
+				},
+				Consumer: nexi.NexiConsumerFull{
+					ShippingAddress: nexi.NexiAddressFull{
+						AddressLine1: "",
+						AddressLine2: "",
+						ReceiverLine: "",
+						PostalCode:   "",
+						City:         "",
+						Country:      "",
+						PhoneNumber: nexi.NexiPhone{
+							Prefix: "",
+							Number: "",
+						},
+					},
+					Company: nexi.NexiCompanyFull{
+						MerchantReference:  "",
+						Name:               "",
+						RegistrationNumber: "",
+						ContactDetails: nexi.NexiContactFull{
+							FirstName:   "",
+							LastName:    "",
+							Email:       "",
+							PhoneNumber: nexi.NexiPhone{
+								Prefix: "",
+								Number: "",
+							},
+						},
+					},
+					PrivatePerson: nexi.NexiPrivatePersonFull{
+						MerchantReference: "",
+						DateOfBirth:       "",
+						FirstName:         "",
+						LastName:          "",
+						Email:             "",
+						PhoneNumber: nexi.NexiPhone{
+							Prefix: "",
+							Number: "",
+						},
+					},
+					BillingAddress: nexi.NexiAddressFull{
+						AddressLine1: "",
+						AddressLine2: "",
+						ReceiverLine: "",
+						PostalCode:   "",
+						City:         "",
+						Country:      "",
+						PhoneNumber: nexi.NexiPhone{
+							Prefix: "",
+							Number: "",
+						},
+					},
+				},
+				PaymentDetails: nexi.NexiPaymentDetails{
+					PaymentType:   "card",
+					PaymentMethod: "visa",
+					InvoiceDetails: nexi.NexiInvoiceDetails{
+						InvoiceNumber: "",
+					},
+					CardDetails: nexi.NexiCardDetails{
+						MaskedPan:  "411111******1111",
+						ExpiryDate: "12/25",
+					},
+				},
+				OrderDetails: nexi.NexiOrderDetails{
+					Amount:    10550,
+					Currency:  "EUR",
+					Reference: "220118-150405-000004",
+				},
+				Checkout: nexi.NexiCheckoutDetails{
+					Url:       "http://localhost/some/pay/link",
+					CancelUrl: "https://example.com/failure",
+				},
+				Created:    "2024-10-15T15:50:20Z",
+				Refunds:    []nexi.NexiRefund{},
+				Charges:    []nexi.NexiCharge{},
+				Terminated: "",
+			},
+		},
 		Status: http.StatusOK,
 		Header: http.Header{
 			"Content-Type": []string{"application/json"},
@@ -176,7 +274,7 @@ func TestNexiApiClient(t *testing.T) {
 		ReferenceId: "220118-150405-000004",
 		Kind:        "raw",
 		Message:     "nexi create request",
-		Details:     `{"order":{"items":[{"reference":"EF 2022 REG 000004","name":"Convention Registration","quantity":1,"unit":"qty","unitPrice":10550,"taxRate":19,"taxAmount":0,"grossTotalAmount":10550,"netTotalAmount":10550,"imageUrl":""}],"amount":10550,"currency":"EUR","reference":"220118-150405-000004"},"checkout":{"url":"","integrationType":"hostedPaymentPage","returnUrl":"https://example.com/success","cancelUrl":"https://example.com/failure","consumer":{"reference":"test@example.com","email":"test@example.com","shippingAddress":{"addressLine1":"","addressLine2":"","postalCode":"","city":"","country":""},"billingAddress":{"addressLine1":"","addressLine2":"","postalCode":"","city":"","country":""},"phoneNumber":{"prefix":"","number":""},"privatePerson":{"firstName":"","lastName":""},"company":{"name":"","contact":{"firstName":"","lastName":""}}},"termsUrl":"","merchantTermsUrl":"","shippingCountries":[{"countryCode":"DE"}],"shipping":{"countries":[{"countryCode":"DE"}],"merchantHandlesShippingCost":false,"enableBillingAddress":true},"consumerType":{"default":"b2c","supportedTypes":["b2c","b2b"]},"charge":true,"publicDevice":false,"merchantHandlesConsumerData":false,"countryCode":"DE"},"merchantNumber":"1234","appearance":{"displayOptions":{"showMerchantName":true,"showOrderSummary":true},"textOptions":{"completePaymentButtonText":"Complete Payment"}},"notifications":{"webhooks":[]}}`,
+		Details:     `{"order":{"items":[{"reference":"EF 2022 REG 000004","name":"Convention Registration","quantity":1,"unit":"qty","unitPrice":10550,"taxRate":19,"taxAmount":0,"grossTotalAmount":10550,"netTotalAmount":10550,"imageUrl":""}],"amount":10550,"currency":"EUR","reference":"220118-150405-000004"},"checkout":{"url":"","integrationType":"hostedPaymentPage","returnUrl":"https://example.com/success","cancelUrl":"https://example.com/failure","consumer":{"reference":"test@example.com","email":"test@example.com","shippingAddress":{"addressLine1":"","addressLine2":"","postalCode":"","city":"","country":""},"billingAddress":{"addressLine1":"","addressLine2":"","postalCode":"","city":"","country":""},"phoneNumber":{"prefix":"","number":""},"privatePerson":{"firstName":"","lastName":""},"company":{"name":"","contact":{"firstName":"","lastName":""}}},"termsUrl":"","merchantTermsUrl":"","shippingCountries":[{"countryCode":"DEU"}],"shipping":{"countries":[{"countryCode":"DEU"}],"merchantHandlesShippingCost":false,"enableBillingAddress":true},"consumerType":{"default":"b2c","supportedTypes":["b2c","b2b"]},"charge":true,"publicDevice":false,"merchantHandlesConsumerData":false,"appearance":{"displayOptions":{"showMerchantName":false,"showOrderSummary":false},"textOptions":{"completePaymentButtonText":""}},"countryCode":"DEU"},"appearance":{"displayOptions":{"showMerchantName":true,"showOrderSummary":true},"textOptions":{"completePaymentButtonText":"Complete Payment"}},"notifications":{"webhooks":[{"eventName":"payment.created","url":"http://localhost:8080/api/rest/v1/webhook/1234","authorization":""}]}}`,
 	}, entity.ProtocolEntry{
 		ReferenceId: "220118-150405-000004",
 		ApiId:       "42",

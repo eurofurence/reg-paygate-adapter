@@ -70,7 +70,7 @@ func NewTestingClient(verifierClient aurestclientapi.Client) NexiDownstream {
 	}
 }
 
-type CreateLowlevelResponseBody struct {
+type NexiCreateLowlevelResponseBody struct {
 	PaymentId            string `json:"paymentId"`
 	HostedPaymentPageUrl string `json:"hostedPaymentPageUrl"`
 }
@@ -93,7 +93,7 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentR
 		aulogging.Logger.Ctx(ctx).Info().Print("nexi create request: " + string(requestBody))
 	}
 	response := aurestclientapi.ParsedResponse{
-		Body: &CreateLowlevelResponseBody{},
+		Body: &NexiCreateLowlevelResponseBody{},
 	}
 	if err := i.client.Perform(ctx, http.MethodPost, requestUrl, string(requestBody), &response); err != nil {
 		return NexiPaymentLinkCreated{}, err
@@ -101,7 +101,7 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentR
 	if response.Status >= 300 {
 		return NexiPaymentLinkCreated{}, fmt.Errorf("unexpected response status %d", response.Status)
 	}
-	bodyDto := *response.Body.(*CreateLowlevelResponseBody)
+	bodyDto := *response.Body.(*NexiCreateLowlevelResponseBody)
 	if config.LogFullRequests() {
 		// Log response
 		if response.Body != nil {
@@ -133,7 +133,7 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentR
 func (i *Impl) QueryPaymentLink(ctx context.Context, paymentId string) (NexiPaymentQueryResponse, error) {
 	requestUrl := fmt.Sprintf("%s/v1/payments/%s", i.baseUrl, paymentId)
 	response := aurestclientapi.ParsedResponse{
-		Body: &queryLowlevelResponseBody{},
+		Body: &NexiQueryLowlevelResponseBody{},
 	}
 	if err := i.client.Perform(ctx, http.MethodGet, requestUrl, "", &response); err != nil {
 		return NexiPaymentQueryResponse{}, err
@@ -141,7 +141,7 @@ func (i *Impl) QueryPaymentLink(ctx context.Context, paymentId string) (NexiPaym
 	if response.Status >= 300 {
 		return NexiPaymentQueryResponse{}, fmt.Errorf("unexpected response status %d", response.Status)
 	}
-	bodyDto := response.Body.(*queryLowlevelResponseBody)
+	bodyDto := response.Body.(*NexiQueryLowlevelResponseBody)
 	// Map new API response to NexiPaymentQueryResponse
 	result := NexiPaymentQueryResponse{
 		ID:          bodyDto.Payment.PaymentId,

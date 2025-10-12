@@ -25,7 +25,6 @@ var (
 type NexiCreatePaymentRequest struct {
 	Order          NexiOrder        `json:"order"`
 	Checkout       NexiCheckout     `json:"checkout"`
-	MerchantNumber string           `json:"merchantNumber"`
 	Appearance     NexiAppearance   `json:"appearance"`
 	Notifications  NexiNotifications `json:"notifications"`
 }
@@ -164,7 +163,7 @@ type NexiPayment struct {
 	Terminated     string              `json:"terminated"`
 }
 
-type queryLowlevelResponseBody struct {
+type NexiQueryLowlevelResponseBody struct {
 	Payment NexiPayment `json:"payment"`
 }
 

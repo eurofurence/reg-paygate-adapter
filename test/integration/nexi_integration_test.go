@@ -70,11 +70,11 @@ func TestNexiIntegrationFullFlow(t *testing.T) {
 			TermsUrl:         "",
 			MerchantTermsUrl: "",
 			ShippingCountries: []nexi.NexiCountry{
-				{CountryCode: "DE"},
+				{CountryCode: "DEU"},
 			},
 			Shipping: nexi.NexiShipping{
 				Countries: []nexi.NexiCountry{
-					{CountryCode: "DE"},
+					{CountryCode: "DEU"},
 				},
 				MerchantHandlesShippingCost: false,
 				EnableBillingAddress:        true,
@@ -86,7 +86,7 @@ func TestNexiIntegrationFullFlow(t *testing.T) {
 			Charge:                      true,
 			PublicDevice:                false,
 			MerchantHandlesConsumerData: false,
-			CountryCode: "DE",
+			CountryCode: "DEU",
 		},
 		Appearance: nexi.NexiAppearance{
 			DisplayOptions: nexi.NexiDisplayOptions{
