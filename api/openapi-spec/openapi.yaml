@@ -32,7 +32,11 @@ paths:
         paying the defined amount and can be presented to the user in various
         ways, including as a link in an email or as an embedded modal dialog in
         our shop page.
-        
+
+        When creating a payment link, the adapter automatically configures
+        webhooks to receive notifications from Nexi about payment events,
+        such as when a payment is created or completed.
+
         We intentionally work with as little information as possible. Specifically,
         we avoid attaching and personally identifiable information.
       operationId: addPaymentLink
