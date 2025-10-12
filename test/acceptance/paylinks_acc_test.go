@@ -375,6 +375,7 @@ func TestDeletePaylink_Success(t *testing.T) {
 
 	docs.Then("and the expected request for payment link deletion has been made")
 	tstRequireNexiRecording(t,
+		"QueryPaymentLink 42",
 		"DeletePaymentLink 42",
 	)
 
@@ -423,7 +424,7 @@ func TestDeletePaylink_NotFound(t *testing.T) {
 
 	docs.Then("and the expected request for payment link deletion has been made")
 	tstRequireNexiRecording(t,
-		"DeletePaymentLink 13",
+		"QueryPaymentLink 13",
 	)
 
 	docs.Then("and the expected protocol entries have been written")

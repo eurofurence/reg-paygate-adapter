@@ -9,7 +9,7 @@ import (
 type NexiDownstream interface {
 	CreatePaymentLink(ctx context.Context, request NexiCreatePaymentRequest) (NexiPaymentLinkCreated, error)
 	QueryPaymentLink(ctx context.Context, paymentId string) (NexiPaymentQueryResponse, error)
-	DeletePaymentLink(ctx context.Context, paymentId string) error
+	DeletePaymentLink(ctx context.Context, paymentId string, amount int64) error
 
 	QueryTransactions(ctx context.Context, timeGreaterThan time.Time, timeLessThan time.Time) ([]TransactionData, error)
 }
@@ -23,9 +23,11 @@ var (
 // -- New Nexi API v1 Structures --
 
 type NexiCreatePaymentRequest struct {
-	Order          NexiOrder    `json:"order"`
-	Checkout       NexiCheckout `json:"checkout"`
-	MerchantNumber string       `json:"merchantNumber"`
+	Order          NexiOrder        `json:"order"`
+	Checkout       NexiCheckout     `json:"checkout"`
+	MerchantNumber string           `json:"merchantNumber"`
+	Appearance     NexiAppearance   `json:"appearance"`
+	Notifications  NexiNotifications `json:"notifications"`
 }
 
 type NexiPaymentLinkCreated struct {
@@ -137,6 +139,16 @@ type NexiDisplayOptions struct {
 
 type NexiTextOptions struct {
 	CompletePaymentButtonText string `json:"completePaymentButtonText"`
+}
+
+type NexiNotifications struct {
+	Webhooks []NexiWebhook `json:"webhooks"`
+}
+
+type NexiWebhook struct {
+	EventName     string `json:"eventName"`
+	Url           string `json:"url"`
+	Authorization string `json:"authorization"`
 }
 
 type NexiPayment struct {

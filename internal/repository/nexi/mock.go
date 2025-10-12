@@ -147,7 +147,7 @@ func (m *mockImpl) QueryPaymentLink(ctx context.Context, id string) (NexiPayment
 	return copiedData, nil
 }
 
-func (m *mockImpl) DeletePaymentLink(ctx context.Context, id string) error {
+func (m *mockImpl) DeletePaymentLink(ctx context.Context, id string, amount int64) error {
 	if m.simulateError != nil {
 		return m.simulateError
 	}

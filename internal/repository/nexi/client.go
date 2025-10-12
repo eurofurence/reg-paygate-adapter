@@ -185,12 +185,17 @@ type deleteLowlevelResponseBody struct {
 	Status string `json:"status"`
 }
 
-func (i *Impl) DeletePaymentLink(ctx context.Context, paymentId string) error {
-	requestUrl := fmt.Sprintf("%s/v1/payments/%s/terminate", i.baseUrl, paymentId)
-	response := aurestclientapi.ParsedResponse{
-		Body: &map[string]interface{}{}, // terminate returns errors or empty
+func (i *Impl) DeletePaymentLink(ctx context.Context, paymentId string, amount int64) error {
+	requestUrl := fmt.Sprintf("%s/v1/payments/%s/cancels", i.baseUrl, paymentId)
+	cancelPayload := map[string]int64{"amount": amount}
+	requestBody, err := json.Marshal(cancelPayload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal cancel request: %v", err)
 	}
-	if err := i.client.Perform(ctx, http.MethodPut, requestUrl, "", &response); err != nil {
+	response := aurestclientapi.ParsedResponse{
+		Body: &map[string]interface{}{}, // cancels returns errors or empty
+	}
+	if err := i.client.Perform(ctx, http.MethodPost, requestUrl, string(requestBody), &response); err != nil {
 		return err
 	}
 	if response.Status >= 300 {

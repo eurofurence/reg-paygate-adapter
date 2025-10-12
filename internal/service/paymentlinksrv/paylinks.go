@@ -124,18 +124,26 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 			Charge:                      true,
 			PublicDevice:                false,
 			MerchantHandlesConsumerData: false,
-			Appearance: nexi.NexiAppearance{
-				DisplayOptions: nexi.NexiDisplayOptions{
-					ShowMerchantName: true,
-					ShowOrderSummary: true,
-				},
-				TextOptions: nexi.NexiTextOptions{
-					CompletePaymentButtonText: "Complete Payment",
-				},
-			},
 			CountryCode: "DE",
 		},
-		MerchantNumber: config.NexiMerchantNumber(),
+		Appearance: nexi.NexiAppearance{
+			DisplayOptions: nexi.NexiDisplayOptions{
+				ShowMerchantName: true,
+				ShowOrderSummary: true,
+			},
+			TextOptions: nexi.NexiTextOptions{
+				CompletePaymentButtonText: "pay",
+			},
+		},
+		Notifications: nexi.NexiNotifications{
+			Webhooks: []nexi.NexiWebhook{
+				{
+					EventName: "payment.created",
+					Url:       config.ServicePublicURL() + "/api/rest/v1/webhook/" + config.WebhookSecret(),
+					Authorization: "",
+				},
+			},
+		},
 	}
 }
 
@@ -199,7 +207,25 @@ func (i *Impl) GetPaymentLink(ctx context.Context, id string) (nexiapi.PaymentLi
 }
 
 func (i *Impl) DeletePaymentLink(ctx context.Context, id string) error {
-	err := nexi.Get().DeletePaymentLink(ctx, id)
+	// Query to get the amount for cancel
+	data, err := nexi.Get().QueryPaymentLink(ctx, id)
+	if err != nil {
+		db := database.GetRepository()
+		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
+			ReferenceId: "",
+			ApiId:       id,
+			Kind:        "error",
+			Message:     "delete-pay-link failed",
+			Details:     err.Error(),
+			RequestId:   ctxvalues.RequestId(ctx),
+		})
+		_ = i.SendErrorNotifyMail(ctx, "delete-pay-link", fmt.Sprintf("paylink id %s", id), err.Error())
+		return err
+	}
+
+	amount := data.Amount
+
+	err = nexi.Get().DeletePaymentLink(ctx, id, amount)
 	if err != nil {
 		db := database.GetRepository()
 		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{

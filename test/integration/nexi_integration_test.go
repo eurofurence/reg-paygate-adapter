@@ -86,18 +86,20 @@ func TestNexiIntegrationFullFlow(t *testing.T) {
 			Charge:                      true,
 			PublicDevice:                false,
 			MerchantHandlesConsumerData: false,
-			Appearance: nexi.NexiAppearance{
-				DisplayOptions: nexi.NexiDisplayOptions{
-					ShowMerchantName: true,
-					ShowOrderSummary: true,
-				},
-				TextOptions: nexi.NexiTextOptions{
-					CompletePaymentButtonText: "Complete Payment",
-				},
-			},
 			CountryCode: "DE",
 		},
-		MerchantNumber: config.NexiMerchantNumber(),
+		Appearance: nexi.NexiAppearance{
+			DisplayOptions: nexi.NexiDisplayOptions{
+				ShowMerchantName: true,
+				ShowOrderSummary: true,
+			},
+			TextOptions: nexi.NexiTextOptions{
+				CompletePaymentButtonText: "pay",
+			},
+		},
+		Notifications: nexi.NexiNotifications{
+			Webhooks: []nexi.NexiWebhook{},
+		},
 	}
 
 	t.Run("create_payment_link", func(t *testing.T) {
@@ -125,7 +127,8 @@ func TestNexiIntegrationFullFlow(t *testing.T) {
 		})
 
 		t.Run("delete_payment_link", func(t *testing.T) {
-			err := client.DeletePaymentLink(ctx, paymentID)
+			amount := paymentLinkRequest.Order.Amount
+			err := client.DeletePaymentLink(ctx, paymentID, amount)
 			require.NoError(t, err, "Failed to delete payment link")
 
 			t.Logf("Deleted payment link: ID=%s", paymentID)
@@ -170,7 +173,7 @@ func TestNexiIntegrationErrorHandling(t *testing.T) {
 	})
 
 	t.Run("delete_nonexistent_payment_link", func(t *testing.T) {
-		err := client.DeletePaymentLink(ctx, "nonexistent-payment-id-12345")
+		err := client.DeletePaymentLink(ctx, "nonexistent-payment-id-12345", 0)
 		// May or may not return an error depending on Nexi API behavior
 		// We just log the result without requiring success or failure
 		if err != nil {
