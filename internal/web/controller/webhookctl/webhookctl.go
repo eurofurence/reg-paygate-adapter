@@ -5,6 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
+	"strings"
+
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
@@ -12,9 +16,6 @@ import (
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/service/paymentlinksrv"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctlutil"
 	"github.com/go-chi/chi/v5"
-	"io"
-	"net/http"
-	"strings"
 )
 
 var paymentLinkService paymentlinksrv.PaymentLinkService

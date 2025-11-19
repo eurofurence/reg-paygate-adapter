@@ -8,6 +8,10 @@ package simulatorctl
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strconv"
+
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
@@ -17,9 +21,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
 	"github.com/google/uuid"
-	"net/http"
-	"net/url"
-	"strconv"
 )
 
 var paymentLinkService paymentlinksrv.PaymentLinkService

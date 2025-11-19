@@ -3,8 +3,9 @@ package ctlutil
 import (
 	"context"
 	"encoding/json"
-	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"net/http"
+
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 )
 
 // --- response helpers ---

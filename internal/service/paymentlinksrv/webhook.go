@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
-	"strconv"
-	"strings"
-	"time"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"

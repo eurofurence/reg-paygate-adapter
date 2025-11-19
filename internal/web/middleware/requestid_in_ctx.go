@@ -1,9 +1,10 @@
 package middleware
 
 import (
+	"net/http"
+
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
 	"github.com/google/uuid"
-	"net/http"
 )
 
 const TraceIdHeader = "X-Request-Id"

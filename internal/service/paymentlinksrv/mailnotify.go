@@ -2,6 +2,7 @@ package paymentlinksrv
 
 import (
 	"context"
+
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"

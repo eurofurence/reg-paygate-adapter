@@ -2,6 +2,8 @@ package mysqldb
 
 import (
 	"context"
+	"time"
+
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
@@ -10,7 +12,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
-	"time"
 )
 
 type MysqlRepository struct {

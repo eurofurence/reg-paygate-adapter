@@ -3,11 +3,12 @@ package paymentservice
 import (
 	"context"
 	"fmt"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/middleware"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/middleware"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
 
 	aurestbreaker "github.com/StephanHCB/go-autumn-restclient-circuitbreaker/implementation/breaker"
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"

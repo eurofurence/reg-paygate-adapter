@@ -2,10 +2,11 @@ package inmemorydb
 
 import (
 	"context"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/dbrepo"
 	"sync/atomic"
 	"time"
+
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/dbrepo"
 )
 
 type InMemoryRepository struct {

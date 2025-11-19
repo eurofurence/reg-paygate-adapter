@@ -3,12 +3,13 @@ package self
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
 	auresthttpclient "github.com/StephanHCB/go-autumn-restclient/implementation/httpclient"
 	aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
-	"net/http"
 )
 
 type Impl struct {

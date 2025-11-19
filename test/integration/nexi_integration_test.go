@@ -86,7 +86,7 @@ func TestNexiIntegrationFullFlow(t *testing.T) {
 			Charge:                      true,
 			PublicDevice:                false,
 			MerchantHandlesConsumerData: false,
-			CountryCode: "DEU",
+			CountryCode:                 "DEU",
 		},
 		Appearance: nexi.NexiAppearance{
 			DisplayOptions: nexi.NexiDisplayOptions{

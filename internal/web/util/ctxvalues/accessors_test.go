@@ -2,9 +2,10 @@ package ctxvalues
 
 import (
 	"context"
+	"testing"
+
 	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestValueMapOnEmptyContext(t *testing.T) {

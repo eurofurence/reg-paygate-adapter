@@ -23,10 +23,10 @@ var (
 // -- New Nexi API v1 Structures --
 
 type NexiCreatePaymentRequest struct {
-	Order          NexiOrder        `json:"order"`
-	Checkout       NexiCheckout     `json:"checkout"`
-	Appearance     NexiAppearance   `json:"appearance"`
-	Notifications  NexiNotifications `json:"notifications"`
+	Order         NexiOrder         `json:"order"`
+	Checkout      NexiCheckout      `json:"checkout"`
+	Appearance    NexiAppearance    `json:"appearance"`
+	Notifications NexiNotifications `json:"notifications"`
 }
 
 type NexiPaymentLinkCreated struct {
@@ -170,26 +170,26 @@ type NexiQueryLowlevelResponseBody struct {
 // -- Query response structures --
 
 type NexiPaymentQueryResponse struct {
-	ID          string                  `json:"id"`
-	Status      string                  `json:"status"`
-	ReferenceID string                  `json:"referenceId"`
-	Link        string                  `json:"link"`
-	Amount      int64                   `json:"amount"`
-	Currency    string                  `json:"currency"`
-	CreatedAt   int64                   `json:"createdAt"`
-	VatRate     float64                 `json:"vatRate"`
-	Order       NexiOrderDetails        `json:"order,omitempty"`
-	Summary     NexiSummary             `json:"summary,omitempty"`
-	Consumer    NexiConsumerFull        `json:"consumer,omitempty"`
-	Payments    []NexiPaymentDetails    `json:"payments,omitempty"`
-	Refunds     []NexiRefund            `json:"refunds,omitempty"`
-	Charges     []NexiCharge            `json:"charges,omitempty"`
+	ID          string               `json:"id"`
+	Status      string               `json:"status"`
+	ReferenceID string               `json:"referenceId"`
+	Link        string               `json:"link"`
+	Amount      int64                `json:"amount"`
+	Currency    string               `json:"currency"`
+	CreatedAt   int64                `json:"createdAt"`
+	VatRate     float64              `json:"vatRate"`
+	Order       NexiOrderDetails     `json:"order,omitempty"`
+	Summary     NexiSummary          `json:"summary,omitempty"`
+	Consumer    NexiConsumerFull     `json:"consumer,omitempty"`
+	Payments    []NexiPaymentDetails `json:"payments,omitempty"`
+	Refunds     []NexiRefund         `json:"refunds,omitempty"`
+	Charges     []NexiCharge         `json:"charges,omitempty"`
 }
 
 type NexiOrderDetails struct {
-	Amount    int64  `json:"amount"`
-	Currency  string `json:"currency"`
-	Reference string `json:"reference"`
+	Amount    int64           `json:"amount"`
+	Currency  string          `json:"currency"`
+	Reference string          `json:"reference"`
 	Items     []NexiOrderItem `json:"items,omitempty"`
 }
 
@@ -217,7 +217,7 @@ type NexiAddressFull struct {
 	ReceiverLine string    `json:"receiverLine"`
 	PostalCode   string    `json:"postalCode"`
 	City         string    `json:"city"`
-	Country      string `json:"country"`
+	Country      string    `json:"country"`
 	PhoneNumber  NexiPhone `json:"phoneNumber"`
 }
 

@@ -1,6 +1,10 @@
 package acceptance
 
 import (
+	"net/http"
+	"net/url"
+	"testing"
+
 	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
@@ -8,9 +12,6 @@ import (
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"net/url"
-	"testing"
 )
 
 // --- create ---

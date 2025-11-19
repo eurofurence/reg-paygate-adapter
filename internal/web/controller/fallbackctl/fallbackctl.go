@@ -1,9 +1,10 @@
 package fallbackctl
 
 import (
+	"net/http"
+
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctlutil"
 	"github.com/go-chi/chi/v5"
-	"net/http"
 )
 
 func Create(server chi.Router) {

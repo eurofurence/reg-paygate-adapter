@@ -3,12 +3,13 @@ package paymentlinksrv
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
+
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/attendeeservice"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
-	"net/url"
-	"strings"
 
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
@@ -124,7 +125,7 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 			Charge:                      true,
 			PublicDevice:                false,
 			MerchantHandlesConsumerData: false,
-			CountryCode: "DEU",
+			CountryCode:                 "DEU",
 		},
 		Appearance: nexi.NexiAppearance{
 			DisplayOptions: nexi.NexiDisplayOptions{
@@ -138,8 +139,8 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 		Notifications: nexi.NexiNotifications{
 			Webhooks: []nexi.NexiWebhook{
 				{
-					EventName: "payment.created",
-					Url:       config.ServicePublicURL() + "/api/rest/v1/webhook/" + config.WebhookSecret(),
+					EventName:     "payment.created",
+					Url:           config.ServicePublicURL() + "/api/rest/v1/webhook/" + config.WebhookSecret(),
 					Authorization: "",
 				},
 			},

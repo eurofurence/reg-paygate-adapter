@@ -1,11 +1,12 @@
 package middleware
 
 import (
+	"net/http"
+
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctlutil"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/media"
-	"net/http"
 )
 
 // --- getting the values from the request ---

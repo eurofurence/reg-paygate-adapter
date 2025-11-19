@@ -2,6 +2,9 @@ package acceptance
 
 import (
 	"context"
+	"net/http/httptest"
+	"time"
+
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/attendeeservice"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
@@ -11,8 +14,6 @@ import (
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/service/paymentlinksrv"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/app"
-	"net/http/httptest"
-	"time"
 )
 
 // placing these here because they are package global

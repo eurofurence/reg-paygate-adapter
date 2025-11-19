@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
 	"time"
+
+	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func RequestLogger(next http.Handler) http.Handler {

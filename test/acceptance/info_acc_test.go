@@ -1,12 +1,13 @@
 package acceptance
 
 import (
-	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/media"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/media"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHealthEndpoint(t *testing.T) {

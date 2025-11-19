@@ -1,11 +1,12 @@
 package middleware
 
 import (
-	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctlutil"
 	"net/http"
 	"net/url"
 	"runtime/debug"
+
+	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctlutil"
 )
 
 func PanicRecoverer(next http.Handler) http.Handler {

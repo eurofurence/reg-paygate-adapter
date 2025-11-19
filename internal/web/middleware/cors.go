@@ -1,10 +1,11 @@
 package middleware
 
 import (
+	"net/http"
+
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 	"github.com/go-http-utils/headers"
-	"net/http"
 )
 
 func CorsHandling(next http.Handler) http.Handler {

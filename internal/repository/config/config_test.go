@@ -1,10 +1,11 @@
 package config
 
 import (
-	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
+	"github.com/stretchr/testify/require"
 )
 
 func TestServerAddrWithAddressAndPort(t *testing.T) {

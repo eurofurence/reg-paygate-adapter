@@ -2,14 +2,15 @@ package ctlutil
 
 import (
 	"context"
+	"net/http"
+	"net/url"
+	"time"
+
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/media"
 	"github.com/go-http-utils/headers"
-	"net/http"
-	"net/url"
-	"time"
 )
 
 // --- common error handlers ---

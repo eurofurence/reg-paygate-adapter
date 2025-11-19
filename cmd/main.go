@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/app"
 	"os"
+
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/app"
 )
 
 func main() {

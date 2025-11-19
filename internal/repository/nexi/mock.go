@@ -3,10 +3,11 @@ package nexi
 import (
 	"context"
 	"fmt"
-	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 	"sync/atomic"
 	"time"
+
+	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 )
 
 type Mock interface {
@@ -105,14 +106,14 @@ func (m *mockImpl) CreatePaymentLink(ctx context.Context, request NexiCreatePaym
 		Link:        constructSimulatedPaylink(newId),
 	}
 	data := NexiPaymentQueryResponse{
-		ID:       newId,
-		Status:   "confirmed",
+		ID:          newId,
+		Status:      "confirmed",
 		ReferenceID: request.Order.Reference,
-		Link:     response.Link,
-		Amount:   request.Order.Amount,
-		Currency: request.Order.Currency,
-		CreatedAt: 1418392958,
-		VatRate:  19.0,
+		Link:        response.Link,
+		Amount:      request.Order.Amount,
+		Currency:    request.Order.Currency,
+		CreatedAt:   1418392958,
+		VatRate:     19.0,
 		Order: NexiOrderDetails{
 			Reference: request.Order.Reference,
 			Amount:    request.Order.Amount,

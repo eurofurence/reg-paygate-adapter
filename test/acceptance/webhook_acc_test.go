@@ -2,14 +2,15 @@ package acceptance
 
 import (
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/paymentservice"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"testing"
 )
 
 func TestWebhook_Success_TolerantReader(t *testing.T) {

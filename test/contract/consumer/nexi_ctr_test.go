@@ -2,6 +2,10 @@ package main
 
 import (
 	"context"
+	"net/http"
+	"testing"
+	"time"
+
 	auzerolog "github.com/StephanHCB/go-autumn-logging-zerolog"
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
 	aurestverifier "github.com/StephanHCB/go-autumn-restclient/implementation/verifier"
@@ -12,9 +16,6 @@ import (
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/inmemorydb"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"testing"
-	"time"
 )
 
 func TestNexiApiClient(t *testing.T) {
@@ -78,7 +79,7 @@ func TestNexiApiClient(t *testing.T) {
 			Charge:                      true,
 			PublicDevice:                false,
 			MerchantHandlesConsumerData: false,
-			CountryCode: "DEU",
+			CountryCode:                 "DEU",
 		},
 		Appearance: nexi.NexiAppearance{
 			DisplayOptions: nexi.NexiDisplayOptions{
@@ -92,14 +93,13 @@ func TestNexiApiClient(t *testing.T) {
 		Notifications: nexi.NexiNotifications{
 			Webhooks: []nexi.NexiWebhook{
 				{
-					EventName: "payment.created",
-					Url:       "http://localhost:8080/api/rest/v1/webhook/1234",
+					EventName:     "payment.created",
+					Url:           "http://localhost:8080/api/rest/v1/webhook/1234",
 					Authorization: "",
 				},
 			},
 		},
 	}
-
 
 	ctx := auzerolog.AddLoggerToCtx(context.Background())
 
@@ -134,8 +134,8 @@ func TestNexiApiClient(t *testing.T) {
 		Name:   "read-paylink-after-use",
 		Method: http.MethodGet,
 		Header: http.Header{}, // not verified
-		Url:  "http://localhost:8000/v1/payments/42",
-		Body: "",
+		Url:    "http://localhost:8000/v1/payments/42",
+		Body:   "",
 	}, aurestclientapi.ParsedResponse{
 		Body: &nexi.NexiQueryLowlevelResponseBody{
 			Payment: nexi.NexiPayment{
@@ -168,9 +168,9 @@ func TestNexiApiClient(t *testing.T) {
 						Name:               "",
 						RegistrationNumber: "",
 						ContactDetails: nexi.NexiContactFull{
-							FirstName:   "",
-							LastName:    "",
-							Email:       "",
+							FirstName: "",
+							LastName:  "",
+							Email:     "",
 							PhoneNumber: nexi.NexiPhone{
 								Prefix: "",
 								Number: "",
@@ -237,8 +237,8 @@ func TestNexiApiClient(t *testing.T) {
 		Name:   "delete-paylink",
 		Method: http.MethodPost,
 		Header: http.Header{}, // not verified
-		Url:  "http://localhost:8000/v1/payments/42/cancels",
-		Body: `{"amount":10550}`,
+		Url:    "http://localhost:8000/v1/payments/42/cancels",
+		Body:   `{"amount":10550}`,
 	}, aurestclientapi.ParsedResponse{
 		Status: http.StatusOK,
 		Time:   time.Time{},

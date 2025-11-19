@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
-	"net/http"
-	"strings"
-	"time"
 
 	aurestbreaker "github.com/StephanHCB/go-autumn-restclient-circuitbreaker/implementation/breaker"
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
@@ -25,8 +26,6 @@ type Impl struct {
 	baseUrl      string
 	instanceName string
 }
-
-
 
 func requestManipulator(ctx context.Context, r *http.Request) {
 	// New Nexi API uses JSON and headers

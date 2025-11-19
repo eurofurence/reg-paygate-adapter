@@ -1,12 +1,13 @@
 package database
 
 import (
+	"os"
+
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/dbrepo"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/inmemorydb"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/mysqldb"
-	"os"
 )
 
 var (

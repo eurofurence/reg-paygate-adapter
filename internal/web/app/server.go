@@ -3,6 +3,13 @@ package app
 import (
 	"context"
 	"errors"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/StephanHCB/go-autumn-logging-zerolog/loggermiddleware"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
@@ -15,12 +22,6 @@ import (
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/controller/webhookctl"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/middleware"
 	"github.com/go-chi/chi/v5"
-	"net"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 func CreateRouter(ctx context.Context) (chi.Router, error) {
@@ -75,6 +76,7 @@ func runServerWithGracefulShutdown() error {
 
 	handler, err := CreateRouter(ctx)
 	if err != nil {
+		cancel()
 		return err
 	}
 	srv := newServer(ctx, handler)

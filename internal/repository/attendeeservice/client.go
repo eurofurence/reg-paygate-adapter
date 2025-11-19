@@ -3,6 +3,9 @@ package attendeeservice
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
 	aurestbreaker "github.com/StephanHCB/go-autumn-restclient-circuitbreaker/implementation/breaker"
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
 	auresthttpclient "github.com/StephanHCB/go-autumn-restclient/implementation/httpclient"
@@ -11,8 +14,6 @@ import (
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/middleware"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
 	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/media"
-	"net/http"
-	"time"
 )
 
 type Impl struct {
