@@ -1,7 +1,8 @@
 service:
   name: 'Registration Nexi Adapter'
-  # my own public URL, needed if you want the simulator to generate valid paylinks, leave unset for the very basic mock used in unit tests
-  # setting is completely ignored if you set nexi_downstream, because that turns off the simulator completely
+  # my own public URL, leave unset for the very basic mock used in unit tests
+  # if nexi_downstream is set, this configures the webhook URL (and turns on requesting webhooks with payments)
+  # if nexi_downstream is unset, this is mandatory, the base url used for built-in simulator payment links
   public_url: 'http://localhost:10000/nexisrv' # do not add trailing /
   # base url of the attendee service, leave blank to use simple in-memory simulator (not useful for production)
   attendee_service: 'http://localhost:9091' # do not add trailing /
@@ -9,15 +10,31 @@ service:
   mail_service: 'http://localhost:9093' # no trailing slash
   # base url of the payment service, leave blank to use simple in-memory simulator (not useful for production)
   payment_service: 'http://localhost:9092' # do not add trailing /
+
   # base url for the Nexi downstream, leave blank to use the local simulator (should set public_url or generated paylinks will not work)
-  # nexi_downstream: 'https://api.pay-link.eu'
+  # nexi_downstream: 'https://test.api.dibspayment.eu' (Test) or 'https://api.dibspayment.eu' (Live)
+
+  # optional CommercePlatformTag header - An identifier of the ecommerce platform
+  # nexi_commerce_platform_tag: 'registration'
+
+  # public checkout key from nexi portal, not currently used by adapter.
   nexi_instance: 'demo'
+
+  # secret api key from nexi portal, used in Authorization header
   nexi_api_secret: 'demosecret'
+
+  # nexi merchant number, for cross-checking received webhook payloads
+  nexi_merchant_number: '123456789'
+
   # if set, will add these redirects to the request for the paylink
-  success_redirect: 'http://localhost:10000/app/register'
-  failure_redirect: 'http://localhost:10000/app/register'
+  success_redirect: 'http://localhost:10000/register'
+  failure_redirect: 'http://localhost:10000/register'
+
   # the service will reject webhooks that reference another prefix (previous year expiry, etc.)
-  transaction_id_prefix: "EF2023"
+  transaction_id_prefix: "EF2024"
+
+  # link to your terms of service, required
+  terms_url: "https://example.com/legal/terms"
 server:
   port: 9097
 database:

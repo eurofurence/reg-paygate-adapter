@@ -3,6 +3,9 @@ service:
   nexi_instance: 'myinstance'
   nexi_api_secret: 'mydemosecret'
   transaction_id_prefix: "221216"
+  # use a port that will fail if accessed - tests should mock the downstream
+  nexi_downstream: 'http://localhost:63000'
+  terms_url: 'https://help.eurofurence.org/legal/terms'
 database:
   use: inmemory
 security:

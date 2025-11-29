@@ -29,7 +29,7 @@ type PaymentLinkRequestDto struct {
 	// The badge number of the attendee. Will be used to build appropriate description, referenceId, etc.
 	DebitorId uint64 `json:"debitor_id"`
 	// The page title to be shown on the payment page.
-	AmountDue int64 `json:"amount_due"`
+	AmountDue int32 `json:"amount_due"`
 	// Only used in responses. The total amount paid. TODO - is this Cents or Euros?
 	Currency string `json:"currency"`
 	// The applicable VAT, in percent.

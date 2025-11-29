@@ -7,7 +7,7 @@ info:
     service to notify us of change events.
   license:
     name: MIT
-    url: https://github.com/eurofurence/reg-attendee-service/blob/main/LICENSE
+    url: https://github.com/eurofurence/reg-paygate-adapter/blob/main/LICENSE
   version: 0.1.0
 servers:
   - url: /api/rest/v1
@@ -28,17 +28,18 @@ paths:
         - paylinks
       summary: Create a new payment link
       description: |-
-        Create a new payment link with Nexi. The link can then be used for
-        paying the defined amount and can be presented to the user in various
-        ways, including as a link in an email or as an embedded modal dialog in
+        Create a new checkout link with Nexi. The link can then be used for
+        paying the defined amount and can be presented to the user by redirection from
         our shop page.
 
-        When creating a payment link, the adapter automatically configures
+        When creating a link, the adapter automatically configures
         webhooks to receive notifications from Nexi about payment events,
         such as when a payment is created or completed.
 
         We intentionally work with as little information as possible. Specifically,
         we avoid attaching and personally identifiable information.
+        
+        Note that links created by this adapter expire after 12-24 hours.
       operationId: addPaymentLink
       requestBody:
         description: Create a new payment link
@@ -91,8 +92,8 @@ paths:
         - paylinks
       summary: Find payment link by id
       description: |-
-        Returns a single payment link, fetching the current status from
-        the downstream Nexi payment link backend.
+        Returns a single link, fetching the current status from
+        the downstream Nexi checkout backend.
       operationId: getPaymentLinkById
       parameters:
         - name: id
@@ -146,7 +147,7 @@ paths:
       tags:
         - paylinks
       summary: Delete a payment link by id
-      description: Removes a payment link from the upstream Nexi backend
+      description: Removes a checkout from the upstream Nexi backend
       operationId: deletePaymentLinkById
       parameters:
         - name: id
@@ -260,9 +261,9 @@ paths:
     post:
       tags:
         - callback
-      summary: Inform us that there is an update for a payment link
+      summary: Inform us that there is an update for a checkout
       description: |-
-        Inform us that there is an update for a payment link
+        Inform us that there is an update for a checkout
       operationId: webhookCallback
       parameters:
         - name: secret
@@ -308,7 +309,7 @@ paths:
     post:
       tags:
         - transactions
-      summary: Replay n days of transactions
+      summary: Replay n days of transactions (NOT YET IMPLEMENTED)
       description: |-
         Replay n days of transactions to the payment service, reading them from
         the Nexi backend. This is intended as a safety measure in case

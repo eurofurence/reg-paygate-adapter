@@ -47,11 +47,11 @@ func TestNexiIntegrationFullFlow(t *testing.T) {
 					Quantity:         1.0,
 					Unit:             "qty",
 					UnitPrice:        1000, // 10.00 EUR
-					TaxRate:          19.0,
-					TaxAmount:        0,
+					TaxRate:          1900, // 19%
+					TaxAmount:        159,
 					GrossTotalAmount: 1000,
-					NetTotalAmount:   1000,
-					ImageUrl:         "",
+					NetTotalAmount:   841,
+					ImageUrl:         nil,
 				},
 			},
 			Amount:    1000,
@@ -59,47 +59,47 @@ func TestNexiIntegrationFullFlow(t *testing.T) {
 			Reference: "INT-TEST-001",
 		},
 		Checkout: nexi.NexiCheckout{
-			Url:             "",
+			Url:             nil,
 			IntegrationType: "hostedPaymentPage",
 			ReturnUrl:       "https://example.com/success",
 			CancelUrl:       "https://example.com/failure",
-			Consumer: nexi.NexiConsumer{
+			Consumer: &nexi.NexiConsumer{
 				Reference: "integration-test@example.com",
 				Email:     "integration-test@example.com",
 			},
 			TermsUrl:         "",
-			MerchantTermsUrl: "",
-			ShippingCountries: []nexi.NexiCountry{
-				{CountryCode: "DEU"},
-			},
-			Shipping: nexi.NexiShipping{
-				Countries: []nexi.NexiCountry{
-					{CountryCode: "DEU"},
-				},
-				MerchantHandlesShippingCost: false,
-				EnableBillingAddress:        true,
-			},
-			ConsumerType: nexi.NexiConsumerType{
-				Default:        "b2c",
-				SupportedTypes: []string{"b2c", "b2b"},
-			},
-			Charge:                      true,
+			MerchantTermsUrl: nil,
+			//ShippingCountries: []nexi.NexiCountry{
+			//	{CountryCode: "DEU"},
+			//},
+			//Shipping: &nexi.NexiShipping{
+			//	Countries: []nexi.NexiCountry{
+			//		{CountryCode: "DEU"},
+			//	},
+			//	MerchantHandlesShippingCost: false,
+			//	EnableBillingAddress:        true,
+			//},
+			//ConsumerType: &nexi.NexiConsumerType{
+			//	Default:        "b2c",
+			//	SupportedTypes: []string{"b2c", "b2b"},
+			//},
+			Charge:                      false,
 			PublicDevice:                false,
-			MerchantHandlesConsumerData: false,
-			CountryCode:                 "DEU",
-		},
-		Appearance: nexi.NexiAppearance{
-			DisplayOptions: nexi.NexiDisplayOptions{
-				ShowMerchantName: true,
-				ShowOrderSummary: true,
+			MerchantHandlesConsumerData: true,
+			CountryCode:                 p("DEU"),
+			Appearance: &nexi.NexiAppearance{
+				DisplayOptions: nexi.NexiDisplayOptions{
+					ShowMerchantName: true,
+					ShowOrderSummary: true,
+				},
+				TextOptions: nexi.NexiTextOptions{
+					CompletePaymentButtonText: "pay",
+				},
 			},
-			TextOptions: nexi.NexiTextOptions{
-				CompletePaymentButtonText: "pay",
-			},
 		},
-		Notifications: nexi.NexiNotifications{
-			Webhooks: []nexi.NexiWebhook{},
-		},
+		//Notifications: &nexi.NexiNotifications{
+		//	Webhooks: []nexi.NexiWebhook{},
+		//},
 	}
 
 	t.Run("create_payment_link", func(t *testing.T) {
@@ -107,7 +107,6 @@ func TestNexiIntegrationFullFlow(t *testing.T) {
 		require.NoError(t, err, "Failed to create payment link")
 		require.NotEmpty(t, created.ID, "Payment link ID should not be empty")
 		require.NotEmpty(t, created.Link, "Payment link URL should not be empty")
-		require.Equal(t, paymentLinkRequest.Order.Reference, created.ReferenceID)
 
 		t.Logf("Created payment link: ID=%s, URL=%s", created.ID, created.Link)
 
@@ -199,4 +198,12 @@ func TestNexiIntegrationWebhookFlow(t *testing.T) {
 	// 3. Wait for webhook notifications
 	// 4. Verify webhook processing
 	// needs to be tested
+}
+
+func p[T comparable](t T) *T {
+	var nullValue T
+	if t == nullValue {
+		return nil
+	}
+	return &t
 }

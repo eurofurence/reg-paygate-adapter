@@ -80,6 +80,7 @@ func validateSecurityConfiguration(errs url.Values, c SecurityConfig) {
 	checkLength(&errs, 8, 64, "security.fixed.webhook", c.Fixed.Webhook)
 }
 
+const urlPattern = "^https?://.*$"
 const downstreamPattern = "^(|https?://.*[^/])$"
 
 func validateServiceConfiguration(errs url.Values, c ServiceConfig) {
@@ -95,8 +96,11 @@ func validateServiceConfiguration(errs url.Values, c ServiceConfig) {
 	if violatesPattern(downstreamPattern, c.PublicURL) {
 		errs.Add("service.public_url", "public url must be empty or start with http:// or https:// and may not end in a /")
 	}
-	if c.NexiDownstream != "" && c.PublicURL != "" {
-		errs.Add("service.public_url", "cannot set both public_url (for simulated paylinks) and nexi_downstream (to talk to actual api). Make up your mind!")
+	if violatesPattern(urlPattern, c.TermsURL) {
+		errs.Add("service.terms_url", "terms url must start with http:// or https://, and cannot be empty")
+	}
+	if c.NexiDownstream == "" && c.PublicURL == "" {
+		errs.Add("service.public_url", "must set public_url (for simulated paylinks) if nexi_downstream (to talk to actual api) is blank")
 	}
 	checkLength(&errs, 1, 256, "service.nexi_instance", c.NexiInstance)
 	checkLength(&errs, 1, 256, "service.nexi_api_secret", c.NexiApiSecret)

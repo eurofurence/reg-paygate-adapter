@@ -7,6 +7,7 @@ service:
   transaction_id_prefix: "INT"
   # IMPORTANT: Set these to your Nexi test environment URLs
   nexi_downstream: 'https://test-api.dibspayment.eu'
+  terms_url: 'https://help.eurofurence.org/legal/terms'
 database:
   use: inmemory
 security:

@@ -41,8 +41,8 @@ func CreateRouter(ctx context.Context) (chi.Router, error) {
 	// add your controllers here
 	paylinkctl.Create(server, paymentLinkService)
 	webhookctl.Create(server, paymentLinkService)
-	if config.ServicePublicURL() != "" {
-		aulogging.Logger.NoCtx().Warn().Printf("service.public_url is configured. Enabling local paylink simulator at %s/simulator (not useful for production!)", config.ServicePublicURL())
+	if config.NexiDownstreamBaseUrl() == "" {
+		aulogging.Logger.NoCtx().Warn().Printf("service.nexi_downstream not configured. Enabling local paylink simulator at %s/simulator (not useful for production!)", config.ServicePublicURL())
 		err := self.Create()
 		if err != nil {
 			return server, err

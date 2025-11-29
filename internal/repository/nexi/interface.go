@@ -9,7 +9,7 @@ import (
 type NexiDownstream interface {
 	CreatePaymentLink(ctx context.Context, request NexiCreatePaymentRequest) (NexiPaymentLinkCreated, error)
 	QueryPaymentLink(ctx context.Context, paymentId string) (NexiPaymentQueryResponse, error)
-	DeletePaymentLink(ctx context.Context, paymentId string, amount int64) error
+	DeletePaymentLink(ctx context.Context, paymentId string, amount int32) error
 
 	QueryTransactions(ctx context.Context, timeGreaterThan time.Time, timeLessThan time.Time) ([]TransactionData, error)
 }
@@ -23,21 +23,19 @@ var (
 // -- New Nexi API v1 Structures --
 
 type NexiCreatePaymentRequest struct {
-	Order         NexiOrder         `json:"order"`
-	Checkout      NexiCheckout      `json:"checkout"`
-	Appearance    NexiAppearance    `json:"appearance"`
-	Notifications NexiNotifications `json:"notifications"`
+	Order         NexiOrder          `json:"order"`
+	Checkout      NexiCheckout       `json:"checkout"`
+	Notifications *NexiNotifications `json:"notifications,omitempty"`
 }
 
 type NexiPaymentLinkCreated struct {
-	ID          string `json:"id"`
-	ReferenceID string `json:"referenceId"`
-	Link        string `json:"link"`
+	ID   string `json:"paymentId"`
+	Link string `json:"hostedPaymentPageUrl"`
 }
 
 type NexiOrder struct {
 	Items     []NexiOrderItem `json:"items"`
-	Amount    int64           `json:"amount"`
+	Amount    int32           `json:"amount"`
 	Currency  string          `json:"currency"`
 	Reference string          `json:"reference"`
 }
@@ -47,30 +45,30 @@ type NexiOrderItem struct {
 	Name             string  `json:"name"`
 	Quantity         float64 `json:"quantity"`
 	Unit             string  `json:"unit"`
-	UnitPrice        int64   `json:"unitPrice"`
-	TaxRate          float64 `json:"taxRate"`
-	TaxAmount        int64   `json:"taxAmount"`
-	GrossTotalAmount int64   `json:"grossTotalAmount"`
-	NetTotalAmount   int64   `json:"netTotalAmount"`
-	ImageUrl         string  `json:"imageUrl"`
+	UnitPrice        int32   `json:"unitPrice"`
+	TaxRate          int32   `json:"taxRate"`
+	TaxAmount        int32   `json:"taxAmount"`
+	GrossTotalAmount int32   `json:"grossTotalAmount"`
+	NetTotalAmount   int32   `json:"netTotalAmount"`
+	ImageUrl         *string `json:"imageUrl,omitempty"`
 }
 
 type NexiCheckout struct {
-	Url                         string           `json:"url"`
-	IntegrationType             string           `json:"integrationType"`
-	ReturnUrl                   string           `json:"returnUrl"`
-	CancelUrl                   string           `json:"cancelUrl"`
-	Consumer                    NexiConsumer     `json:"consumer"`
-	TermsUrl                    string           `json:"termsUrl"`
-	MerchantTermsUrl            string           `json:"merchantTermsUrl"`
-	ShippingCountries           []NexiCountry    `json:"shippingCountries"`
-	Shipping                    NexiShipping     `json:"shipping"`
-	ConsumerType                NexiConsumerType `json:"consumerType"`
-	Charge                      bool             `json:"charge"`
-	PublicDevice                bool             `json:"publicDevice"`
-	MerchantHandlesConsumerData bool             `json:"merchantHandlesConsumerData"`
-	Appearance                  NexiAppearance   `json:"appearance"`
-	CountryCode                 string           `json:"countryCode"`
+	Url                         *string           `json:"url,omitempty"`
+	IntegrationType             string            `json:"integrationType"`
+	ReturnUrl                   string            `json:"returnUrl"`
+	CancelUrl                   string            `json:"cancelUrl"`
+	Consumer                    *NexiConsumer     `json:"consumer,omitempty"`
+	TermsUrl                    string            `json:"termsUrl"`
+	MerchantTermsUrl            *string           `json:"merchantTermsUrl,omitempty"`
+	ShippingCountries           []NexiCountry     `json:"shippingCountries,omitempty"`
+	Shipping                    *NexiShipping     `json:"shipping,omitempty"`
+	ConsumerType                *NexiConsumerType `json:"consumerType,omitempty"`
+	Charge                      bool              `json:"charge"`
+	PublicDevice                bool              `json:"publicDevice"`
+	MerchantHandlesConsumerData bool              `json:"merchantHandlesConsumerData"`
+	Appearance                  *NexiAppearance   `json:"appearance,omitempty"`
+	CountryCode                 *string           `json:"countryCode,omitempty"`
 }
 
 type NexiConsumer struct {
@@ -174,7 +172,7 @@ type NexiPaymentQueryResponse struct {
 	Status      string               `json:"status"`
 	ReferenceID string               `json:"referenceId"`
 	Link        string               `json:"link"`
-	Amount      int64                `json:"amount"`
+	Amount      int32                `json:"amount"`
 	Currency    string               `json:"currency"`
 	CreatedAt   int64                `json:"createdAt"`
 	VatRate     float64              `json:"vatRate"`
@@ -187,21 +185,21 @@ type NexiPaymentQueryResponse struct {
 }
 
 type NexiOrderDetails struct {
-	Amount    int64           `json:"amount"`
+	Amount    int32           `json:"amount"`
 	Currency  string          `json:"currency"`
 	Reference string          `json:"reference"`
 	Items     []NexiOrderItem `json:"items,omitempty"`
 }
 
 type NexiSummary struct {
-	ReservedAmount           int64 `json:"reservedAmount"`
-	ReservedSurchargeAmount  int64 `json:"reservedSurchargeAmount"`
-	ChargedAmount            int64 `json:"chargedAmount"`
-	ChargedSurchargeAmount   int64 `json:"chargedSurchargeAmount"`
-	RefundedAmount           int64 `json:"refundedAmount"`
-	RefundedSurchargeAmount  int64 `json:"refundedSurchargeAmount"`
-	CancelledAmount          int64 `json:"cancelledAmount"`
-	CancelledSurchargeAmount int64 `json:"cancelledSurchargeAmount"`
+	ReservedAmount           int32 `json:"reservedAmount"`
+	ReservedSurchargeAmount  int32 `json:"reservedSurchargeAmount"`
+	ChargedAmount            int32 `json:"chargedAmount"`
+	ChargedSurchargeAmount   int32 `json:"chargedSurchargeAmount"`
+	RefundedAmount           int32 `json:"refundedAmount"`
+	RefundedSurchargeAmount  int32 `json:"refundedSurchargeAmount"`
+	CancelledAmount          int32 `json:"cancelledAmount"`
+	CancelledSurchargeAmount int32 `json:"cancelledSurchargeAmount"`
 }
 
 type NexiConsumerFull struct {

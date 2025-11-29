@@ -126,3 +126,7 @@ func CommercePlatformTag() string {
 func NexiMerchantNumber() string {
 	return Configuration().Service.NexiMerchantNumber
 }
+
+func TermsURL() string {
+	return Configuration().Service.TermsURL
+}
