@@ -1,6 +1,6 @@
-# reg-payment-nexi-adapter
+# reg-paygate-adapter
 
-<img src="https://github.com/eurofurence/reg-payment-nexi-adapter/actions/workflows/go.yml/badge.svg" alt="test status"/>
+<img src="https://github.com/eurofurence/reg-paygate-adapter/actions/workflows/go.yml/badge.svg" alt="test status"/>
 
 ## Overview
 

@@ -3,7 +3,7 @@ package dbrepo
 import (
 	"context"
 
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
+	"github.com/eurofurence/reg-paygate-adapter/internal/entity"
 )
 
 type Repository interface {

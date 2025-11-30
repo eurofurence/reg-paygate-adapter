@@ -8,8 +8,8 @@ import (
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
 	auresthttpclient "github.com/StephanHCB/go-autumn-restclient/implementation/httpclient"
 	aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
 )
 
 type Impl struct {

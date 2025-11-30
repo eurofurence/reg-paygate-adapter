@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
+	"github.com/eurofurence/reg-paygate-adapter/docs"
 	"github.com/stretchr/testify/require"
 )
 

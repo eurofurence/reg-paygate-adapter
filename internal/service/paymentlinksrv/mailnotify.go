@@ -4,8 +4,8 @@ import (
 	"context"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/mailservice"
 )
 
 func (i *Impl) SendErrorNotifyMail(ctx context.Context, operation string, referenceId string, status string) error {

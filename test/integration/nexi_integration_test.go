@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging-zerolog"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/inmemorydb"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/database/inmemorydb"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/nexi"
 	"github.com/stretchr/testify/require"
 )
 

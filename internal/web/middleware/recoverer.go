@@ -6,7 +6,7 @@ import (
 	"runtime/debug"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctlutil"
+	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/ctlutil"
 )
 
 func PanicRecoverer(next http.Handler) http.Handler {

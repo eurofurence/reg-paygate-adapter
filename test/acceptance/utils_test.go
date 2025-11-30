@@ -9,14 +9,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/inmemorydb"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/paymentservice"
+	"github.com/eurofurence/reg-paygate-adapter/internal/entity"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/database/inmemorydb"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/paymentservice"
 
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/media"
+	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/media"
 	"github.com/go-http-utils/headers"
 	"github.com/stretchr/testify/require"
 )

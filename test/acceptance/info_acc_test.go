@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/media"
+	"github.com/eurofurence/reg-paygate-adapter/docs"
+	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/media"
 	"github.com/stretchr/testify/require"
 )
 

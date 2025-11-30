@@ -3,8 +3,8 @@ package infoctl
 import (
 	"net/http"
 
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctlutil"
+	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/ctlutil"
 	"github.com/go-chi/chi/v5"
 )
 

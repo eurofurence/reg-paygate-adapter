@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/app"
+	"github.com/eurofurence/reg-paygate-adapter/internal/web/app"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
+	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/ctxvalues"
 	"github.com/google/uuid"
 )
 

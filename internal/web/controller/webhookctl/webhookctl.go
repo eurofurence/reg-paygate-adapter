@@ -10,11 +10,11 @@ import (
 	"strings"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/service/paymentlinksrv"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctlutil"
+	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/service/paymentlinksrv"
+	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/ctlutil"
 	"github.com/go-chi/chi/v5"
 )
 

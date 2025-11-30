@@ -10,10 +10,10 @@ import (
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
 	auresthttpclient "github.com/StephanHCB/go-autumn-restclient/implementation/httpclient"
 	aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/middleware"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/media"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-paygate-adapter/internal/web/middleware"
+	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/ctxvalues"
+	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/media"
 )
 
 type Impl struct {

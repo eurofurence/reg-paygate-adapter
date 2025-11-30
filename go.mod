@@ -1,4 +1,4 @@
-module github.com/eurofurence/reg-payment-nexi-adapter
+module github.com/eurofurence/reg-paygate-adapter
 
 go 1.21
 

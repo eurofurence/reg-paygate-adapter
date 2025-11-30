@@ -3,7 +3,7 @@ package ctxvalues
 import (
 	"context"
 
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
 )
 
 const ContextMap = "map"

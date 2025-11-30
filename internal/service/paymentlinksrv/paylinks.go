@@ -7,14 +7,14 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/attendeeservice"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
+	"github.com/eurofurence/reg-paygate-adapter/internal/entity"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/attendeeservice"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/ctxvalues"
 
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/nexi"
 )
 
 func (i *Impl) ValidatePaymentLinkRequest(ctx context.Context, data nexiapi.PaymentLinkRequestDto) url.Values {

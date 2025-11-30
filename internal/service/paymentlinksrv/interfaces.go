@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
 )
 
 type PaymentLinkService interface {

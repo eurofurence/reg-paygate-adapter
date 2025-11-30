@@ -5,12 +5,12 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/api/v1/nexiapi"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/attendeeservice"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-paygate-adapter/docs"
+	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/entity"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/attendeeservice"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/nexi"
 	"github.com/stretchr/testify/require"
 )
 

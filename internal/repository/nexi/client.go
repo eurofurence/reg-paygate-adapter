@@ -9,15 +9,15 @@ import (
 	"time"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
+	"github.com/eurofurence/reg-paygate-adapter/internal/entity"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/ctxvalues"
 
 	aurestbreaker "github.com/StephanHCB/go-autumn-restclient-circuitbreaker/implementation/breaker"
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
 	auresthttpclient "github.com/StephanHCB/go-autumn-restclient/implementation/httpclient"
 	aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
 	"github.com/go-http-utils/headers"
 )
 
