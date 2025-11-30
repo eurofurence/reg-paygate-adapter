@@ -123,9 +123,8 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentR
 		}
 	}
 	return NexiPaymentLinkCreated{
-		ID:          bodyDto.PaymentId,
-		ReferenceID: request.Order.Reference,
-		Link:        bodyDto.HostedPaymentPageUrl,
+		ID:   bodyDto.PaymentId,
+		Link: bodyDto.HostedPaymentPageUrl,
 	}, nil
 }
 
@@ -184,9 +183,9 @@ type deleteLowlevelResponseBody struct {
 	Status string `json:"status"`
 }
 
-func (i *Impl) DeletePaymentLink(ctx context.Context, paymentId string, amount int64) error {
+func (i *Impl) DeletePaymentLink(ctx context.Context, paymentId string, amount int32) error {
 	requestUrl := fmt.Sprintf("%s/v1/payments/%s/cancels", i.baseUrl, paymentId)
-	cancelPayload := map[string]int64{"amount": amount}
+	cancelPayload := map[string]int32{"amount": amount}
 	requestBody, err := json.Marshal(cancelPayload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal cancel request: %v", err)

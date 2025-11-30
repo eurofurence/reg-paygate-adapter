@@ -3,6 +3,7 @@ package paymentlinksrv
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/url"
 	"strings"
 
@@ -77,20 +78,22 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 	if len(shortenedOrderId) > 30 {
 		shortenedOrderId = shortenedOrderId[:30]
 	}
-	return nexi.NexiCreatePaymentRequest{
+	taxAmountCents := int32(math.Round(float64(data.AmountDue) * data.VatRate / 100.0))
+
+	request := nexi.NexiCreatePaymentRequest{
 		Order: nexi.NexiOrder{
 			Items: []nexi.NexiOrderItem{
 				{
-					Reference:        config.InvoicePurpose(),
+					Reference:        config.InvoicePurpose(), // SKU
 					Name:             config.InvoiceTitle(),
 					Quantity:         1.0,
-					Unit:             "qty",
-					UnitPrice:        data.AmountDue,
-					TaxRate:          data.VatRate,
-					TaxAmount:        0, // calculate if needed
+					Unit:             "pcs",
+					UnitPrice:        data.AmountDue - taxAmountCents,
+					TaxRate:          int32(math.Round(data.VatRate * 100.0)), // in increments of 0.01%
+					TaxAmount:        taxAmountCents,
 					GrossTotalAmount: data.AmountDue,
-					NetTotalAmount:   data.AmountDue,
-					ImageUrl:         "",
+					NetTotalAmount:   data.AmountDue - taxAmountCents,
+					ImageUrl:         p(""),
 				},
 			},
 			Amount:    data.AmountDue,
@@ -98,45 +101,47 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 			Reference: data.ReferenceId,
 		},
 		Checkout: nexi.NexiCheckout{
-			Url:             "",
-			IntegrationType: "hostedPaymentPage",
+			Url:             p(""),
+			IntegrationType: "HostedPaymentPage", // case-sensitive - was hostedPaymentPage?
 			ReturnUrl:       config.SuccessRedirect(),
 			CancelUrl:       config.FailureRedirect(),
-			Consumer: nexi.NexiConsumer{
-				Reference: attendee.Email,
-				Email:     attendee.Email,
-			},
-			TermsUrl:         "",
-			MerchantTermsUrl: "",
-			ShippingCountries: []nexi.NexiCountry{
-				{CountryCode: "DEU"},
-			},
-			Shipping: nexi.NexiShipping{
-				Countries: []nexi.NexiCountry{
-					{CountryCode: "DEU"},
-				},
-				MerchantHandlesShippingCost: false,
-				EnableBillingAddress:        true,
-			},
-			ConsumerType: nexi.NexiConsumerType{
-				Default:        "b2c",
-				SupportedTypes: []string{"b2c", "b2b"},
-			},
-			Charge:                      true,
+			//Consumer: &nexi.NexiConsumer{
+			//	Reference: attendee.Email,
+			//	Email:     attendee.Email,
+			//},
+			TermsUrl:         config.TermsURL(),
+			MerchantTermsUrl: p(""),
+			//ShippingCountries: []nexi.NexiCountry{ // optional
+			//	{CountryCode: "DEU"},
+			//},
+			//Shipping: nexi.NexiShipping{ // optional
+			//	Countries: []nexi.NexiCountry{
+			//		{CountryCode: "DEU"},
+			//	},
+			//	MerchantHandlesShippingCost: false,
+			//	EnableBillingAddress:        true,
+			//},
+			//ConsumerType: &nexi.NexiConsumerType{
+			//	Default:        "b2c",
+			//	SupportedTypes: []string{"b2c", "b2b"},
+			//},
+			Charge:                      false,
 			PublicDevice:                false,
-			MerchantHandlesConsumerData: false,
-			CountryCode:                 "DEU",
-		},
-		Appearance: nexi.NexiAppearance{
-			DisplayOptions: nexi.NexiDisplayOptions{
-				ShowMerchantName: true,
-				ShowOrderSummary: true,
+			MerchantHandlesConsumerData: true,
+			CountryCode:                 p("DEU"),
+			Appearance: &nexi.NexiAppearance{
+				DisplayOptions: nexi.NexiDisplayOptions{
+					ShowMerchantName: true,
+					ShowOrderSummary: true,
+				},
+				TextOptions: nexi.NexiTextOptions{
+					CompletePaymentButtonText: "pay",
+				},
 			},
-			TextOptions: nexi.NexiTextOptions{
-				CompletePaymentButtonText: "pay",
-			},
 		},
-		Notifications: nexi.NexiNotifications{
+	}
+	if config.ServicePublicURL() != "" {
+		request.Notifications = &nexi.NexiNotifications{
 			Webhooks: []nexi.NexiWebhook{
 				{
 					EventName:     "payment.created",
@@ -144,20 +149,21 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 					Authorization: "",
 				},
 			},
-		},
+		}
 	}
+	return request
 }
 
 func (i *Impl) apiResponseFromNexiResponse(response nexi.NexiPaymentLinkCreated, request nexi.NexiCreatePaymentRequest) nexiapi.PaymentLinkDto {
 	return nexiapi.PaymentLinkDto{
 		Title:       config.InvoiceTitle(),
 		Description: config.InvoiceDescription(),
-		ReferenceId: response.ReferenceID,
+		ReferenceId: request.Order.Reference,
 		Purpose:     config.InvoicePurpose(),
-		AmountDue:   request.Order.Amount,
+		AmountDue:   int64(request.Order.Amount),
 		AmountPaid:  0,
 		Currency:    request.Order.Currency,
-		VatRate:     request.Order.Items[0].TaxRate,
+		VatRate:     float64(request.Order.Items[0].TaxRate) / 100.0,
 		Link:        response.Link,
 	}
 }
@@ -193,13 +199,13 @@ func (i *Impl) GetPaymentLink(ctx context.Context, id string) (nexiapi.PaymentLi
 	result := nexiapi.PaymentLinkDto{
 		ReferenceId: data.ReferenceID,
 		Purpose:     config.InvoicePurpose(),
-		AmountDue:   data.Amount,
+		AmountDue:   int64(data.Amount),
 		AmountPaid:  0, // TODO calculate paid amount from summary
 		Currency:    data.Currency,
 		Link:        data.Link,
 	}
 	if len(data.Order.Items) > 0 {
-		result.VatRate = data.Order.Items[0].TaxRate
+		result.VatRate = float64(data.Order.Items[0].TaxRate) / 100.0
 		result.Title = data.Order.Items[0].Name
 		result.Description = "" // TODO
 	}
@@ -252,4 +258,12 @@ func (i *Impl) DeletePaymentLink(ctx context.Context, id string) error {
 	})
 
 	return nil
+}
+
+func p[T comparable](t T) *T {
+	var nullValue T
+	if t == nullValue {
+		return nil
+	}
+	return &t
 }

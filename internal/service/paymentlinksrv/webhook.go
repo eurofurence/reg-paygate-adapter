@@ -148,7 +148,7 @@ func (i *Impl) createTransaction(ctx context.Context, paylink nexi.NexiPaymentQu
 		Type:      paymentservice.Payment,
 		Method:    paymentservice.Credit, // we use paylink for credit cards only, atm.
 		Amount: paymentservice.Amount{
-			GrossCent: paylink.Amount,
+			GrossCent: int64(paylink.Amount),
 			Currency:  paylink.Currency,
 			VatRate:   paylink.VatRate,
 		},
@@ -177,7 +177,7 @@ func (i *Impl) updateTransaction(ctx context.Context, paylink nexi.NexiPaymentQu
 	effective := i.effectiveISODateOrToday(paylink)
 	comment := "CC orderId " + i.transactionUuid(paylink)
 
-	transaction.Amount.GrossCent = paylink.Amount
+	transaction.Amount.GrossCent = int64(paylink.Amount)
 	transaction.Amount.Currency = paylink.Currency
 	transaction.Status = paymentservice.Valid
 	transaction.EffectiveDate = effective

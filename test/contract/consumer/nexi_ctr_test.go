@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
@@ -40,11 +41,11 @@ func TestNexiApiClient(t *testing.T) {
 					Quantity:         1.0,
 					Unit:             "qty",
 					UnitPrice:        10550,
-					TaxRate:          19.0,
+					TaxRate:          1900,
 					TaxAmount:        0,
 					GrossTotalAmount: 10550,
 					NetTotalAmount:   10550,
-					ImageUrl:         "",
+					ImageUrl:         nil,
 				},
 			},
 			Amount:    10550,
@@ -52,45 +53,44 @@ func TestNexiApiClient(t *testing.T) {
 			Reference: "220118-150405-000004",
 		},
 		Checkout: nexi.NexiCheckout{
-			Url:             "",
-			IntegrationType: "hostedPaymentPage",
+			Url:             nil,
+			IntegrationType: "HostedPaymentPage",
 			ReturnUrl:       "https://example.com/success",
 			CancelUrl:       "https://example.com/failure",
-			Consumer: nexi.NexiConsumer{
-				Reference: "test@example.com",
-				Email:     "test@example.com",
-			},
-			TermsUrl:         "",
-			MerchantTermsUrl: "",
-			ShippingCountries: []nexi.NexiCountry{
-				{CountryCode: "DEU"},
-			},
-			Shipping: nexi.NexiShipping{
-				Countries: []nexi.NexiCountry{
-					{CountryCode: "DEU"},
-				},
-				MerchantHandlesShippingCost: false,
-				EnableBillingAddress:        true,
-			},
-			ConsumerType: nexi.NexiConsumerType{
-				Default:        "b2c",
-				SupportedTypes: []string{"b2c", "b2b"},
-			},
-			Charge:                      true,
+			//Consumer: &nexi.NexiConsumer{
+			//	Reference: "test@example.com",
+			//	Email:     "test@example.com",
+			//},
+			TermsUrl: "https://help.eurofurence.org/legal/terms",
+			//ShippingCountries: []nexi.NexiCountry{
+			//	{CountryCode: "DEU"},
+			//},
+			//Shipping: &nexi.NexiShipping{
+			//	Countries: []nexi.NexiCountry{
+			//		{CountryCode: "DEU"},
+			//	},
+			//	MerchantHandlesShippingCost: false,
+			//	EnableBillingAddress:        true,
+			//},
+			//ConsumerType: &nexi.NexiConsumerType{
+			//	Default:        "b2c",
+			//	SupportedTypes: []string{"b2c", "b2b"},
+			//},
+			Charge:                      false,
 			PublicDevice:                false,
-			MerchantHandlesConsumerData: false,
-			CountryCode:                 "DEU",
-		},
-		Appearance: nexi.NexiAppearance{
-			DisplayOptions: nexi.NexiDisplayOptions{
-				ShowMerchantName: true,
-				ShowOrderSummary: true,
+			MerchantHandlesConsumerData: true,
+			CountryCode:                 p("DEU"),
+			Appearance: &nexi.NexiAppearance{
+				DisplayOptions: nexi.NexiDisplayOptions{
+					ShowMerchantName: true,
+					ShowOrderSummary: true,
+				},
+				TextOptions: nexi.NexiTextOptions{
+					CompletePaymentButtonText: "pay",
+				},
 			},
-			TextOptions: nexi.NexiTextOptions{
-				CompletePaymentButtonText: "pay",
-			},
 		},
-		Notifications: nexi.NexiNotifications{
+		Notifications: &nexi.NexiNotifications{
 			Webhooks: []nexi.NexiWebhook{
 				{
 					EventName:     "payment.created",
@@ -118,13 +118,13 @@ func TestNexiApiClient(t *testing.T) {
 			"Content-Type": []string{"application/json"},
 		},
 		Url:  "http://localhost:8000/v1/payments",
-		Body: `{"order":{"items":[{"reference":"EF 2022 REG 000004","name":"Convention Registration","quantity":1,"unit":"qty","unitPrice":10550,"taxRate":19,"taxAmount":0,"grossTotalAmount":10550,"netTotalAmount":10550,"imageUrl":""}],"amount":10550,"currency":"EUR","reference":"220118-150405-000004"},"checkout":{"url":"","integrationType":"hostedPaymentPage","returnUrl":"https://example.com/success","cancelUrl":"https://example.com/failure","consumer":{"reference":"test@example.com","email":"test@example.com","shippingAddress":{"addressLine1":"","addressLine2":"","postalCode":"","city":"","country":""},"billingAddress":{"addressLine1":"","addressLine2":"","postalCode":"","city":"","country":""},"phoneNumber":{"prefix":"","number":""},"privatePerson":{"firstName":"","lastName":""},"company":{"name":"","contact":{"firstName":"","lastName":""}}},"termsUrl":"","merchantTermsUrl":"","shippingCountries":[{"countryCode":"DEU"}],"shipping":{"countries":[{"countryCode":"DEU"}],"merchantHandlesShippingCost":false,"enableBillingAddress":true},"consumerType":{"default":"b2c","supportedTypes":["b2c","b2b"]},"charge":true,"publicDevice":false,"merchantHandlesConsumerData":false,"appearance":{"displayOptions":{"showMerchantName":false,"showOrderSummary":false},"textOptions":{"completePaymentButtonText":""}},"countryCode":"DEU"},"appearance":{"displayOptions":{"showMerchantName":true,"showOrderSummary":true},"textOptions":{"completePaymentButtonText":"pay"}},"notifications":{"webhooks":[{"eventName":"payment.created","url":"http://localhost:8080/api/rest/v1/webhook/1234","authorization":""}]}}`,
+		Body: `{"order":{"items":[{"reference":"EF 2022 REG 000004","name":"Convention Registration","quantity":1,"unit":"qty","unitPrice":10550,"taxRate":1900,"taxAmount":0,"grossTotalAmount":10550,"netTotalAmount":10550}],"amount":10550,"currency":"EUR","reference":"220118-150405-000004"},"checkout":{"integrationType":"HostedPaymentPage","returnUrl":"https://example.com/success","cancelUrl":"https://example.com/failure","termsUrl":"https://help.eurofurence.org/legal/terms","charge":false,"publicDevice":false,"merchantHandlesConsumerData":true,"appearance":{"displayOptions":{"showMerchantName":true,"showOrderSummary":true},"textOptions":{"completePaymentButtonText":"pay"}},"countryCode":"DEU"},"notifications":{"webhooks":[{"eventName":"payment.created","url":"http://localhost:8080/api/rest/v1/webhook/1234","authorization":""}]}}`,
 	}, aurestclientapi.ParsedResponse{
 		Body: &nexi.NexiCreateLowlevelResponseBody{
 			PaymentId:            "42",
 			HostedPaymentPageUrl: "http://localhost/some/pay/link",
 		},
-		Status: http.StatusOK,
+		Status: http.StatusCreated,
 		Header: http.Header{
 			"Content-Type": []string{"application/json"},
 		},
@@ -251,7 +251,6 @@ func TestNexiApiClient(t *testing.T) {
 	created, err := client.CreatePaymentLink(ctx, createRequest)
 	require.Nil(t, err)
 	require.Equal(t, "42", created.ID)
-	require.Equal(t, "220118-150405-000004", created.ReferenceID)
 	require.Equal(t, "http://localhost/some/pay/link", created.Link)
 
 	// STEP 2: read the payment link again after use
@@ -260,7 +259,7 @@ func TestNexiApiClient(t *testing.T) {
 	require.Equal(t, "42", read.ID)
 	require.Equal(t, "220118-150405-000004", read.ReferenceID)
 	require.Equal(t, "confirmed", read.Status)
-	require.Equal(t, int64(10550), read.Amount)
+	require.Equal(t, int32(10550), read.Amount)
 
 	// STEP 3: delete the payment link (wouldn't normally work after use)
 	err = client.DeletePaymentLink(ctx, created.ID, 10550)
@@ -274,7 +273,7 @@ func TestNexiApiClient(t *testing.T) {
 		ReferenceId: "220118-150405-000004",
 		Kind:        "raw",
 		Message:     "nexi create request",
-		Details:     `{"order":{"items":[{"reference":"EF 2022 REG 000004","name":"Convention Registration","quantity":1,"unit":"qty","unitPrice":10550,"taxRate":19,"taxAmount":0,"grossTotalAmount":10550,"netTotalAmount":10550,"imageUrl":""}],"amount":10550,"currency":"EUR","reference":"220118-150405-000004"},"checkout":{"url":"","integrationType":"hostedPaymentPage","returnUrl":"https://example.com/success","cancelUrl":"https://example.com/failure","consumer":{"reference":"test@example.com","email":"test@example.com","shippingAddress":{"addressLine1":"","addressLine2":"","postalCode":"","city":"","country":""},"billingAddress":{"addressLine1":"","addressLine2":"","postalCode":"","city":"","country":""},"phoneNumber":{"prefix":"","number":""},"privatePerson":{"firstName":"","lastName":""},"company":{"name":"","contact":{"firstName":"","lastName":""}}},"termsUrl":"","merchantTermsUrl":"","shippingCountries":[{"countryCode":"DEU"}],"shipping":{"countries":[{"countryCode":"DEU"}],"merchantHandlesShippingCost":false,"enableBillingAddress":true},"consumerType":{"default":"b2c","supportedTypes":["b2c","b2b"]},"charge":true,"publicDevice":false,"merchantHandlesConsumerData":false,"appearance":{"displayOptions":{"showMerchantName":false,"showOrderSummary":false},"textOptions":{"completePaymentButtonText":""}},"countryCode":"DEU"},"appearance":{"displayOptions":{"showMerchantName":true,"showOrderSummary":true},"textOptions":{"completePaymentButtonText":"pay"}},"notifications":{"webhooks":[{"eventName":"payment.created","url":"http://localhost:8080/api/rest/v1/webhook/1234","authorization":""}]}}`,
+		Details:     `{"order":{"items":[{"reference":"EF 2022 REG 000004","name":"Convention Registration","quantity":1,"unit":"qty","unitPrice":10550,"taxRate":1900,"taxAmount":0,"grossTotalAmount":10550,"netTotalAmount":10550}],"amount":10550,"currency":"EUR","reference":"220118-150405-000004"},"checkout":{"integrationType":"HostedPaymentPage","returnUrl":"https://example.com/success","cancelUrl":"https://example.com/failure","termsUrl":"https://help.eurofurence.org/legal/terms","charge":false,"publicDevice":false,"merchantHandlesConsumerData":true,"appearance":{"displayOptions":{"showMerchantName":true,"showOrderSummary":true},"textOptions":{"completePaymentButtonText":"pay"}},"countryCode":"DEU"},"notifications":{"webhooks":[{"eventName":"payment.created","url":"http://localhost:8080/api/rest/v1/webhook/1234","authorization":""}]}}`,
 	}, entity.ProtocolEntry{
 		ReferenceId: "220118-150405-000004",
 		ApiId:       "42",
@@ -296,4 +295,24 @@ func tstRequireProtocolEntries(t *testing.T, expectedProtocol ...entity.Protocol
 		require.Equal(t, expected.Message, actual.Message)
 		require.Equal(t, expected.Details, actual.Details)
 	}
+}
+
+func p[T comparable](t T) *T {
+	var nullValue T
+	if t == nullValue {
+		return nil
+	}
+	return &t
+}
+
+func unindentJSON(v string) string {
+	parsed := map[string]interface{}{}
+	if err := json.Unmarshal([]byte(v), &parsed); err != nil {
+		return "error parsing json: " + err.Error()
+	}
+	unindented, err := json.Marshal(parsed)
+	if err != nil {
+		return "error rendering json: " + err.Error()
+	}
+	return string(unindented)
 }

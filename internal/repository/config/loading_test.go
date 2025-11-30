@@ -74,6 +74,7 @@ logging:
 		"configuration error: service.nexi_instance: service.nexi_instance field must be at least 1 and at most 256 characters long",
 		"configuration error: service.payment_service: base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /",
 		"configuration error: service.public_url: public url must be empty or start with http:// or https:// and may not end in a /",
+		"configuration error: service.terms_url: terms url must start with http:// or https://, and cannot be empty",
 	}, recording)
 }
 
@@ -87,8 +88,10 @@ security:
 database:
   use: inmemory
 service:
+  public_url: 'http://localhost/hello'
   nexi_instance: 'my-demo-instance'
   nexi_api_secret: 'my-demo-secret'
+  terms_url: 'http://localhost/terms'
 invoice:
   title: 'demo title'
   description: 'demo description'
