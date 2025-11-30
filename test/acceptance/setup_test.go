@@ -6,14 +6,14 @@ import (
 	"time"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/attendeeservice"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/paymentservice"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/service/paymentlinksrv"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/app"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/attendeeservice"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/paymentservice"
+	"github.com/eurofurence/reg-paygate-adapter/internal/service/paymentlinksrv"
+	"github.com/eurofurence/reg-paygate-adapter/internal/web/app"
 )
 
 // placing these here because they are package global

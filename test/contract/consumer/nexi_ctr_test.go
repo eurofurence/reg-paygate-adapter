@@ -10,12 +10,12 @@ import (
 	auzerolog "github.com/StephanHCB/go-autumn-logging-zerolog"
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
 	aurestverifier "github.com/StephanHCB/go-autumn-restclient/implementation/verifier"
-	"github.com/eurofurence/reg-payment-nexi-adapter/docs"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/entity"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database/inmemorydb"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-paygate-adapter/docs"
+	"github.com/eurofurence/reg-paygate-adapter/internal/entity"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/database/inmemorydb"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/nexi"
 	"github.com/stretchr/testify/require"
 )
 

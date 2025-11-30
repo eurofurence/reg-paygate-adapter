@@ -3,7 +3,7 @@ package app
 import (
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	auzerolog "github.com/StephanHCB/go-autumn-logging-zerolog"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/web/util/ctxvalues"
+	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/ctxvalues"
 	"github.com/rs/zerolog"
 )
 

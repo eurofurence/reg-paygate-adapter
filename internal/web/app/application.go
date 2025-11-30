@@ -1,12 +1,12 @@
 package app
 
 import (
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/attendeeservice"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/database"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/mailservice"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/nexi"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/paymentservice"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/attendeeservice"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/paymentservice"
 )
 
 type Application interface {

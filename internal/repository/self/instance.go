@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-payment-nexi-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
 )
 
 var activeInstance Self
