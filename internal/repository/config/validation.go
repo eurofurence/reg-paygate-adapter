@@ -26,8 +26,8 @@ func setConfigurationDefaults(c *Application) {
 }
 
 const (
-	envNexiApiSecret             = "REG_SECRET_CONCARDIS_API_SECRET"
-	envNexiIncomingWebhookSecret = "REG_SECRET_CONCARDIS_INCOMING_WEBHOOK_SECRET"
+	envNexiApiSecret             = "REG_SECRET_NEXI_API_SECRET"
+	envNexiIncomingWebhookSecret = "REG_SECRET_NEXI_INCOMING_WEBHOOK_SECRET"
 	envApiToken                  = "REG_SECRET_API_TOKEN"
 	envDbPassword                = "REG_SECRET_DB_PASSWORD"
 )
