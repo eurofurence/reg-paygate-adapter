@@ -72,13 +72,13 @@ type NexiCheckout struct {
 }
 
 type NexiConsumer struct {
-	Reference       string            `json:"reference"`
-	Email           string            `json:"email"`
-	ShippingAddress NexiAddress       `json:"shippingAddress"`
-	BillingAddress  NexiAddress       `json:"billingAddress"`
-	PhoneNumber     NexiPhone         `json:"phoneNumber"`
-	PrivatePerson   NexiPrivatePerson `json:"privatePerson"`
-	Company         NexiCompany       `json:"company"`
+	Reference       *string            `json:"reference,omitempty"`
+	Email           *string            `json:"email,omitempty"`
+	ShippingAddress *NexiAddress       `json:"shippingAddress,omitempty"`
+	BillingAddress  *NexiAddress       `json:"billingAddress,omitempty"`
+	PhoneNumber     *NexiPhone         `json:"phoneNumber,omitempty"`
+	PrivatePerson   *NexiPrivatePerson `json:"privatePerson,omitempty"`
+	Company         *NexiCompany       `json:"company,omitempty"`
 }
 
 type NexiAddress struct {

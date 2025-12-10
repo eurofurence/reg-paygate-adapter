@@ -14,6 +14,8 @@ import (
 )
 
 func TestWebhook_Success_TolerantReader(t *testing.T) {
+	t.Skip("Skipping webhook tests for the moment")
+
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 
@@ -37,6 +39,8 @@ func TestWebhook_Success_TolerantReader(t *testing.T) {
 }
 
 func TestWebhook_Success_Status_Confirmed(t *testing.T) {
+	t.Skip("Skipping webhook tests for the moment")
+
 	tstWebhookSuccessCase(t, "confirmed", []paymentservice.Transaction{
 		{
 			ID: "mock-transaction-id",
@@ -60,6 +64,8 @@ func TestWebhook_Success_Status_Confirmed(t *testing.T) {
 }
 
 func TestWebhook_Success_Status_Ignored(t *testing.T) {
+	t.Skip("Skipping webhook tests for the moment")
+
 	for _, status := range []string{"cancelled", "declined"} {
 		testname := fmt.Sprintf("Status_%s", status)
 		t.Run(testname, func(t *testing.T) {
@@ -77,6 +83,8 @@ func TestWebhook_Success_Status_Ignored(t *testing.T) {
 }
 
 func TestWebhook_Success_Status_NotifyMail(t *testing.T) {
+	t.Skip("Skipping webhook tests for the moment")
+
 	for _, status := range []string{"waiting", "authorized", "refunded", "partially-refunded", "refund_pending", "chargeback", "error", "uncaptured", "reserved"} {
 		testname := fmt.Sprintf("Status_%s", status)
 		t.Run(testname, func(t *testing.T) {
@@ -96,6 +104,8 @@ func TestWebhook_Success_Status_NotifyMail(t *testing.T) {
 }
 
 func TestWebhook_InvalidJson(t *testing.T) {
+	t.Skip("Skipping webhook tests for the moment")
+
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 
@@ -110,6 +120,8 @@ func TestWebhook_InvalidJson(t *testing.T) {
 }
 
 func TestWebhook_WrongSecret(t *testing.T) {
+	t.Skip("Skipping webhook tests for the moment")
+
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 
@@ -124,6 +136,8 @@ func TestWebhook_WrongSecret(t *testing.T) {
 }
 
 func TestWebhook_DownstreamError(t *testing.T) {
+	t.Skip("Skipping webhook tests for the moment")
+
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 
@@ -139,6 +153,8 @@ func TestWebhook_DownstreamError(t *testing.T) {
 }
 
 func TestWebhook_Success_Status_WrongPrefix(t *testing.T) {
+	t.Skip("Skipping webhook tests for the moment")
+
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 

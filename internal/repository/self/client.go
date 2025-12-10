@@ -41,7 +41,7 @@ func errByStatus(err error, status int) error {
 	return nil
 }
 
-func (i *Impl) CallWebhook(ctx context.Context, event nexiapi.WebhookEventDto) error {
+func (i *Impl) CallWebhook(ctx context.Context, event nexiapi.WebhookDto) error {
 	url := fmt.Sprintf("%s/api/rest/v1/webhook/%s", i.baseUrl, config.WebhookSecret())
 	response := aurestclientapi.ParsedResponse{}
 	err := i.client.Perform(ctx, http.MethodPost, url, event, &response)
