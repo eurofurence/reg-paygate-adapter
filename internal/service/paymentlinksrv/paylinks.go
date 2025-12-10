@@ -105,10 +105,9 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 			IntegrationType: "HostedPaymentPage", // case-sensitive - was hostedPaymentPage?
 			ReturnUrl:       config.SuccessRedirect(),
 			CancelUrl:       config.FailureRedirect(),
-			//Consumer: &nexi.NexiConsumer{
-			//	Reference: attendee.Email,
-			//	Email:     attendee.Email,
-			//},
+			Consumer: &nexi.NexiConsumer{
+				Email: p(attendee.Email),
+			},
 			TermsUrl:         config.TermsURL(),
 			MerchantTermsUrl: p(""),
 			//ShippingCountries: []nexi.NexiCountry{ // optional
@@ -125,7 +124,7 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 			//	Default:        "b2c",
 			//	SupportedTypes: []string{"b2c", "b2b"},
 			//},
-			Charge:                      false,
+			Charge:                      true,
 			PublicDevice:                false,
 			MerchantHandlesConsumerData: true,
 			CountryCode:                 p("DEU"),
@@ -145,6 +144,11 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 			Webhooks: []nexi.NexiWebhook{
 				{
 					EventName:     "payment.created",
+					Url:           config.ServicePublicURL() + "/api/rest/v1/webhook/" + config.WebhookSecret(),
+					Authorization: "",
+				},
+				{
+					EventName:     "payment.charge.created.v2",
 					Url:           config.ServicePublicURL() + "/api/rest/v1/webhook/" + config.WebhookSecret(),
 					Authorization: "",
 				},

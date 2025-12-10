@@ -33,7 +33,7 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request, err := parseBodyToWebhookEventDtoTolerant(ctx, w, r)
+	request, err := parseBodyToWebhookDtoTolerant(ctx, w, r)
 	if err != nil {
 		return
 	}
@@ -54,8 +54,8 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func parseBodyToWebhookEventDtoTolerant(ctx context.Context, w http.ResponseWriter, r *http.Request) (nexiapi.WebhookEventDto, error) {
-	dto := nexiapi.WebhookEventDto{}
+func parseBodyToWebhookDtoTolerant(ctx context.Context, w http.ResponseWriter, r *http.Request) (nexiapi.WebhookDto, error) {
+	dto := nexiapi.WebhookDto{}
 
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {

@@ -69,14 +69,16 @@ func useSimulator(w http.ResponseWriter, r *http.Request) {
 	if parsed, err := strconv.ParseInt(id, 10, 64); err == nil {
 		paymentReqId = parsed
 	}
-	event := nexiapi.WebhookEventDto{
-		Transaction: nexiapi.WebhookEventTransaction{
-			Id: tx.ID,
-			Invoice: nexiapi.WebhookEventTransactionInvoice{
-				ReferenceId:      paylink.ReferenceId,
-				PaymentRequestId: paymentReqId,
-			},
-		},
+	event := nexiapi.WebhookDto{
+		// TODO this is nonsense
+		Id: fmt.Sprintf("%d", paymentReqId),
+		//Transaction: nexiapi.WebhookEventTransaction{
+		//	Id: tx.ID,
+		//	Invoice: nexiapi.WebhookEventTransactionInvoice{
+		//		ReferenceId:      paylink.ReferenceId,
+		//		PaymentRequestId: paymentReqId,
+		//	},
+		//},
 	}
 	err = selfCaller.CallWebhook(ctx, event)
 	if err != nil {

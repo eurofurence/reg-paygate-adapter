@@ -8,7 +8,7 @@ import (
 )
 
 type Self interface {
-	CallWebhook(ctx context.Context, event nexiapi.WebhookEventDto) error
+	CallWebhook(ctx context.Context, event nexiapi.WebhookDto) error
 }
 
 var (

@@ -57,21 +57,3 @@ type PaymentLinkDto struct {
 	// The payment link.
 	Link string `json:"link"`
 }
-
-// WebhookEventDto struct for WebhookEventDto
-type WebhookEventDto struct {
-	Transaction WebhookEventTransaction `json:"transaction"`
-}
-
-// WebhookEventTransaction struct for WebhookEventTransaction
-type WebhookEventTransaction struct {
-	Id      int64                          `json:"id"` // id of the transaction (not the payment link)
-	Invoice WebhookEventTransactionInvoice `json:"invoice"`
-}
-
-// WebhookEventTransactionInvoice struct for WebhookEventTransactionInvoice
-type WebhookEventTransactionInvoice struct {
-	Number           string `json:"number"` // "123456" -> test webhook payload
-	ReferenceId      string `json:"referenceId"`
-	PaymentRequestId int64  `json:"paymentRequestId"` // id of the payment link concerned
-}
