@@ -140,15 +140,36 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 		},
 	}
 	if config.ServicePublicURL() != "" {
+		url := config.ServicePublicURL() + "/api/rest/v1/webhook/" + config.WebhookSecret()
 		request.Notifications = &nexi.NexiNotifications{
 			Webhooks: []nexi.NexiWebhook{
 				{
-					EventName: "payment.created",
-					Url:       config.ServicePublicURL() + "/api/rest/v1/webhook/" + config.WebhookSecret(),
+					EventName: nexiapi.EventPaymentCheckoutCompleted,
+					Url:       url,
 				},
 				{
-					EventName: "payment.charge.created.v2",
-					Url:       config.ServicePublicURL() + "/api/rest/v1/webhook/" + config.WebhookSecret(),
+					EventName: nexiapi.EventPaymentCancelCreated,
+					Url:       url,
+				},
+				{
+					EventName: nexiapi.EventPaymentChargeCreated,
+					Url:       url,
+				},
+				{
+					EventName: nexiapi.EventPaymentChargeCreatedV2,
+					Url:       url,
+				},
+				{
+					EventName: nexiapi.EventPaymentChargeFailed,
+					Url:       url,
+				},
+				{
+					EventName: nexiapi.EventPaymentChargeFailedV2,
+					Url:       url,
+				},
+				{
+					EventName: nexiapi.EventPaymentCreated,
+					Url:       url,
 				},
 			},
 		}
