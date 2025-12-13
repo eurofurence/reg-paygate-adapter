@@ -91,40 +91,61 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentR
 		})
 		aulogging.Logger.Ctx(ctx).Info().Print("nexi create request: " + string(requestBody))
 	}
+	var responseRaw *[]byte
 	response := aurestclientapi.ParsedResponse{
-		Body: &NexiCreateLowlevelResponseBody{},
+		Body: &responseRaw,
 	}
 	if err := i.client.Perform(ctx, http.MethodPost, requestUrl, string(requestBody), &response); err != nil {
 		return NexiPaymentLinkCreated{}, err
 	}
-	if response.Status >= 300 {
-		return NexiPaymentLinkCreated{}, fmt.Errorf("unexpected response status %d", response.Status)
+	if responseRaw == nil {
+		return NexiPaymentLinkCreated{}, fmt.Errorf("response body is empty")
 	}
-	bodyDto := *response.Body.(*NexiCreateLowlevelResponseBody)
-	if config.LogFullRequests() {
-		// Log response
-		if response.Body != nil {
-			bodyBytes, _ := json.Marshal(response.Body)
-			aulogging.Logger.Ctx(ctx).Info().Print("nexi create response: " + string(bodyBytes))
-			// Also write to protocol with ApiId
+	if response.Status >= 300 {
+		if config.LogFullRequests() {
 			db := database.GetRepository()
-			bodyStr := string(bodyBytes)
+			bodyStr := string(*responseRaw)
 			bodyStr = strings.ReplaceAll(bodyStr, "\r", "")
 			bodyStr = strings.ReplaceAll(bodyStr, "\n", "")
 			bodyStr = strings.ReplaceAll(bodyStr, " ", "")
 			_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
 				ReferenceId: request.Order.Reference,
-				ApiId:       bodyDto.PaymentId,
 				Kind:        "raw",
-				Message:     "nexi create response",
+				Message:     "nexi create error response",
+				Details:     bodyStr,
+				RequestId:   ctxvalues.RequestId(ctx),
+			})
+			aulogging.Logger.Ctx(ctx).Info().Printf("nexi create error response (status %d): %s", response.Status, string(*responseRaw))
+		}
+		return NexiPaymentLinkCreated{}, fmt.Errorf("unexpected response status %d", response.Status)
+	}
+	responseBody := NexiCreateLowlevelResponseBody{}
+	if err := json.Unmarshal(*responseRaw, &responseBody); err != nil {
+		return NexiPaymentLinkCreated{}, fmt.Errorf("failed to unmarshal response body: %v", err)
+	}
+	if config.LogFullRequests() {
+		// Log response
+		if response.Body != nil {
+			aulogging.Logger.Ctx(ctx).Info().Print("nexi create success response: " + string(*responseRaw))
+			// Also write to protocol with ApiId
+			db := database.GetRepository()
+			bodyStr := string(*responseRaw)
+			bodyStr = strings.ReplaceAll(bodyStr, "\r", "")
+			bodyStr = strings.ReplaceAll(bodyStr, "\n", "")
+			bodyStr = strings.ReplaceAll(bodyStr, " ", "")
+			_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
+				ReferenceId: request.Order.Reference,
+				ApiId:       responseBody.PaymentId,
+				Kind:        "raw",
+				Message:     "nexi create success response",
 				Details:     bodyStr,
 				RequestId:   ctxvalues.RequestId(ctx),
 			})
 		}
 	}
 	return NexiPaymentLinkCreated{
-		ID:   bodyDto.PaymentId,
-		Link: bodyDto.HostedPaymentPageUrl,
+		ID:   responseBody.PaymentId,
+		Link: responseBody.HostedPaymentPageUrl,
 	}, nil
 }
 

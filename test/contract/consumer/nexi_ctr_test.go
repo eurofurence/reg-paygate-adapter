@@ -283,7 +283,7 @@ func TestNexiApiClient(t *testing.T) {
 		ReferenceId: "220118-150405-000004",
 		ApiId:       "42",
 		Kind:        "raw",
-		Message:     "nexi create response",
+		Message:     "nexi create success response",
 		Details:     `{"paymentId":"42","hostedPaymentPageUrl":"http://localhost/some/pay/link"}`,
 	})
 }
