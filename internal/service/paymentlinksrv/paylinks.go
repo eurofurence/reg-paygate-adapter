@@ -126,7 +126,7 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 			//},
 			Charge:                      true,
 			PublicDevice:                false,
-			MerchantHandlesConsumerData: true,
+			MerchantHandlesConsumerData: false,
 			CountryCode:                 p("DEU"),
 			Appearance: &nexi.NexiAppearance{
 				DisplayOptions: nexi.NexiDisplayOptions{
