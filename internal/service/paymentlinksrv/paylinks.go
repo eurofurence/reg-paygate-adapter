@@ -143,14 +143,12 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 		request.Notifications = &nexi.NexiNotifications{
 			Webhooks: []nexi.NexiWebhook{
 				{
-					EventName:     "payment.created",
-					Url:           config.ServicePublicURL() + "/api/rest/v1/webhook/" + config.WebhookSecret(),
-					Authorization: "",
+					EventName: "payment.created",
+					Url:       config.ServicePublicURL() + "/api/rest/v1/webhook/" + config.WebhookSecret(),
 				},
 				{
-					EventName:     "payment.charge.created.v2",
-					Url:           config.ServicePublicURL() + "/api/rest/v1/webhook/" + config.WebhookSecret(),
-					Authorization: "",
+					EventName: "payment.charge.created.v2",
+					Url:       config.ServicePublicURL() + "/api/rest/v1/webhook/" + config.WebhookSecret(),
 				},
 			},
 		}

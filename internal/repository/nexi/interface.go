@@ -143,9 +143,9 @@ type NexiNotifications struct {
 }
 
 type NexiWebhook struct {
-	EventName     string `json:"eventName"`
-	Url           string `json:"url"`
-	Authorization string `json:"authorization"`
+	EventName     string  `json:"eventName"`
+	Url           string  `json:"url"`
+	Authorization *string `json:"authorization,omitempty"`
 }
 
 type NexiPayment struct {
