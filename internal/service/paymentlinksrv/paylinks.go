@@ -124,7 +124,7 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 			//	Default:        "b2c",
 			//	SupportedTypes: []string{"b2c", "b2b"},
 			//},
-			Charge:                      true,
+			Charge:                      false,
 			PublicDevice:                false,
 			MerchantHandlesConsumerData: false,
 			CountryCode:                 p("DEU"),
