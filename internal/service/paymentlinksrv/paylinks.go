@@ -105,11 +105,11 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 			IntegrationType: "HostedPaymentPage", // case-sensitive - was hostedPaymentPage?
 			ReturnUrl:       config.SuccessRedirect(),
 			CancelUrl:       config.FailureRedirect(),
-			Consumer: &nexi.NexiConsumer{
-				Email: p(attendee.Email),
-			},
-			TermsUrl:         config.TermsURL(),
-			MerchantTermsUrl: p(""),
+			//Consumer: &nexi.NexiConsumer{
+			//	Email: p(attendee.Email),
+			//},
+			TermsUrl: config.TermsURL(),
+			//MerchantTermsUrl: p(""),
 			//ShippingCountries: []nexi.NexiCountry{ // optional
 			//	{CountryCode: "DEU"},
 			//},
@@ -124,19 +124,19 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 			//	Default:        "b2c",
 			//	SupportedTypes: []string{"b2c", "b2b"},
 			//},
-			Charge:                      false,
+			Charge:                      true,
 			PublicDevice:                false,
 			MerchantHandlesConsumerData: false,
-			CountryCode:                 p("DEU"),
-			Appearance: &nexi.NexiAppearance{
-				DisplayOptions: nexi.NexiDisplayOptions{
-					ShowMerchantName: true,
-					ShowOrderSummary: true,
-				},
-				TextOptions: nexi.NexiTextOptions{
-					CompletePaymentButtonText: "pay",
-				},
-			},
+			// CountryCode:                 p("DEU"),
+			//Appearance: &nexi.NexiAppearance{
+			//	DisplayOptions: nexi.NexiDisplayOptions{
+			//		ShowMerchantName: true,
+			//		ShowOrderSummary: true,
+			//	},
+			//	TextOptions: nexi.NexiTextOptions{
+			//		CompletePaymentButtonText: "pay",
+			//	},
+			//},
 		},
 	}
 	if config.ServicePublicURL() != "" {
