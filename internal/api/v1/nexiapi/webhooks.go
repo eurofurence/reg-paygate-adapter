@@ -141,15 +141,15 @@ const EventPaymentChargeCreatedV2 = "payment.charge.created.v2"
 type DataPaymentChargeCreatedV2 struct {
 	ChargeId   string `json:"chargeId"`
 	OrderItems []struct {
-		GrossTotalAmount string `json:"grossTotalAmount"`
-		Name             string `json:"name"`
-		NetTotalAmount   string `json:"netTotalAmount"`
-		Quantity         string `json:"quantity"`
-		Reference        string `json:"reference"`
-		TaxRate          string `json:"taxRate"`
-		TaxAmount        string `json:"taxAmount"`
-		Unit             string `json:"unit"`
-		UnitPrice        string `json:"unitPrice"`
+		GrossTotalAmount int32   `json:"grossTotalAmount"`
+		Name             string  `json:"name"`
+		NetTotalAmount   int32   `json:"netTotalAmount"`
+		Quantity         float64 `json:"quantity"`
+		Reference        string  `json:"reference"`
+		TaxRate          int32   `json:"taxRate"`
+		TaxAmount        int32   `json:"taxAmount"`
+		Unit             string  `json:"unit"`
+		UnitPrice        int32   `json:"unitPrice"`
 	} `json:"orderItems"`
 	PaymentMethod           string `json:"paymentMethod"`
 	PaymentType             string `json:"paymentType"`
@@ -157,10 +157,10 @@ type DataPaymentChargeCreatedV2 struct {
 	ReconciliationReference string `json:"reconciliationReference"`
 	MyReference             string `json:"myReference"`
 	Amount                  struct {
-		Amount   string `json:"amount"`
+		Amount   int32  `json:"amount"`
 		Currency string `json:"currency"`
 	} `json:"amount"`
-	SurchargeAmount string `json:"surchargeAmount"`
+	SurchargeAmount int32  `json:"surchargeAmount"`
 	PaymentId       string `json:"paymentId"`
 }
 
@@ -251,21 +251,21 @@ const EventPaymentCreated = "payment.created"
 type DataPaymentCreated struct {
 	Order struct {
 		Amount struct {
-			Amount   string `json:"amount"`
+			Amount   int32  `json:"amount"`
 			Currency string `json:"currency"`
 		} `json:"amount"`
 		Reference   string `json:"reference"`
 		Description string `json:"description"`
 		OrderItems  []struct {
-			GrossTotalAmount string `json:"grossTotalAmount"`
-			Name             string `json:"name"`
-			NetTotalAmount   string `json:"netTotalAmount"`
-			Quantity         string `json:"quantity"`
-			Reference        string `json:"reference"`
-			TaxRate          string `json:"taxRate"`
-			TaxAmount        string `json:"taxAmount"`
-			Unit             string `json:"unit"`
-			UnitPrice        string `json:"unitPrice"`
+			GrossTotalAmount int32   `json:"grossTotalAmount"`
+			Name             string  `json:"name"`
+			NetTotalAmount   int32   `json:"netTotalAmount"`
+			Quantity         float64 `json:"quantity"`
+			Reference        string  `json:"reference"`
+			TaxRate          int32   `json:"taxRate"`
+			TaxAmount        int32   `json:"taxAmount"`
+			Unit             string  `json:"unit"`
+			UnitPrice        int32   `json:"unitPrice"`
 		} `json:"orderItems"`
 	} `json:"order"`
 	MyReference    string `json:"myReference"`

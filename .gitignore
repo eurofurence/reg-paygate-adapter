@@ -5,3 +5,4 @@ test/contract/*/logs/**
 payment-nexi-adapter
 main
 .vscode/**
+tmp
