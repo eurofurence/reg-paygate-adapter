@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
@@ -126,7 +125,7 @@ func (i *Impl) eventPaymentCheckoutCompleted(ctx context.Context, webhook nexiap
 			Details:     fmt.Sprintf("expecting prefix %s", prefix),
 			RequestId:   ctxvalues.RequestId(ctx),
 		})
-		_ = i.SendErrorNotifyMail(ctx, "webhook", data.Order.Reference, "ref-id-prefix mismatch")
+		_ = i.SendErrorNotifyMail(ctx, "webhook", data.Order.Reference, "ref-id-prefix-mismatch")
 		// report success so they don't retry, it's not a big problem after all
 		return nil
 	}
@@ -134,7 +133,7 @@ func (i *Impl) eventPaymentCheckoutCompleted(ctx context.Context, webhook nexiap
 	// fetch transaction data from payment service
 	transaction, err := paymentservice.Get().GetTransactionByReferenceId(ctx, data.Order.Reference)
 	if err != nil {
-		if err == paymentservice.NotFoundError {
+		if errors.Is(err, paymentservice.NotFoundError) {
 			// transaction not found in the payment service -> create one.
 			// Note: this should never happen, but we try to recover because someone paid us money for something.
 			aulogging.Logger.Ctx(ctx).Error().Printf("webhook ref not found in payment service. Creating new pending transaction and flagging for manual review. ref=%s", data.Order.Reference)
@@ -193,7 +192,7 @@ func (i *Impl) createTransaction(ctx context.Context, data nexiapi.DataPaymentCh
 			Details:     fmt.Sprintf("amount=%d currency=%s", data.Order.Amount.Amount, data.Order.Amount.Currency),
 			RequestId:   ctxvalues.RequestId(ctx),
 		})
-		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("refId: %s", data.Order.Reference), "parse-refid-err")
+		_ = i.SendErrorNotifyMail(ctx, "webhook", data.Order.Reference, "parse-refid-err")
 		// do not continue - we wouldn't know which attendee to associate the payment with. Needs manual investigation
 		return err
 	}
@@ -234,7 +233,7 @@ func (i *Impl) createTransaction(ctx context.Context, data nexiapi.DataPaymentCh
 			Details:     fmt.Sprintf("amount=%d currency=%s error=%s", data.Order.Amount.Amount, data.Order.Amount.Currency, err.Error()),
 			RequestId:   ctxvalues.RequestId(ctx),
 		})
-		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("refId: %s", data.Order.Reference), "create-missing-err")
+		_ = i.SendErrorNotifyMail(ctx, "webhook", data.Order.Reference, "create-missing-err")
 		return err
 	}
 
@@ -253,23 +252,27 @@ func (i *Impl) createTransaction(ctx context.Context, data nexiapi.DataPaymentCh
 		Details:     fmt.Sprintf("amount=%d currency=%s", data.Order.Amount.Amount, data.Order.Amount.Currency),
 		RequestId:   ctxvalues.RequestId(ctx),
 	})
-	_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("refId: %s", data.Order.Reference), "create-missing-pending-success (needs review)")
+	_ = i.SendErrorNotifyMail(ctx, "webhook", data.Order.Reference, "create-missing-pending-success (needs review)")
 	return nil
 }
 
 func (i *Impl) updateTransaction(ctx context.Context, data nexiapi.DataPaymentCheckoutCompleted, transaction paymentservice.Transaction) error {
-	if transaction.Status == paymentservice.Valid {
-		aulogging.Logger.Ctx(ctx).Warn().Printf("aborting transaction update - already in status valid! reference_id=%s", data.Order.Reference)
+	if transaction.Status == paymentservice.Valid || transaction.Status == paymentservice.Pending {
+		aulogging.Logger.Ctx(ctx).Warn().Printf("aborting transaction update - already in status %s! reference_id=%s", transaction.Status, data.Order.Reference)
 		db := database.GetRepository()
 		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
 			ReferenceId: data.Order.Reference,
 			ApiId:       data.PaymentId,
 			Kind:        "warning",
-			Message:     fmt.Sprintf("webhook %s payment already in status valid", nexiapi.EventPaymentCheckoutCompleted),
-			Details:     fmt.Sprintf("amount=%d currency=%s", data.Order.Amount.Amount, data.Order.Amount.Currency),
-			RequestId:   ctxvalues.RequestId(ctx),
+			Message:     fmt.Sprintf("webhook %s payment already in status %s", nexiapi.EventPaymentCheckoutCompleted, transaction.Status),
+			Details: fmt.Sprintf("existing_amount=%d ignored_amount=%d existing_currency=%s ignored_currency=%s",
+				transaction.Amount.GrossCent,
+				data.Order.Amount.Amount,
+				transaction.Amount.Currency,
+				data.Order.Amount.Currency),
+			RequestId: ctxvalues.RequestId(ctx),
 		})
-		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("refId: %s", data.Order.Reference), "abort-update-for-valid")
+		_ = i.SendErrorNotifyMail(ctx, "webhook", data.Order.Reference, fmt.Sprintf("abort-update-for-%s", transaction.Status))
 		return nil // not an error
 	}
 
@@ -278,14 +281,29 @@ func (i *Impl) updateTransaction(ctx context.Context, data nexiapi.DataPaymentCh
 
 	if transaction.Amount.GrossCent != int64(data.Order.Amount.Amount) || transaction.Amount.Currency != data.Order.Amount.Currency {
 		aulogging.Logger.Ctx(ctx).Warn().Printf("transaction update changes amount or currency! reference_id=%s", data.Order.Reference)
-		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("refId: %s", data.Order.Reference), "amount-difference-please-check")
-		// continue!
+		db := database.GetRepository()
+		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
+			ReferenceId: data.Order.Reference,
+			ApiId:       data.PaymentId,
+			Kind:        "warning",
+			Message:     fmt.Sprintf("webhook %s payment amount differs", nexiapi.EventPaymentCheckoutCompleted),
+			Details: fmt.Sprintf("old_amount=%d amount=%d old_currency=%s currency=%s",
+				transaction.Amount.GrossCent,
+				data.Order.Amount.Amount,
+				transaction.Amount.Currency,
+				data.Order.Amount.Currency),
+			RequestId: ctxvalues.RequestId(ctx),
+		})
+		_ = i.SendErrorNotifyMail(ctx, "webhook", data.Order.Reference, "amount-difference-kept-pending-please-check")
+		// continue, but keep in pending!
 
 		transaction.Amount.GrossCent = int64(data.Order.Amount.Amount)
 		transaction.Amount.Currency = data.Order.Amount.Currency
+		transaction.Status = paymentservice.Pending
+	} else {
+		transaction.Status = paymentservice.Valid
 	}
 
-	transaction.Status = paymentservice.Valid
 	transaction.EffectiveDate = effective
 	transaction.Comment = comment
 
@@ -301,15 +319,26 @@ func (i *Impl) updateTransaction(ctx context.Context, data nexiapi.DataPaymentCh
 			Details:     fmt.Sprintf("amount=%d currency=%s error=%s", data.Order.Amount.Amount, data.Order.Amount.Currency, err.Error()),
 			RequestId:   ctxvalues.RequestId(ctx),
 		})
-		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("refId: %s", data.Order.Reference), "update-tx-err")
+		_ = i.SendErrorNotifyMail(ctx, "webhook", data.Order.Reference, "update-tx-err")
 		return err
 	}
+
+	aulogging.Logger.Ctx(ctx).Info().Printf("successfully updated upstream transaction to valid. reference_id=%s", data.Order.Reference)
+	db := database.GetRepository()
+	_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
+		ReferenceId: data.Order.Reference,
+		ApiId:       data.PaymentId,
+		Kind:        "success",
+		Message:     fmt.Sprintf("webhook %s updated tx", nexiapi.EventPaymentCheckoutCompleted),
+		Details:     fmt.Sprintf("amount=%d currency=%s", data.Order.Amount.Amount, data.Order.Amount.Currency),
+		RequestId:   ctxvalues.RequestId(ctx),
+	})
 
 	return nil
 }
 
 func (i *Impl) effectiveToday() string {
-	return time.Now().Format(isoDateFormat)
+	return i.Now().Format(isoDateFormat)
 }
 
 func (i *Impl) transactionUuid(data nexiapi.DataPaymentCheckoutCompleted) string {

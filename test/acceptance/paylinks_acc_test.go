@@ -38,7 +38,7 @@ func TestCreatePaylink_Success(t *testing.T) {
 
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
-		ReferenceId: "221216-122218-000001",
+		ReferenceId: "EF1995-000001-221216-122218-4132",
 		ApiId:       "mock-101",
 		Kind:        "success",
 		Message:     "create-pay-link",
@@ -203,7 +203,7 @@ func TestCreatePaylink_DownstreamErrorCncrd(t *testing.T) {
 
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
-		ReferenceId: "221216-122218-000001",
+		ReferenceId: "EF1995-000001-221216-122218-4132",
 		ApiId:       "",
 		Kind:        "error",
 		Message:     "create-pay-link failed",
@@ -233,7 +233,7 @@ func TestGetPaylink_Success(t *testing.T) {
 
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
-		ReferenceId: "221216-122218-000001",
+		ReferenceId: "EF1995-000001-221216-122218-4132",
 		ApiId:       "42",
 		Kind:        "success",
 		Message:     "get-pay-link",

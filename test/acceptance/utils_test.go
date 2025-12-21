@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -169,7 +170,7 @@ func tstRequirePaymentServiceRecording(t *testing.T, expectedEntries []paymentse
 
 func tstBuildValidPaymentLinkRequest() nexiapi.PaymentLinkRequestDto {
 	return nexiapi.PaymentLinkRequestDto{
-		ReferenceId: "221216-122218-000001",
+		ReferenceId: "EF1995-000001-221216-122218-4132",
 		DebitorId:   1,
 		AmountDue:   390,
 		Currency:    "EUR",
@@ -181,7 +182,7 @@ func tstBuildValidPaymentLink() nexiapi.PaymentLinkDto {
 	return nexiapi.PaymentLinkDto{
 		Title:       "some page title",
 		Description: "some page description",
-		ReferenceId: "221216-122218-000001",
+		ReferenceId: "EF1995-000001-221216-122218-4132",
 		Purpose:     "some payment purpose",
 		AmountDue:   390,
 		AmountPaid:  0,
@@ -193,7 +194,7 @@ func tstBuildValidPaymentLink() nexiapi.PaymentLinkDto {
 
 func tstBuildValidPaymentLinkGetResponse() nexiapi.PaymentLinkDto {
 	return nexiapi.PaymentLinkDto{
-		ReferenceId: "221216-122218-000001",
+		ReferenceId: "EF1995-000001-221216-122218-4132",
 		Purpose:     "some payment purpose",
 		AmountDue:   390,
 		AmountPaid:  0,
@@ -219,7 +220,7 @@ func tstBuildValidWebhookRequest(t *testing.T, event string) string {
           "currency": "EUR",
           "other": "some extra stuff to test tolerant reader pattern"
         },
-        "reference": "221216-122218-000001"
+        "reference": "EF1995-000001-221216-122218-4132"
       },
       "paymentId": "ef00000000000000000000000000cafe"
     }
@@ -257,15 +258,24 @@ func tstBuildValidWebhookRequest(t *testing.T, event string) string {
           "amount": 18500,
           "currency": "EUR"
         },
-        "reference": "221216-122218-000001"
+        "reference": "EF1995-000001-221216-122218-4132"
       },
       "paymentId": "ef00000000000000000000000000cafe"
     }
   }
 `, "")
 	} else {
-		t.FailNow()
-		return ``
+		return re.ReplaceAllString(fmt.Sprintf(`
+  {
+    "id": "01234567890abcdef0123456789abcde",
+    "merchantId": 123456789,
+    "timestamp": "2025-12-15T13:24:23.0175+00:00",
+    "event": "%s",
+    "data": {
+      "paymentId": "ef00000000000000000000000000cafe"
+    }
+  }
+`, event), "")
 	}
 }
 
@@ -279,7 +289,7 @@ func tstExpectedMailNotification(operation string, status string) mailservice.Ma
 		Variables: map[string]string{
 			"status":      status,
 			"operation":   operation,
-			"referenceId": "221216-122218-000001",
+			"referenceId": "EF1995-000001-221216-122218-4132",
 		},
 	}
 }

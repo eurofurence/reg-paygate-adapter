@@ -56,16 +56,20 @@ func (m *MockImpl) UpdateTransaction(ctx context.Context, transaction Transactio
 }
 
 func (m *MockImpl) GetTransactionByReferenceId(ctx context.Context, referenceId string) (Transaction, error) {
-	transaction := Transaction{
-		ID: "mock-transaction-id",
+	for _, transactions := range m.data {
+		for _, transaction := range transactions {
+			if transaction.ID == referenceId {
+				return transaction, nil
+			}
+		}
 	}
-
-	return transaction, nil
+	return Transaction{}, NotFoundError
 }
 
 // only used in tests
 
 func (m *MockImpl) Reset() {
+	m.data = make(map[uint][]Transaction)
 	m.recording = make([]Transaction, 0)
 	m.simulateGetError = nil
 	m.simulateAddError = nil

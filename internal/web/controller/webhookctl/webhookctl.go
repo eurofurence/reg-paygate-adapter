@@ -12,6 +12,7 @@ import (
 	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
 	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
 	"github.com/eurofurence/reg-paygate-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-paygate-adapter/internal/service/paymentlinksrv"
 	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/ctlutil"
 	"github.com/go-chi/chi/v5"
@@ -43,7 +44,7 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 			webhookRequestInvalidErrorHandler(ctx, w, r, err)
 		} else if errors.Is(err, nexi.NoSuchID404Error) {
 			paylinkNotFoundErrorHandler(ctx, w, r)
-		} else if errors.Is(err, nexi.DownstreamError) {
+		} else if errors.Is(err, nexi.DownstreamError) || errors.Is(err, paymentservice.DownstreamError) {
 			downstreamErrorHandler(ctx, w, r, err)
 		} else {
 			ctlutil.UnexpectedError(ctx, w, r, err)
