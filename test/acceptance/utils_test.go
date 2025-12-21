@@ -2,10 +2,12 @@ package acceptance
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -168,7 +170,7 @@ func tstRequirePaymentServiceRecording(t *testing.T, expectedEntries []paymentse
 
 func tstBuildValidPaymentLinkRequest() nexiapi.PaymentLinkRequestDto {
 	return nexiapi.PaymentLinkRequestDto{
-		ReferenceId: "221216-122218-000001",
+		ReferenceId: "EF1995-000001-221216-122218-4132",
 		DebitorId:   1,
 		AmountDue:   390,
 		Currency:    "EUR",
@@ -180,7 +182,7 @@ func tstBuildValidPaymentLink() nexiapi.PaymentLinkDto {
 	return nexiapi.PaymentLinkDto{
 		Title:       "some page title",
 		Description: "some page description",
-		ReferenceId: "221216-122218-000001",
+		ReferenceId: "EF1995-000001-221216-122218-4132",
 		Purpose:     "some payment purpose",
 		AmountDue:   390,
 		AmountPaid:  0,
@@ -192,7 +194,7 @@ func tstBuildValidPaymentLink() nexiapi.PaymentLinkDto {
 
 func tstBuildValidPaymentLinkGetResponse() nexiapi.PaymentLinkDto {
 	return nexiapi.PaymentLinkDto{
-		ReferenceId: "221216-122218-000001",
+		ReferenceId: "EF1995-000001-221216-122218-4132",
 		Purpose:     "some payment purpose",
 		AmountDue:   390,
 		AmountPaid:  0,
@@ -201,27 +203,80 @@ func tstBuildValidPaymentLinkGetResponse() nexiapi.PaymentLinkDto {
 	}
 }
 
-func tstBuildValidWebhookRequest() string {
-	return `
-{
-   "transaction": {
-       "id": 1892362736,
-       "invoice": {
-           "paymentRequestId": 42,
-           "referenceId": "221216-122218-000001",
-           "still": "more stuff"
-       },
-       "more": "stuff"
-   },
-   "otherField1": [
-       42
-   ],
-   "otherField2": {
-       "something": true,
-       "or_other": "thing"
-   }
-}
-`
+func tstBuildValidWebhookRequest(t *testing.T, event string) string {
+	re := regexp.MustCompile(`(\r\s*|\n\s*)`)
+	// for each event, hardcode one realistic webhook body
+	if event == nexiapi.EventPaymentCreated {
+		return re.ReplaceAllString(`
+  {
+    "id": "01234567890abcdef0123456789abcde",
+    "merchantId": 123456789,
+    "timestamp": "2025-12-15T13:24:15.9680+00:00",
+    "event": "payment.created",
+    "data": {
+      "order": {
+        "amount": {
+          "amount": 18500,
+          "currency": "EUR",
+          "other": "some extra stuff to test tolerant reader pattern"
+        },
+        "reference": "EF1995-000001-221216-122218-4132"
+      },
+      "paymentId": "ef00000000000000000000000000cafe"
+    }
+  }
+`, "")
+	} else if event == nexiapi.EventPaymentChargeCreatedV2 {
+		return re.ReplaceAllString(`
+  {
+    "id": "01234567890abcdef0123456789abcde",
+    "timestamp": "2025-12-15T13:24:23.0175+00:00",
+    "merchantNumber": 123456789,
+    "event": "payment.charge.created.v2",
+    "data": {
+      "paymentMethod": "Visa",
+      "paymentType": "CARD",
+      "amount": {
+        "amount": 18500,
+        "currency": "EUR"
+      },
+      "surchargeAmount": 0,
+      "paymentId": "ef00000000000000000000000000cafe"
+    }
+  }
+`, "")
+	} else if event == nexiapi.EventPaymentCheckoutCompleted {
+		return re.ReplaceAllString(`
+  {
+    "id": "01234567890abcdef0123456789abcde",
+    "merchantId": 123456789,
+    "timestamp": "2025-12-15T13:24:23.0175+00:00",
+    "event": "payment.checkout.completed",
+    "data": {
+      "order": {
+        "amount": {
+          "amount": 18500,
+          "currency": "EUR"
+        },
+        "reference": "EF1995-000001-221216-122218-4132"
+      },
+      "paymentId": "ef00000000000000000000000000cafe"
+    }
+  }
+`, "")
+	} else {
+		return re.ReplaceAllString(fmt.Sprintf(`
+  {
+    "id": "01234567890abcdef0123456789abcde",
+    "merchantId": 123456789,
+    "timestamp": "2025-12-15T13:24:23.0175+00:00",
+    "event": "%s",
+    "data": {
+      "paymentId": "ef00000000000000000000000000cafe"
+    }
+  }
+`, event), "")
+	}
 }
 
 func tstExpectedMailNotification(operation string, status string) mailservice.MailSendDto {
@@ -234,7 +289,7 @@ func tstExpectedMailNotification(operation string, status string) mailservice.Ma
 		Variables: map[string]string{
 			"status":      status,
 			"operation":   operation,
-			"referenceId": "221216-122218-000001",
+			"referenceId": "EF1995-000001-221216-122218-4132",
 		},
 	}
 }

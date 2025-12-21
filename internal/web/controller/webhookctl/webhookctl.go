@@ -7,12 +7,12 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"strings"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
 	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
 	"github.com/eurofurence/reg-paygate-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-paygate-adapter/internal/service/paymentlinksrv"
 	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/ctlutil"
 	"github.com/go-chi/chi/v5"
@@ -44,7 +44,7 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 			webhookRequestInvalidErrorHandler(ctx, w, r, err)
 		} else if errors.Is(err, nexi.NoSuchID404Error) {
 			paylinkNotFoundErrorHandler(ctx, w, r)
-		} else if errors.Is(err, nexi.DownstreamError) {
+		} else if errors.Is(err, nexi.DownstreamError) || errors.Is(err, paymentservice.DownstreamError) {
 			downstreamErrorHandler(ctx, w, r, err)
 		} else {
 			ctlutil.UnexpectedError(ctx, w, r, err)
@@ -64,10 +64,10 @@ func parseBodyToWebhookDtoTolerant(ctx context.Context, w http.ResponseWriter, r
 	}
 
 	if config.LogFullRequests() {
-		bodyStr := string(bodyBytes)
-		bodyStr = strings.ReplaceAll(bodyStr, "\r", "")
-		bodyStr = strings.ReplaceAll(bodyStr, "\n", "\\n")
-		aulogging.Logger.Ctx(ctx).Info().Print("webhook request: " + bodyStr)
+		if err := paymentLinkService.LogRawWebhook(ctx, string(bodyBytes)); err != nil {
+			// log and ignore
+			aulogging.Logger.Ctx(ctx).Error().Printf("failed to write incoming webhook payload to database: %s", err.Error())
+		}
 	}
 
 	decoder := json.NewDecoder(bytes.NewReader(bodyBytes))

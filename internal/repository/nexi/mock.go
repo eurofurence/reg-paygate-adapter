@@ -34,14 +34,14 @@ func newMock() Mock {
 	simData["42"] = NexiPaymentQueryResponse{
 		ID:          "42",
 		Status:      "confirmed",
-		ReferenceID: "221216-122218-000001",
+		ReferenceID: "EF1995-000001-221216-122218-4132",
 		Link:        constructSimulatedPaylink("42"),
 		Amount:      390,
 		Currency:    "EUR",
 		CreatedAt:   1673136000, // 2023-01-08
 		VatRate:     19.0,
 		Order: NexiOrderDetails{
-			Reference: "221216-122218-000001",
+			Reference: "EF1995-000001-221216-122218-4132",
 			Amount:    390,
 			Currency:  "EUR",
 		},
@@ -56,14 +56,14 @@ func newMock() Mock {
 	simData["4242"] = NexiPaymentQueryResponse{
 		ID:          "4242",
 		Status:      "confirmed",
-		ReferenceID: "230001-122218-000001",
-		Link:        constructSimulatedPaylink("4242"),
+		ReferenceID: "EF1995-000001-230001-122218-5555",
+		Link:        constructSimulatedPaylink("5555"),
 		Amount:      390,
 		Currency:    "EUR",
 		CreatedAt:   1418392958,
 		VatRate:     19.0,
 		Order: NexiOrderDetails{
-			Reference: "230001-122218-000001",
+			Reference: "EF1995-000001-230001-122218-5555",
 			Amount:    390,
 			Currency:  "EUR",
 		},
