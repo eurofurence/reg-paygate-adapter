@@ -10,7 +10,7 @@ Implemented in Go.
 
 Command line arguments
 ```
--config <path-to-config-file> [-ecs-json-logging]
+-config <path-to-config-file> [-migrate-database] [-ecs-json-logging]
 ```
 
 ## Installation
@@ -28,10 +28,6 @@ for operation with an in-memory database and sensible defaults.
 Build using `go build cmd/main.go`.
 
 Then run `./main -config config.yaml`.
-
-## Installation on the server
-
-See `install.sh`. This assumes a current build, and a valid configuration template in specific filenames.
 
 ## Test Coverage
 

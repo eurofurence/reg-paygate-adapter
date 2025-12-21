@@ -14,53 +14,70 @@ import (
 )
 
 func TestWebhook_Success_TolerantReader(t *testing.T) {
-	t.Skip("Skipping webhook tests for the moment")
-
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 
 	docs.Given("given an anonymous caller who knows the secret url")
 	url := "/api/rest/v1/webhook/demosecret"
 
-	docs.When("when they trigger our webhook endpoint with valid information with lots of extra fields which we ignore")
-	response := tstPerformPost(url, tstBuildValidWebhookRequest(), tstNoToken())
+	docs.When("when they trigger our webhook endpoint with valid information with some extra fields")
+	request := tstBuildValidWebhookRequest(t, "payment.created")
+	response := tstPerformPost(url, request, tstNoToken())
 
-	docs.Then("then the request is successful")
+	docs.Then("then the extra fields are ignored and the request is successful")
 	require.Equal(t, http.StatusOK, response.status)
 
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: "",
+		ApiId:       "",
+		Kind:        "raw",
+		Message:     "webhook request",
+		Details:     request,
+	}, entity.ProtocolEntry{
 		ReferenceId: "221216-122218-000001",
-		ApiId:       "42",
+		ApiId:       "ef00000000000000000000000000cafe",
 		Kind:        "success",
-		Message:     "webhook query-pay-link",
-		Details:     "status=confirmed amount=390",
+		Message:     "webhook payment.created",
+		Details:     "amount=18500 currency=EUR",
 	})
+
+	docs.Then("and no notification emails have been sent")
+	tstRequireMailServiceRecording(t, []mailservice.MailSendDto{})
 }
 
-func TestWebhook_Success_Status_Confirmed(t *testing.T) {
-	t.Skip("Skipping webhook tests for the moment")
-
-	tstWebhookSuccessCase(t, "confirmed", []paymentservice.Transaction{
-		{
-			ID: "mock-transaction-id",
-			Amount: paymentservice.Amount{
-				Currency:  "EUR",
-				GrossCent: 390,
+func TestWebhook_Success_PaymentCreated(t *testing.T) {
+	docs.Description("payment.created events are logged but otherwise ignored")
+	tstWebhookSuccessCase(t, "payment.created",
+		[]paymentservice.Transaction{},
+		[]mailservice.MailSendDto{},
+		[]entity.ProtocolEntry{
+			{
+				ReferenceId: "221216-122218-000001",
+				ApiId:       "ef00000000000000000000000000cafe",
+				Kind:        "success",
+				Message:     "webhook payment.created",
+				Details:     "amount=18500 currency=EUR",
 			},
-			Status:        "valid",
-			EffectiveDate: "2023-01-08",
-			Comment:       "CC orderId 42",
 		},
-	}, []mailservice.MailSendDto{}, []entity.ProtocolEntry{
-		{
-			ReferenceId: "221216-122218-000001",
-			ApiId:       "42",
-			Kind:        "success",
-			Message:     "webhook query-pay-link",
-			Details:     "status=confirmed amount=390",
+	)
+}
+
+func TestWebhook_Success_ChargeCreated(t *testing.T) {
+	docs.Description("payment.charge.created.v2 events are logged but otherwise ignored")
+	tstWebhookSuccessCase(t, "payment.charge.created.v2",
+		[]paymentservice.Transaction{},
+		[]mailservice.MailSendDto{},
+		[]entity.ProtocolEntry{
+			{
+				ReferenceId: "",
+				ApiId:       "ef00000000000000000000000000cafe",
+				Kind:        "success",
+				Message:     "webhook payment.charge.created.v2",
+				Details:     "method=Visa type=CARD amount=18500 currency=EUR",
+			},
 		},
-	})
+	)
 }
 
 func TestWebhook_Success_Status_Ignored(t *testing.T) {
@@ -129,7 +146,7 @@ func TestWebhook_WrongSecret(t *testing.T) {
 	url := "/api/rest/v1/webhook/wrongsecret"
 
 	docs.When("when they attempt to trigger our webhook endpoint")
-	response := tstPerformPost(url, tstBuildValidWebhookRequest(), tstNoToken())
+	response := tstPerformPost(url, tstBuildValidWebhookRequest(t, "payment.created"), tstNoToken())
 
 	docs.Then("then the request fails with the appropriate error")
 	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", nil)
@@ -146,7 +163,7 @@ func TestWebhook_DownstreamError(t *testing.T) {
 
 	docs.When("when they attempt to trigger our webhook endpoint while the downstream api is down")
 	nexiMock.SimulateError(nexi.DownstreamError)
-	response := tstPerformPost(url, tstBuildValidWebhookRequest(), tstNoToken())
+	response := tstPerformPost(url, tstBuildValidWebhookRequest(t, "payment.created"), tstNoToken())
 
 	docs.Then("then the request fails with the appropriate error")
 	tstRequireErrorResponse(t, response, http.StatusBadGateway, "webhook.downstream.error", nil)
@@ -216,28 +233,21 @@ func TestWebhook_Success_Status_WrongPrefix(t *testing.T) {
 
 // --- helpers ---
 
-func tstWebhookSuccessCase(t *testing.T, status string, expectedPaymentServiceRecording []paymentservice.Transaction, expectedMailRecording []mailservice.MailSendDto, expectedProtocol []entity.ProtocolEntry) {
+func tstWebhookSuccessCase(t *testing.T, event string, expectedPaymentServiceRecording []paymentservice.Transaction, expectedMailRecording []mailservice.MailSendDto, expectedProtocol []entity.ProtocolEntry) {
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 
-	docs.Given(fmt.Sprintf("given the payment provider has a transaction in status %s", status))
-	if status != "confirmed" {
-		nexiMock.ManipulateStatus("42", status)
-	}
-
-	docs.Given("and an anonymous caller who knows the secret url")
+	docs.Given("given an anonymous caller who knows the secret url")
 	url := "/api/rest/v1/webhook/demosecret"
 
+	docs.Given("and the payment service has a transaction in status tentative")
+
 	docs.When("when they trigger our webhook endpoint with valid information")
-	response := tstPerformPost(url, tstBuildValidWebhookRequest(), tstNoToken())
+	request := tstBuildValidWebhookRequest(t, event)
+	response := tstPerformPost(url, request, tstNoToken())
 
 	docs.Then("then the request is successful")
 	require.Equal(t, http.StatusOK, response.status)
-
-	docs.Then("and the expected downstream requests have been made to the nexi api")
-	tstRequireNexiRecording(t,
-		"QueryPaymentLink 42",
-	)
 
 	if len(expectedPaymentServiceRecording) == 0 {
 		docs.Then("and no requests to the payment service have been made")
@@ -254,9 +264,20 @@ func tstWebhookSuccessCase(t *testing.T, status string, expectedPaymentServiceRe
 	tstRequireMailServiceRecording(t, expectedMailRecording)
 
 	if len(expectedProtocol) == 0 {
-		docs.Then("and no protocol entries have been written")
+		docs.Then("and no protocol entries (other than the raw request log) have been written")
 	} else {
 		docs.Then("and the expected protocol entries have been written")
 	}
-	tstRequireProtocolEntries(t, expectedProtocol...)
+	fullExpectedProtocol := make([]entity.ProtocolEntry, len(expectedProtocol)+1)
+	fullExpectedProtocol[0] = entity.ProtocolEntry{
+		ReferenceId: "",
+		ApiId:       "",
+		Kind:        "raw",
+		Message:     "webhook request",
+		Details:     request,
+	}
+	for i := 0; i < len(expectedProtocol); i++ {
+		fullExpectedProtocol[i+1] = expectedProtocol[i]
+	}
+	tstRequireProtocolEntries(t, fullExpectedProtocol...)
 }

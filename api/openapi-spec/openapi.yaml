@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
-  title: Payment Nexi Adapter Service
+  title: Nexi Paygate Adapter Service
   description: |-
-    This services provides methods to create and managed Nexi Payment Links.
-    It also provides a valid callback endpoint for the Nexi Payment Link
+    This services provides methods to create and manage hosted payment pages.
+    It also provides a valid callback endpoint for the Paygate
     service to notify us of change events.
   license:
     name: MIT
@@ -90,7 +90,7 @@ paths:
     get:
       tags:
         - paylinks
-      summary: Find payment link by id
+      summary: Find payment link by id (NOT YET IMPLEMENTED)
       description: |-
         Returns a single link, fetching the current status from
         the downstream Nexi checkout backend.
@@ -146,7 +146,7 @@ paths:
     delete:
       tags:
         - paylinks
-      summary: Delete a payment link by id
+      summary: Delete a payment link by id (NOT YET IMPLEMENTED)
       description: Removes a checkout from the upstream Nexi backend
       operationId: deletePaymentLinkById
       parameters:
@@ -305,58 +305,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /transactions/replay:
-    post:
-      tags:
-        - transactions
-      summary: Replay n days of transactions (NOT YET IMPLEMENTED)
-      description: |-
-        Replay n days of transactions to the payment service, reading them from
-        the Nexi backend. This is intended as a safety measure in case
-        transaction events were lost and need to be repeated. The payment service
-        is required to be idempotent regarding transaction event notifications.
-      operationId: transactionReplay
-      parameters:
-        - name: days
-          in: query
-          description: number of days to replay transactions for
-          required: true
-          schema:
-            type: number
-            default: 1
-      responses:
-        '200':
-          description: Successfully replayed
-        '400':
-          description: Invalid number of days supplied
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Authorization required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: You do not have permission to replay transactions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: An unexpected error occurred. A best effort attempt is made to return details in the body.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '502':
-          description: The Nexi backend could not be reached.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
   /health:
     get:
       tags:
@@ -475,42 +423,35 @@ components:
     WebhookEvent:
       type: object
       required:
-        - transaction
+        - event
+        - data
       additionalProperties: true
+      description: |-
+        webhook event data structure. See
+        https://developer.nexigroup.com/nexi-checkout/en-EU/api/payment-webhooks-v1/
+        for further details.
       properties:
-        transaction:
+        id:
+          type: string
+          example: "d4e7f0d40d704fe3a655ddd941a33f3d"
+        event:
+          type: string
+          enum:
+            - payment.checkout.completed
+            - payment.cancel.created
+            - payment.charge.created
+            - payment.charge.created.v2
+            - payment.charge.failed
+            - payment.charge.failed.v2
+            - payment.created
+          description: |-
+            event determines the structure under data. See the official API docs for further details.
+            
+            This specification only lists the events that are relevant for our use cases.
+        data:
           type: object
-          required:
-            - id
-            - invoice
           additionalProperties: true
-          properties:
-            id:
-              type: integer
-              format: int64
-              minimum: 1
-              description: Id of the transaction.
-              example: 711
-            invoice:
-              type: object
-              required:
-                - referenceId
-                - paymentRequestId
-              additionalProperties: true
-              properties:
-                referenceId:
-                  type: string
-                  minimum: 1
-                  minLength: 1
-                  maxLength: 80
-                  description: reference id we used to create the payment link.
-                  example: ab23-1870ffe6-ca1778de7-0167
-                paymentRequestId:
-                  type: integer
-                  format: int64
-                  minimum: 1
-                  description: id of the payment link concerned.
-                  example: 42
+          description: union, exact structure depends on the value of event. See the official API docs for further details.
     HealthReport:
       type: object
       required:

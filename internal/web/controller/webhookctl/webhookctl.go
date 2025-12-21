@@ -7,7 +7,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"strings"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
@@ -64,10 +63,10 @@ func parseBodyToWebhookDtoTolerant(ctx context.Context, w http.ResponseWriter, r
 	}
 
 	if config.LogFullRequests() {
-		bodyStr := string(bodyBytes)
-		bodyStr = strings.ReplaceAll(bodyStr, "\r", "")
-		bodyStr = strings.ReplaceAll(bodyStr, "\n", "\\n")
-		aulogging.Logger.Ctx(ctx).Info().Print("webhook request: " + bodyStr)
+		if err := paymentLinkService.LogRawWebhook(ctx, string(bodyBytes)); err != nil {
+			// log and ignore
+			aulogging.Logger.Ctx(ctx).Error().Printf("failed to write incoming webhook payload to database: %s", err.Error())
+		}
 	}
 
 	decoder := json.NewDecoder(bytes.NewReader(bodyBytes))

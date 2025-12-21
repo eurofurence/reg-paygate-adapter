@@ -26,7 +26,10 @@ type PaymentLinkService interface {
 	// DeletePaymentLink asks the downstream api to delete the given payment link.
 	DeletePaymentLink(ctx context.Context, id string) error
 
-	// HandleWebhook requests the payment link referenced in the webhook data and reacts to any new payments
+	// LogRawWebhook logs the payload of an incoming webhook both in the DB and the service log
+	LogRawWebhook(ctx context.Context, payload string) error
+
+	// HandleWebhook requests the payment referenced in the webhook data and reacts to any payment status updates
 	HandleWebhook(ctx context.Context, webhook nexiapi.WebhookDto) error
 
 	// SendErrorNotifyMail notifies us about unexpected conditions in this service so we can look at the logs
