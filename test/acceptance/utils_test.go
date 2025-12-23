@@ -291,6 +291,7 @@ func tstExpectedMailNotification(operation string, status string) mailservice.Ma
 			"operation":   operation,
 			"referenceId": "EF1995-000001-221216-122218-4132",
 		},
+		Async: true,
 	}
 }
 
