@@ -28,6 +28,7 @@ func (i *Impl) SendErrorNotifyMail(ctx context.Context, operation string, refere
 		To: []string{
 			notifyMail,
 		},
+		Async: true,
 	}
 
 	err := mailservice.Get().SendEmail(ctx, mailDto)

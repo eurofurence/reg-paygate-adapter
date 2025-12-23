@@ -273,6 +273,7 @@ func TestWebhook_Success_UnexpectedEvents(t *testing.T) {
 							"operation":   "webhook",
 							"referenceId": fmt.Sprintf("unknown event: %s", event),
 						},
+						Async: true,
 					},
 				},
 				[]entity.ProtocolEntry{
@@ -399,6 +400,7 @@ func TestWebhook_Success_Status_WrongPrefix(t *testing.T) {
 				"operation":   "webhook",
 				"referenceId": "EF2001-000001-221216-122218-4132",
 			},
+			Async: true,
 		},
 	})
 
