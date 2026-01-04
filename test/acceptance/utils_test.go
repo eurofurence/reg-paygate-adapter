@@ -188,7 +188,7 @@ func tstBuildValidPaymentLink() nexiapi.PaymentLinkDto {
 		AmountPaid:  0,
 		Currency:    "EUR",
 		VatRate:     19.0,
-		Link:        "http://localhost:1111/some/paylink/mock-101",
+		Link:        "http://localhost:1111/some/paylink/EF1995-000001-221216-122218-4132",
 	}
 }
 

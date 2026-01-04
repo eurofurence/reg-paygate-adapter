@@ -2,11 +2,14 @@ package nexi
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"sync/atomic"
 	"time"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
 	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
 )
 
@@ -18,17 +21,21 @@ type Mock interface {
 	SimulateError(err error)
 	InjectTransaction(tx TransactionData)
 	ManipulateStatus(paylinkId string, status string)
+
+	GetCachedWebhook(referenceId string) (nexiapi.WebhookDto, error)
 }
 
 type mockImpl struct {
 	recording     []string
 	simulateError error
 	simulatorData map[string]NexiPaymentQueryResponse
+	webhookCache  map[string]nexiapi.WebhookDto
 	idSequence    uint32
 	simulatorTx   []TransactionData
 }
 
 func newMock() Mock {
+	// not actually queried, but currently used by some test cases
 	simData := make(map[string]NexiPaymentQueryResponse)
 	// used by some testcases
 	simData["42"] = NexiPaymentQueryResponse{
@@ -75,10 +82,13 @@ func newMock() Mock {
 		Refunds:  []NexiRefund{},
 		Charges:  []NexiCharge{},
 	}
+
+	webhookCache := make(map[string]nexiapi.WebhookDto)
 	return &mockImpl{
 		recording:     make([]string, 0),
 		simulatorData: simData,
 		simulatorTx:   make([]TransactionData, 0),
+		webhookCache:  webhookCache,
 		idSequence:    100,
 	}
 }
@@ -102,36 +112,56 @@ func (m *mockImpl) CreatePaymentLink(ctx context.Context, request NexiCreatePaym
 	newId := fmt.Sprintf("mock-%d", newIdNum)
 	response := NexiPaymentLinkCreated{
 		ID:   newId,
-		Link: constructSimulatedPaylink(newId),
+		Link: constructSimulatedPaylink(request.Order.Reference),
 	}
-	data := NexiPaymentQueryResponse{
-		ID:          newId,
-		Status:      "confirmed",
-		ReferenceID: request.Order.Reference,
-		Link:        response.Link,
-		Amount:      request.Order.Amount,
-		Currency:    request.Order.Currency,
-		CreatedAt:   1418392958,
-		VatRate:     19.0,
-		Order: NexiOrderDetails{
-			Reference: request.Order.Reference,
-			Amount:    request.Order.Amount,
-			Currency:  request.Order.Currency,
-			Items:     request.Order.Items,
+
+	webhookData := nexiapi.DataPaymentCheckoutCompleted{}
+	webhookData.Order.Reference = request.Order.Reference
+	webhookData.Order.Amount.Amount = request.Order.Amount
+	webhookData.Order.Amount.Currency = request.Order.Currency
+	webhookData.Order.OrderItems = []struct {
+		GrossTotalAmount int32   `json:"grossTotalAmount"`
+		Name             string  `json:"name"`
+		NetTotalAmount   int32   `json:"netTotalAmount"`
+		Quantity         float64 `json:"quantity"`
+		Reference        string  `json:"reference"`
+		TaxRate          int32   `json:"taxRate"`
+		TaxAmount        int32   `json:"taxAmount"`
+		Unit             string  `json:"unit"`
+		UnitPrice        int32   `json:"unitPrice"`
+	}{
+		{
+			TaxRate: 1900,
 		},
-		Summary: NexiSummary{
-			ChargedAmount: request.Order.Amount,
-		},
-		Consumer: NexiConsumerFull{},
-		Payments: []NexiPaymentDetails{},
-		Refunds:  []NexiRefund{},
-		Charges:  []NexiCharge{},
+	}
+	if len(request.Order.Items) > 0 {
+		webhookData.Order.OrderItems[0].TaxRate = request.Order.Items[0].TaxRate // only field actually used
+	}
+	webhookData.PaymentId = newId
+
+	webhookDataJson, err := json.Marshal(webhookData)
+	if err != nil {
+		return response, err
+	}
+
+	webhook := nexiapi.WebhookDto{
+		Id:    newId,
+		Event: nexiapi.EventPaymentCheckoutCompleted,
+		Data:  webhookDataJson,
 	}
 
 	aulogging.Logger.Ctx(ctx).Info().Printf("mock creating payment link id=%s amount=%d curr=%s", newId, request.Order.Amount, request.Order.Currency)
 
-	m.simulatorData[newId] = data
+	m.webhookCache[request.Order.Reference] = webhook
 	return response, nil
+}
+
+func (m *mockImpl) GetCachedWebhook(referenceId string) (nexiapi.WebhookDto, error) {
+	webhook, ok := m.webhookCache[referenceId]
+	if !ok {
+		return nexiapi.WebhookDto{}, errors.New("webhook not found")
+	}
+	return webhook, nil
 }
 
 func (m *mockImpl) QueryPaymentLink(ctx context.Context, id string) (NexiPaymentQueryResponse, error) {

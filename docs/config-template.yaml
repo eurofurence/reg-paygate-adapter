@@ -3,7 +3,7 @@ service:
   # my own public URL, leave unset for the very basic mock used in unit tests
   # if nexi_downstream is set, this configures the webhook URL (and turns on requesting webhooks with payments)
   # if nexi_downstream is unset, this is mandatory, the base url used for built-in simulator payment links
-  public_url: 'http://localhost:10000/nexisrv' # do not add trailing /
+  public_url: 'http://localhost:10000/paygatesrv' # do not add trailing /
   # base url of the attendee service, leave blank to use simple in-memory simulator (not useful for production)
   attendee_service: 'http://localhost:9091' # do not add trailing /
   # base url of the mail service, leave blank to use simple in-memory simulator (not useful for production)
