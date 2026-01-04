@@ -7,10 +7,10 @@ package simulatorctl
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
@@ -20,7 +20,6 @@ import (
 	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
-	"github.com/google/uuid"
 )
 
 var paymentLinkService paymentlinksrv.PaymentLinkService
@@ -33,65 +32,40 @@ func Create(server chi.Router, paymentLinkSrv paymentlinksrv.PaymentLinkService)
 func useSimulator(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	id, err := idFromVars(ctx, w, r)
+	referenceId, err := idFromVars(ctx, w, r)
 	if err != nil {
-		return
-	}
-
-	paylink, err := paymentLinkService.GetPaymentLink(ctx, id)
-	if err != nil {
-		errorHandler(ctx, w, http.StatusNotFound, "not found", fmt.Sprintf("simulator paylink with id %s not found (may be lost from memory after restart)", id))
 		return
 	}
 
 	mock := nexi.Get().(nexi.Mock)
-	tx := nexi.TransactionData{
-		UUID:        uuid.New().String(),
-		Amount:      paylink.AmountDue,
-		Status:      "confirmed",
-		Time:        "2022-10-15 15:50:20",
-		Lang:        "DEU",
-		PageUUID:    "",
-		Payment:     nexi.Payment{Brand: "visa"},
-		Psp:         "ConCardis_PayEngine_3",
-		PspID:       29,
-		Mode:        "TEST",
-		ReferenceID: paylink.ReferenceId,
-		Invoice: nexi.Invoice{
-			Currency: "EUR",
-		},
+
+	event, err := mock.GetCachedWebhook(referenceId)
+	if err != nil {
+		errorHandler(ctx, w, http.StatusNotFound, "not found", fmt.Sprintf("simulator paylink with id %s not found (may be lost from memory after restart)", referenceId))
+		return
 	}
-	mock.InjectTransaction(tx)
+	var data nexiapi.DataPaymentCheckoutCompleted
+	err = json.Unmarshal(event.Data, &data)
+	if err != nil {
+		errorHandler(ctx, w, http.StatusInternalServerError,
+			"failed to report to local webhook - see log for details",
+			fmt.Sprintf("failed to unmarshal cached webhook for %s: %s", referenceId, err.Error()),
+		)
+	}
 
 	selfCaller := self.Get()
-	// For simulator, use a dummy id since webhook expects int
-	var paymentReqId int64 = 42
-	if parsed, err := strconv.ParseInt(id, 10, 64); err == nil {
-		paymentReqId = parsed
-	}
-	event := nexiapi.WebhookDto{
-		// TODO this is nonsense
-		Id: fmt.Sprintf("%d", paymentReqId),
-		//Transaction: nexiapi.WebhookEventTransaction{
-		//	Id: tx.ID,
-		//	Invoice: nexiapi.WebhookEventTransactionInvoice{
-		//		ReferenceId:      paylink.ReferenceId,
-		//		PaymentRequestId: paymentReqId,
-		//	},
-		//},
-	}
 	err = selfCaller.CallWebhook(ctx, event)
 	if err != nil {
 		errorHandler(ctx, w, http.StatusInternalServerError,
 			"failed to report to local webhook - see log for details",
-			fmt.Sprintf("failed to report %s to webhook: %s", paylink.ReferenceId, err.Error()),
+			fmt.Sprintf("failed to report %s to webhook: %s", referenceId, err.Error()),
 		)
 		return
 	}
 
 	successHandler(ctx, w,
-		fmt.Sprintf("paid refId %s for %0.2f %s", paylink.ReferenceId, float64(tx.Amount)/100.0, tx.Invoice.Currency),
-		fmt.Sprintf("simulator paid refId %s for %0.2f %s", paylink.ReferenceId, float64(tx.Amount)/100.0, tx.Invoice.Currency),
+		fmt.Sprintf("paid refId %s for %0.2f %s", referenceId, float64(data.Order.Amount.Amount)/100.0, data.Order.Amount.Currency),
+		fmt.Sprintf("simulator paid refId %s for %0.2f %s", referenceId, float64(data.Order.Amount.Amount)/100.0, data.Order.Amount.Currency),
 	)
 }
 
