@@ -37,6 +37,7 @@ type PaymentLinkService interface {
 }
 
 var (
+	ReceivedEmptyPaylink    = errors.New("received empty paylink")
 	WebhookValidationErr    = errors.New("webhook referenced invalid invoice id, must be positive integer")
 	WebhookRefIdMismatchErr = errors.New("webhook reference_id differes from paylink reference_id")
 )

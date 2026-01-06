@@ -69,9 +69,9 @@ logging:
 		"configuration error: security.fixed.api: security.fixed.api field must be at least 16 and at most 256 characters long",
 		"configuration error: security.fixed.webhook: security.fixed.webhook field must be at least 8 and at most 64 characters long",
 		"configuration error: server.port: server.port field must be an integer at least 1024 and at most 65535",
-		"configuration error: service.nexi_api_secret: service.nexi_api_secret field must be at least 1 and at most 256 characters long",
+		"configuration error: service.nexi_api_key: service.nexi_api_key field must be at least 1 and at most 256 characters long",
 		"configuration error: service.nexi_downstream: base url must be empty (enables local simulator) or start with http:// or https:// and may not end in a /",
-		"configuration error: service.nexi_instance: service.nexi_instance field must be at least 1 and at most 256 characters long",
+		"configuration error: service.nexi_merchant_id: service.nexi_merchant_id field must be at least 1 and at most 256 characters long",
 		"configuration error: service.payment_service: base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /",
 		"configuration error: service.public_url: public url must be empty or start with http:// or https:// and may not end in a /",
 		"configuration error: service.terms_url: terms url must start with http:// or https://, and cannot be empty",
@@ -89,8 +89,8 @@ database:
   use: inmemory
 service:
   public_url: 'http://localhost/hello'
-  nexi_instance: 'my-demo-instance'
-  nexi_api_secret: 'my-demo-secret'
+  nexi_merchant_id: 'my-demo-merchant'
+  nexi_api_key: 'my-demo-secret'
   terms_url: 'http://localhost/terms'
 invoice:
   title: 'demo title'

@@ -14,17 +14,11 @@ service:
   # base url for the Nexi downstream, leave blank to use the local simulator (should set public_url or generated paylinks will not work)
   # nexi_downstream: 'https://test.api.dibspayment.eu' (Test) or 'https://api.dibspayment.eu' (Live)
 
-  # optional CommercePlatformTag header - An identifier of the ecommerce platform
-  # nexi_commerce_platform_tag: 'registration'
+  # secret api key from nexi portal
+  nexi_api_key: 'demosecret'
 
-  # public checkout key from nexi portal, not currently used by adapter.
-  nexi_instance: 'demo'
-
-  # secret api key from nexi portal, used in Authorization header
-  nexi_api_secret: 'demosecret'
-
-  # nexi merchant number, for cross-checking received webhook payloads
-  nexi_merchant_number: '123456789'
+  # nexi merchant id
+  nexi_merchant_id: 'GG1234_56789'
 
   # if set, will add these redirects to the request for the paylink
   success_redirect: 'http://localhost:10000/register'

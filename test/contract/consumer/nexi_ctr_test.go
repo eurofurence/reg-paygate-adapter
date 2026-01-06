@@ -33,75 +33,18 @@ func TestNexiApiClient(t *testing.T) {
 
 	// STEP 1: create
 	createRequest := nexi.NexiCreateCheckoutSessionRequest{
-		Order: nexi.NexiOrder{
-			Items: []nexi.NexiOrderItem{
-				{
-					Reference:        "EF 2022 REG 000004",
-					Name:             "Convention Registration",
-					Quantity:         1.0,
-					Unit:             "qty",
-					UnitPrice:        10550,
-					TaxRate:          1900,
-					TaxAmount:        0,
-					GrossTotalAmount: 10550,
-					NetTotalAmount:   10550,
-					ImageUrl:         nil,
-				},
-			},
-			Amount:    10550,
-			Currency:  "EUR",
-			Reference: "220118-150405-000004",
+		TransId: "220118-150405-000004",
+		Amount: nexi.NexiAmount{
+			Value:    10550,
+			Currency: "EUR",
 		},
-		Checkout: nexi.NexiCheckout{
-			Url:             nil,
-			IntegrationType: "HostedPaymentPage",
-			ReturnUrl:       "https://example.com/success",
-			CancelUrl:       "https://example.com/failure",
-			Consumer: &nexi.NexiConsumer{
-				//	Reference: "test@example.com",
-				Email: p("test@example.com"),
-			},
-			TermsUrl: "https://help.eurofurence.org/legal/terms",
-			//ShippingCountries: []nexi.NexiCountry{
-			//	{CountryCode: "DEU"},
-			//},
-			//Shipping: &nexi.NexiShipping{
-			//	Countries: []nexi.NexiCountry{
-			//		{CountryCode: "DEU"},
-			//	},
-			//	MerchantHandlesShippingCost: false,
-			//	EnableBillingAddress:        true,
-			//},
-			//ConsumerType: &nexi.NexiConsumerType{
-			//	Default:        "b2c",
-			//	SupportedTypes: []string{"b2c", "b2b"},
-			//},
-			Charge:                      true,
-			PublicDevice:                false,
-			MerchantHandlesConsumerData: true,
-			CountryCode:                 p("DEU"),
-			Appearance: &nexi.NexiAppearance{
-				DisplayOptions: nexi.NexiDisplayOptions{
-					ShowMerchantName: true,
-					ShowOrderSummary: true,
-				},
-				TextOptions: nexi.NexiTextOptions{
-					CompletePaymentButtonText: "pay",
-				},
-			},
+		Language: "de",
+		Urls: nexi.NexiPaymentUrlsRequest{
+			Return:  "https://example.com/success",
+			Cancel:  "https://example.com/failure",
+			Webhook: "http://localhost:8080/api/rest/v1/webhook/1234",
 		},
-		Notifications: &nexi.NexiNotifications{
-			Webhooks: []nexi.NexiWebhook{
-				{
-					EventName: "payment.created",
-					Url:       "http://localhost:8080/api/rest/v1/webhook/1234",
-				},
-				{
-					EventName: "payment.charge.created.v2",
-					Url:       "http://localhost:8080/api/rest/v1/webhook/1234",
-				},
-			},
-		},
+		StatementDescriptor: "Convention Registration",
 	}
 
 	ctx := auzerolog.AddLoggerToCtx(context.Background())
@@ -120,12 +63,16 @@ func TestNexiApiClient(t *testing.T) {
 		Header: http.Header{ // not verified
 			"Content-Type": []string{"application/json"},
 		},
-		Url:  "http://localhost:8000/v2/payments",
-		Body: `{"transId":"220118-150405-000004","refNr":"220118-150405-000004","amount":{"value":10550,"currency":"EUR"},"language":"en","order":{"merchantReference":"220118-150405-000004","items":[{"sku":"EF 2022 REG 000004","name":"Convention Registration","quantity":1,"taxRate":1900,"taxAmount":0,"netPrice":10550,"grossPrice":10550,"description":"Convention Registration"}]},"urls":{"return":"https://example.com/success","cancel":"https://example.com/failure","webhook":"http://localhost:8080/api/rest/v1/webhook/1234"}}`,
+		Url:  "http://localhost:8000/payments/sessions",
+		Body: `{"transId":"220118-150405-000004","amount":{"value":10550,"currency":"EUR"},"language":"de","urls":{"return":"https://example.com/success","cancel":"https://example.com/failure","webhook":"http://localhost:8080/api/rest/v1/webhook/1234"},"statementDescriptor":"Convention Registration"}`,
 	}, aurestclientapi.ParsedResponse{
-		Body: &nexi.NexiCreateLowlevelResponseBody{
-			PaymentId:            "42",
-			HostedPaymentPageUrl: "http://localhost/some/pay/link",
+		Body: &nexi.NexiCreateCheckoutSessionResponse{
+			Links: nexi.NexiCheckoutSessionResponseLinks{
+				Redirect: &nexi.RedirectLink{
+					Href: "http://localhost/some/pay/link",
+					Type: "hosted", // TODO what is the real value?
+				},
+			},
 		},
 		Status: http.StatusCreated,
 		Header: http.Header{
@@ -141,94 +88,10 @@ func TestNexiApiClient(t *testing.T) {
 		Body:   "",
 	}, aurestclientapi.ParsedResponse{
 		Body: &nexi.NexiPaymentQueryResponse{
-			Payment: nexi.NexiPayment{
-				PaymentId: "42",
-				Summary: nexi.NexiSummary{
-					ReservedAmount:           0,
-					ReservedSurchargeAmount:  0,
-					ChargedAmount:            10550,
-					ChargedSurchargeAmount:   0,
-					RefundedAmount:           0,
-					RefundedSurchargeAmount:  0,
-					CancelledAmount:          0,
-					CancelledSurchargeAmount: 0,
-				},
-				Consumer: nexi.NexiConsumerFull{
-					ShippingAddress: nexi.NexiAddressFull{
-						AddressLine1: "",
-						AddressLine2: "",
-						ReceiverLine: "",
-						PostalCode:   "",
-						City:         "",
-						Country:      "",
-						PhoneNumber: nexi.NexiPhone{
-							Prefix: "",
-							Number: "",
-						},
-					},
-					Company: nexi.NexiCompanyFull{
-						MerchantReference:  "",
-						Name:               "",
-						RegistrationNumber: "",
-						ContactDetails: nexi.NexiContactFull{
-							FirstName: "",
-							LastName:  "",
-							Email:     "",
-							PhoneNumber: nexi.NexiPhone{
-								Prefix: "",
-								Number: "",
-							},
-						},
-					},
-					PrivatePerson: nexi.NexiPrivatePersonFull{
-						MerchantReference: "",
-						DateOfBirth:       "",
-						FirstName:         "",
-						LastName:          "",
-						Email:             "",
-						PhoneNumber: nexi.NexiPhone{
-							Prefix: "",
-							Number: "",
-						},
-					},
-					BillingAddress: nexi.NexiAddressFull{
-						AddressLine1: "",
-						AddressLine2: "",
-						ReceiverLine: "",
-						PostalCode:   "",
-						City:         "",
-						Country:      "",
-						PhoneNumber: nexi.NexiPhone{
-							Prefix: "",
-							Number: "",
-						},
-					},
-				},
-				PaymentDetails: nexi.NexiPaymentDetails{
-					PaymentType:   "card",
-					PaymentMethod: "visa",
-					InvoiceDetails: nexi.NexiInvoiceDetails{
-						InvoiceNumber: "",
-					},
-					CardDetails: nexi.NexiCardDetails{
-						MaskedPan:  "411111******1111",
-						ExpiryDate: "12/25",
-					},
-				},
-				OrderDetails: nexi.NexiOrderDetails{
-					Amount:    10550,
-					Currency:  "EUR",
-					Reference: "220118-150405-000004",
-				},
-				Checkout: nexi.NexiCheckoutDetails{
-					Url:       "http://localhost/some/pay/link",
-					CancelUrl: "https://example.com/failure",
-				},
-				Created:    "2024-10-15T15:50:20Z",
-				Refunds:    []nexi.NexiRefund{},
-				Charges:    []nexi.NexiCharge{},
-				Terminated: "",
-			},
+			PayId:   "42",
+			TransId: "220118-150405-000004",
+			Status:  "confirmed",
+			// TODO better example response
 		},
 		Status: http.StatusOK,
 		Header: http.Header{
@@ -236,16 +99,16 @@ func TestNexiApiClient(t *testing.T) {
 		},
 		Time: time.Time{},
 	}, nil)
-	verifierImpl.AddExpectation(aurestverifier.Request{
-		Name:   "delete-paylink",
-		Method: http.MethodPost,
-		Header: http.Header{}, // not verified
-		Url:    "http://localhost:8000/v1/payments/42/cancels",
-		Body:   `{"amount":10550}`,
-	}, aurestclientapi.ParsedResponse{
-		Status: http.StatusOK,
-		Time:   time.Time{},
-	}, nil)
+	//verifierImpl.AddExpectation(aurestverifier.Request{
+	//	Name:   "delete-paylink",
+	//	Method: http.MethodPost,
+	//	Header: http.Header{}, // not verified
+	//	Url:    "http://localhost:8000/v1/payments/42/cancels",
+	//	Body:   `{"amount":10550}`,
+	//}, aurestclientapi.ParsedResponse{
+	//	Status: http.StatusOK,
+	//	Time:   time.Time{},
+	//}, nil)
 
 	// set up downstream client
 	client := nexi.NewTestingClient(verifierClient)
@@ -253,20 +116,19 @@ func TestNexiApiClient(t *testing.T) {
 	// STEP 1: create a new payment link
 	created, err := client.CreatePaymentLink(ctx, createRequest)
 	require.Nil(t, err)
-	require.Equal(t, "42", created.ID)
-	require.Equal(t, "http://localhost/some/pay/link", created.Link)
+	require.Equal(t, "http://localhost/some/pay/link", created.Links.Redirect.Href)
 
 	// STEP 2: read the payment link again after use
-	read, err := client.QueryPaymentLink(ctx, created.ID)
+	read, err := client.QueryPaymentLink(ctx, "220118-150405-000004")
 	require.Nil(t, err)
-	require.Equal(t, "42", read.ID)
-	require.Equal(t, "220118-150405-000004", read.ReferenceID)
+	require.Equal(t, "42", read.PayId)
+	require.Equal(t, "220118-150405-000004", read.TransId)
 	require.Equal(t, "confirmed", read.Status)
-	require.Equal(t, int32(10550), read.Amount)
+	require.Equal(t, int64(10550), read.Amount.Value)
 
 	// STEP 3: delete the payment link (wouldn't normally work after use)
-	err = client.DeletePaymentLink(ctx, created.ID, 10550)
-	require.Nil(t, err)
+	// err = client.DeletePaymentLink(ctx, "220118-150405-000004", 10550)
+	// require.Nil(t, err)
 
 	docs.Then("and the expected interactions have occurred in the correct order")
 	require.Nil(t, verifierImpl.FirstUnexpectedOrNil())

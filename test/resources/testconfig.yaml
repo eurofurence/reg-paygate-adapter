@@ -1,7 +1,7 @@
 service:
   name: 'Registration Nexi Adapter Unit Testing Configuration'
-  nexi_instance: 'myinstance'
-  nexi_api_secret: 'mydemosecret'
+  nexi_api_key: 'mydemosecret'
+  nexi_merchant_id: 'mymerchant'
   transaction_id_prefix: "EF1995"
   # use a port that will fail if accessed - tests should mock the downstream
   nexi_downstream: 'http://localhost:63000'

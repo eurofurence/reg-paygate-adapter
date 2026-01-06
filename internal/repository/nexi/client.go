@@ -23,9 +23,8 @@ import (
 )
 
 type Impl struct {
-	client       aurestclientapi.Client
-	baseUrl      string
-	instanceName string
+	client  aurestclientapi.Client
+	baseUrl string
 }
 
 func requestManipulator(ctx context.Context, r *http.Request) {
@@ -57,17 +56,15 @@ func newClient() (NexiDownstream, error) {
 	)
 
 	return &Impl{
-		client:       circuitBreakerClient,
-		baseUrl:      config.NexiDownstreamBaseUrl(),
-		instanceName: config.NexiInstanceName(),
+		client:  circuitBreakerClient,
+		baseUrl: config.NexiDownstreamBaseUrl(),
 	}, nil
 }
 
 func NewTestingClient(verifierClient aurestclientapi.Client) NexiDownstream {
 	return &Impl{
-		client:       verifierClient,
-		baseUrl:      config.NexiDownstreamBaseUrl(),
-		instanceName: config.NexiInstanceName(),
+		client:  verifierClient,
+		baseUrl: config.NexiDownstreamBaseUrl(),
 	}
 }
 
@@ -77,7 +74,7 @@ type NexiCreateLowlevelResponseBody struct {
 }
 
 func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreateCheckoutSessionRequest) (NexiCreateCheckoutSessionResponse, error) {
-	requestUrl := fmt.Sprintf("%s/v2/payments/sessions", i.baseUrl)
+	requestUrl := fmt.Sprintf("%s/payments/sessions", i.baseUrl)
 	requestBody, err := json.Marshal(request)
 	if err != nil {
 		return NexiCreateCheckoutSessionResponse{}, fmt.Errorf("failed to marshal request: %v", err)
@@ -137,7 +134,6 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreateCheckout
 			bodyStr = strings.ReplaceAll(bodyStr, " ", "")
 			_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
 				ReferenceId: request.TransId,
-				ApiId:       responseBody.PaymentId,
 				Kind:        "raw",
 				Message:     "nexi create success response",
 				Details:     bodyStr,
@@ -145,14 +141,11 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreateCheckout
 			})
 		}
 	}
-	return NexiCreateCheckoutSessionResponse{
-		ID:   responseBody.PaymentId,
-		Link: responseBody.HostedPaymentPageUrl,
-	}, nil
+	return responseBody, nil
 }
 
 func (i *Impl) QueryPaymentLink(ctx context.Context, paymentId string) (NexiPaymentQueryResponse, error) {
-	requestUrl := fmt.Sprintf("%s/v1/payments/%s", i.baseUrl, paymentId)
+	requestUrl := fmt.Sprintf("%s/payments/getByPayId/%s", i.baseUrl, paymentId)
 	response := aurestclientapi.ParsedResponse{
 		Body: &NexiPaymentQueryResponse{},
 	}
@@ -166,47 +159,9 @@ func (i *Impl) QueryPaymentLink(ctx context.Context, paymentId string) (NexiPaym
 	return *result, nil
 }
 
-func determineStatusFromSummary(summary NexiSummary) string {
-	// Simple status determination based on amounts
-	if summary.ChargedAmount > 0 {
-		return "confirmed"
-	} else if summary.CancelledAmount > 0 {
-		return "cancelled"
-	} else {
-		return "waiting"
-	}
-}
-
-func parseCreatedDate(created string) int64 {
-	// Parse ISO date to int64 timestamp
-	if t, err := time.Parse(time.RFC3339, created); err == nil {
-		return t.Unix()
-	}
-	return 0
-}
-
-// delete does not return a response body?
-type deleteLowlevelResponseBody struct {
-	Status string `json:"status"`
-}
-
-func (i *Impl) DeletePaymentLink(ctx context.Context, paymentId string, amount int32) error {
-	requestUrl := fmt.Sprintf("%s/v1/payments/%s/cancels", i.baseUrl, paymentId)
-	cancelPayload := map[string]int32{"amount": amount}
-	requestBody, err := json.Marshal(cancelPayload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal cancel request: %v", err)
-	}
-	response := aurestclientapi.ParsedResponse{
-		Body: &map[string]interface{}{}, // cancels returns errors or empty
-	}
-	if err := i.client.Perform(ctx, http.MethodPost, requestUrl, string(requestBody), &response); err != nil {
-		return err
-	}
-	if response.Status >= 300 {
-		return fmt.Errorf("unexpected response status %d", response.Status)
-	}
-	return nil
+func (i *Impl) DeletePaymentLink(ctx context.Context, paymentId string, amount int64) error {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (i *Impl) QueryTransactions(ctx context.Context, timeGreaterThan time.Time, timeLessThan time.Time) ([]TransactionData, error) {

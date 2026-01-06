@@ -2,7 +2,6 @@ package nexi
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sync/atomic"
@@ -38,50 +37,50 @@ func newMock() Mock {
 	// not actually queried, but currently used by some test cases
 	simData := make(map[string]NexiPaymentQueryResponse)
 	// used by some testcases
-	simData["42"] = NexiPaymentQueryResponse{
-		ID:          "42",
-		Status:      "confirmed",
-		ReferenceID: "EF1995-000001-221216-122218-4132",
-		Link:        constructSimulatedPaylink("42"),
-		Amount:      390,
-		Currency:    "EUR",
-		CreatedAt:   1673136000, // 2023-01-08
-		VatRate:     19.0,
-		Order: NexiOrderDetails{
-			Reference: "EF1995-000001-221216-122218-4132",
-			Amount:    390,
-			Currency:  "EUR",
-		},
-		Summary: NexiSummary{
-			ChargedAmount: 390,
-		},
-		Consumer: NexiConsumerFull{},
-		Payments: []NexiPaymentDetails{},
-		Refunds:  []NexiRefund{},
-		Charges:  []NexiCharge{},
-	}
-	simData["4242"] = NexiPaymentQueryResponse{
-		ID:          "4242",
-		Status:      "confirmed",
-		ReferenceID: "EF1995-000001-230001-122218-5555",
-		Link:        constructSimulatedPaylink("5555"),
-		Amount:      390,
-		Currency:    "EUR",
-		CreatedAt:   1418392958,
-		VatRate:     19.0,
-		Order: NexiOrderDetails{
-			Reference: "EF1995-000001-230001-122218-5555",
-			Amount:    390,
-			Currency:  "EUR",
-		},
-		Summary: NexiSummary{
-			ChargedAmount: 390,
-		},
-		Consumer: NexiConsumerFull{},
-		Payments: []NexiPaymentDetails{},
-		Refunds:  []NexiRefund{},
-		Charges:  []NexiCharge{},
-	}
+	//simData["42"] = NexiPaymentQueryResponse{
+	//	ID:          "42",
+	//	Status:      "confirmed",
+	//	ReferenceID: "EF1995-000001-221216-122218-4132",
+	//	Link:        constructSimulatedPaylink("42"),
+	//	Amount:      390,
+	//	Currency:    "EUR",
+	//	CreatedAt:   1673136000, // 2023-01-08
+	//	VatRate:     19.0,
+	//	Order: NexiOrderDetails{
+	//		Reference: "EF1995-000001-221216-122218-4132",
+	//		Amount:    390,
+	//		Currency:  "EUR",
+	//	},
+	//	Summary: NexiSummary{
+	//		ChargedAmount: 390,
+	//	},
+	//	Consumer: NexiConsumerFull{},
+	//	Payments: []NexiPaymentDetails{},
+	//	Refunds:  []NexiRefund{},
+	//	Charges:  []NexiCharge{},
+	//}
+	//simData["4242"] = NexiPaymentQueryResponse{
+	//	ID:          "4242",
+	//	Status:      "confirmed",
+	//	ReferenceID: "EF1995-000001-230001-122218-5555",
+	//	Link:        constructSimulatedPaylink("5555"),
+	//	Amount:      390,
+	//	Currency:    "EUR",
+	//	CreatedAt:   1418392958,
+	//	VatRate:     19.0,
+	//	Order: NexiOrderDetails{
+	//		Reference: "EF1995-000001-230001-122218-5555",
+	//		Amount:    390,
+	//		Currency:  "EUR",
+	//	},
+	//	Summary: NexiSummary{
+	//		ChargedAmount: 390,
+	//	},
+	//	Consumer: NexiConsumerFull{},
+	//	Payments: []NexiPaymentDetails{},
+	//	Refunds:  []NexiRefund{},
+	//	Charges:  []NexiCharge{},
+	//}
 
 	webhookCache := make(map[string]nexiapi.WebhookDto)
 	return &mockImpl{
@@ -111,48 +110,50 @@ func (m *mockImpl) CreatePaymentLink(ctx context.Context, request NexiCreateChec
 	newIdNum := atomic.AddUint32(&m.idSequence, 1)
 	newId := fmt.Sprintf("mock-%d", newIdNum)
 	response := NexiCreateCheckoutSessionResponse{
-		ID:   newId,
-		Link: constructSimulatedPaylink(request.Order.Reference),
+		Links: NexiCheckoutSessionResponseLinks{Redirect: &RedirectLink{
+			Href: constructSimulatedPaylink(request.TransId),
+			Type: "", // TODO
+		}},
 	}
 
-	webhookData := nexiapi.DataPaymentCheckoutCompleted{}
-	webhookData.Order.Reference = request.Order.Reference
-	webhookData.Order.Amount.Amount = request.Order.Amount
-	webhookData.Order.Amount.Currency = request.Order.Currency
-	webhookData.Order.OrderItems = []struct {
-		GrossTotalAmount int32   `json:"grossTotalAmount"`
-		Name             string  `json:"name"`
-		NetTotalAmount   int32   `json:"netTotalAmount"`
-		Quantity         float64 `json:"quantity"`
-		Reference        string  `json:"reference"`
-		TaxRate          int32   `json:"taxRate"`
-		TaxAmount        int32   `json:"taxAmount"`
-		Unit             string  `json:"unit"`
-		UnitPrice        int32   `json:"unitPrice"`
-	}{
-		{
-			TaxRate: 1900,
-		},
-	}
-	if len(request.Order.Items) > 0 {
-		webhookData.Order.OrderItems[0].TaxRate = request.Order.Items[0].TaxRate // only field actually used
-	}
-	webhookData.PaymentId = newId
+	//webhookData := nexiapi.DataPaymentCheckoutCompleted{}
+	//webhookData.Order.Reference = request.Order.Reference
+	//webhookData.Order.Amount.Amount = request.Order.Amount
+	//webhookData.Order.Amount.Currency = request.Order.Currency
+	//webhookData.Order.OrderItems = []struct {
+	//	GrossTotalAmount int32   `json:"grossTotalAmount"`
+	//	Name             string  `json:"name"`
+	//	NetTotalAmount   int32   `json:"netTotalAmount"`
+	//	Quantity         float64 `json:"quantity"`
+	//	Reference        string  `json:"reference"`
+	//	TaxRate          int32   `json:"taxRate"`
+	//	TaxAmount        int32   `json:"taxAmount"`
+	//	Unit             string  `json:"unit"`
+	//	UnitPrice        int32   `json:"unitPrice"`
+	//}{
+	//	{
+	//		TaxRate: 1900,
+	//	},
+	//}
+	//if len(request.Order.Items) > 0 {
+	//	webhookData.Order.OrderItems[0].TaxRate = request.Order.Items[0].TaxRate // only field actually used
+	//}
+	//webhookData.PaymentId = newId
+	//
+	//webhookDataJson, err := json.Marshal(webhookData)
+	//if err != nil {
+	//	return response, err
+	//}
+	//
+	//webhook := nexiapi.WebhookDto{
+	//	Id:    newId,
+	//	Event: nexiapi.EventPaymentCheckoutCompleted,
+	//	Data:  webhookDataJson,
+	//}
 
-	webhookDataJson, err := json.Marshal(webhookData)
-	if err != nil {
-		return response, err
-	}
+	aulogging.Logger.Ctx(ctx).Info().Printf("mock creating payment link id=%s amount=%d curr=%s", newId, request.Amount.Value, request.Amount.Currency)
 
-	webhook := nexiapi.WebhookDto{
-		Id:    newId,
-		Event: nexiapi.EventPaymentCheckoutCompleted,
-		Data:  webhookDataJson,
-	}
-
-	aulogging.Logger.Ctx(ctx).Info().Printf("mock creating payment link id=%s amount=%d curr=%s", newId, request.Order.Amount, request.Order.Currency)
-
-	m.webhookCache[request.Order.Reference] = webhook
+	// m.webhookCache[request.Order.Reference] = webhook
 	return response, nil
 }
 
@@ -177,7 +178,7 @@ func (m *mockImpl) QueryPaymentLink(ctx context.Context, id string) (NexiPayment
 	return copiedData, nil
 }
 
-func (m *mockImpl) DeletePaymentLink(ctx context.Context, id string, amount int32) error {
+func (m *mockImpl) DeletePaymentLink(ctx context.Context, id string, amount int64) error {
 	if m.simulateError != nil {
 		return m.simulateError
 	}
@@ -220,7 +221,7 @@ func (m *mockImpl) SimulateError(err error) {
 
 func (m *mockImpl) InjectTransaction(tx TransactionData) {
 	newId := int64(atomic.AddUint32(&m.idSequence, 1))
-	tx.ID = newId
+	tx.Id = newId
 	m.simulatorTx = append(m.simulatorTx, tx)
 
 	// TODO: adapt to new NexiPaymentQueryResponse structure if needed

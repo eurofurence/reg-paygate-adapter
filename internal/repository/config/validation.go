@@ -102,8 +102,8 @@ func validateServiceConfiguration(errs url.Values, c ServiceConfig) {
 	if c.NexiDownstream == "" && c.PublicURL == "" {
 		errs.Add("service.public_url", "must set public_url (for simulated paylinks) if nexi_downstream (to talk to actual api) is blank")
 	}
-	checkLength(&errs, 1, 256, "service.nexi_instance", c.NexiInstance)
-	checkLength(&errs, 1, 256, "service.nexi_api_secret", c.NexiApiKey)
+	checkLength(&errs, 1, 256, "service.nexi_api_key", c.NexiApiKey)
+	checkLength(&errs, 1, 256, "service.nexi_merchant_id", c.NexiMerchantID)
 }
 
 func validateInvoiceConfiguration(errs url.Values, c InvoiceConfig) {

@@ -9,7 +9,7 @@ import (
 type NexiDownstream interface {
 	CreatePaymentLink(ctx context.Context, request NexiCreateCheckoutSessionRequest) (NexiCreateCheckoutSessionResponse, error)
 	QueryPaymentLink(ctx context.Context, transactionId string) (NexiPaymentQueryResponse, error)
-	DeletePaymentLink(ctx context.Context, paymentId string, amount int32) error
+	DeletePaymentLink(ctx context.Context, paymentId string, amount int64) error
 
 	QueryTransactions(ctx context.Context, timeGreaterThan time.Time, timeLessThan time.Time) ([]TransactionData, error)
 }
@@ -20,36 +20,37 @@ var (
 	NotSuccessful    = errors.New("response body status field did not indicate success")
 )
 
-// -- New Nexi PayGate API v2 Structures --
+// -- New Nexi PayGate API Structures --
+
+// --- NexiCreateCheckoutSessionRequest
 
 type NexiCreateCheckoutSessionRequest struct {
-	TransId               string                    `json:"transId"` // required
-	ExternalIntegrationId string                    `json:"externalIntegrationId,omitempty"`
-	RefNr                 string                    `json:"refNr,omitempty"`
-	Amount                NexiAmount                `json:"amount"` // required
-	Language              string                    `json:"language,omitempty"`
-	Template              *NexiTemplate             `json:"template,omitempty"`
-	CaptureMethod         *NexiCaptureMethod        `json:"captureMethod,omitempty"`
-	CredentialOnFile      *NexiCredentialOnFile     `json:"credentialOnFile,omitempty"`
-	Order                 *NexiOrder                `json:"order,omitempty"`
-	SimulationMode        string                    `json:"simulationMode,omitempty"`
-	Urls                  NexiPaymentUrlsRequest    `json:"urls,omitempty"`
-	BillingAddress        *NexiBillingAddress       `json:"billingAddress,omitempty"`
-	Shipping              *NexiShipping             `json:"shipping,omitempty"`
-	StatementDescriptor   string                    `json:"statementDescriptor,omitempty"`
-	CustomerInfo          *NexiCustomerInfoRequest  `json:"customerInfo,omitempty"`
-	PartialPayment        bool                      `json:"partialPayment,omitempty"`
-	ExpirationTime        string                    `json:"expirationTime,omitempty"` // RFC3339 - e.g. 2025-02-07T16:00:00Z
-	FraudData             *NexiFraudData            `json:"fraudData,omitempty"`
-	PaymentFacilitator    *NexiPaymentFacilitator   `json:"paymentFacilitator,omitempty"`
-	BrowserInfo           *NexiBrowserInfo          `json:"browserInfo,omitempty"`
-	Device                *NexiDevice               `json:"device,omitempty"`
-	Channel               NexiChannel               `json:"channel,omitempty"` // ECOM | MOTO | APP | PAYBYLINK | POS
-	RemittanceInfo        string                    `json:"remittanceInfo,omitempty"`
-	Metadata              map[string]string         `json:"metadata,omitempty"`
-	AllowedPaymentMethod  []PaymentMethodType       `json:"allowedPaymentMethod,omitempty"`
-	ReferencePayId        string                    `json:"referencePayId,omitempty"` // only applicable for PFConnect Authorization and Subsequent card installment payments.
-	PaymentMethods        NexiPaymentMethodsRequest `json:"paymentMethods,omitempty"`
+	TransId               string                     `json:"transId"` // required
+	ExternalIntegrationId string                     `json:"externalIntegrationId,omitempty"`
+	RefNr                 string                     `json:"refNr,omitempty"`
+	Amount                NexiAmount                 `json:"amount"` // required
+	Language              string                     `json:"language,omitempty"`
+	Template              *NexiTemplate              `json:"template,omitempty"`
+	CaptureMethod         *NexiCaptureMethod         `json:"captureMethod,omitempty"`
+	Order                 *NexiOrder                 `json:"order,omitempty"`
+	SimulationMode        string                     `json:"simulationMode,omitempty"`
+	Urls                  NexiPaymentUrlsRequest     `json:"urls,omitempty"`
+	BillingAddress        *NexiBillingAddress        `json:"billingAddress,omitempty"`
+	Shipping              *NexiShipping              `json:"shipping,omitempty"`
+	StatementDescriptor   string                     `json:"statementDescriptor,omitempty"`
+	CustomerInfo          *NexiCustomerInfoRequest   `json:"customerInfo,omitempty"`
+	PartialPayment        bool                       `json:"partialPayment,omitempty"`
+	ExpirationTime        string                     `json:"expirationTime,omitempty"` // RFC3339 - e.g. 2025-02-07T16:00:00Z
+	FraudData             *NexiFraudData             `json:"fraudData,omitempty"`
+	PaymentFacilitator    *NexiPaymentFacilitator    `json:"paymentFacilitator,omitempty"`
+	BrowserInfo           *NexiBrowserInfo           `json:"browserInfo,omitempty"`
+	Device                *NexiDevice                `json:"device,omitempty"`
+	Channel               NexiChannel                `json:"channel,omitempty"` // ECOM | MOTO | APP | PAYBYLINK | POS
+	RemittanceInfo        string                     `json:"remittanceInfo,omitempty"`
+	Metadata              map[string]string          `json:"metadata,omitempty"`
+	AllowedPaymentMethod  []PaymentMethodType        `json:"allowedPaymentMethod,omitempty"`
+	ReferencePayId        string                     `json:"referencePayId,omitempty"` // only applicable for PFConnect Authorization and Subsequent card installment payments.
+	PaymentMethods        *NexiPaymentMethodsRequest `json:"paymentMethods,omitempty"`
 }
 
 type NexiAmount struct {
@@ -93,37 +94,6 @@ type NexiCustomFields struct {
 	CustomField13 string `json:"customField13,omitempty"`
 	CustomField14 string `json:"customField14,omitempty"`
 }
-
-// Probably not used vvv
-
-type NexiCredentialOnFile struct {
-	Type           string                      `json:"type"` // RECURRING | UNSCHEDULED | INSTALLMENTS
-	InitialPayment bool                        `json:"initialPayment,omitempty"`
-	Recurring      *NexiCredentialRecurring    `json:"recurring,omitempty"`
-	Unscheduled    *NexiCredentialUnscheduled  `json:"unscheduled,omitempty"`
-	Installments   *NexiCredentialInstallments `json:"installments,omitempty"`
-}
-
-type NexiCredentialRecurring struct {
-	UseCase    string `json:"useCase,omitempty"`    // FIXED | FLEXIBLE_AMOUNT | FLEXIBLE_FREQUENCY
-	Frequency  string `json:"frequency,omitempty"`  // DAILY | WEEKLY | MONTHLY | YEARLY
-	StartDate  string `json:"startDate,omitempty"`  // YYYY-MM-DD
-	ExpiryDate string `json:"expiryDate,omitempty"` // YYYY-MM-DD
-}
-
-type NexiCredentialUnscheduled struct {
-	SubType string `json:"subType"` // CIT | MIT
-}
-
-type NexiCredentialInstallments struct {
-	Total          int64  `json:"total,omitempty"`
-	CurIdx         int64  `json:"curIdx,omitempty"`
-	PurchaseAmount int64  `json:"purchaseAmount,omitempty"`
-	Frequency      string `json:"frequency,omitempty"`  // DAILY | WEEKLY | BIWEEKLY | MONTHLY | BIMONTHLY | QUARTERLY | YEARLY
-	ExpiryDate     string `json:"expiryDate,omitempty"` // YYYY-MM-DD
-}
-
-// Probably not used ^^^
 
 type NexiOrder struct {
 	MerchantReference string          `json:"merchantReference,omitempty"`
@@ -392,38 +362,7 @@ const (
 type NexiPaymentMethodsRequest struct {
 	IntegrationType IntegrationType   `json:"integrationType"`
 	Type            PaymentMethodType `json:"type"`
-	Bancontact      *NexiBancontact   `json:"bancontact,omitempty"`
-	Boleto          *NexiBoleto       `json:"boleto,omitempty"`
 	Card            *NexiCard         `json:"card,omitempty"`
-	DirectDebit     *NexiDirectDebit  `json:"directDebit,omitempty"`
-	EasyCollect     *NexiEasyCollect  `json:"easyCollect,omitempty"`
-	EPS             *NexiEPS          `json:"eps,omitempty"`
-	Ideal           *NexiIdeal        `json:"ideal,omitempty"`
-	Instanea        *NexiInstanea     `json:"instanea,omitempty"`
-	Klarna          *NexiKlarna       `json:"klarna,omitempty"`
-	MultiBanco      *NexiMultiBanco   `json:"multibanco,omitempty"`
-	MyBank          *NexiMyBank       `json:"myBank,omitempty"`
-	PayPal          *NexiPayPal       `json:"payPal,omitempty"`
-	Przelewy24      *NexiPrzelewy24   `json:"przelewy24,omitempty"`
-	Vipps           *NexiVipps        `json:"vipps,omitempty"`
-	Trustly         *NexiTrustly      `json:"trustly,omitempty"`
-	Twint           *NexiTwint        `json:"twint,omitempty"`
-}
-
-type NexiBancontact struct {
-	SellingPoint  string                `json:"sellingPoint,omitempty"`  // Optional
-	Service       string                `json:"service,omitempty"`       // Optional
-	Account       NexiBancontactAccount `json:"account"`                 // Required
-	CheckoutToken string                `json:"checkoutToken,omitempty"` // Optional token for recurring/one-click payments
-}
-
-type NexiBancontactAccount struct {
-	AccountHolderName string `json:"accountHolderName"` // Required
-}
-
-type NexiBoleto struct {
-	SellingPoint string `json:"sellingPoint,omitempty"` // Optional
-	Service      string `json:"service,omitempty"`      // Optional
 }
 
 type CardEventToken string
@@ -512,308 +451,32 @@ type NexiCardPrefillInfo struct {
 }
 
 type NexiCard struct {
-	EventToken         CardEventToken          `json:"eventToken,omitempty"`
-	SubType            []string                `json:"subType,omitempty"` // list of allowed card networks - overrides brand selection in merchant account
-	ThreeDsPolicy      *NexiCardThreeDsPolicy  `json:"threeDsPolicy,omitempty"`
-	Template           *NexiCardTemplate       `json:"template,omitempty"`
-	BancontactTemplate *NexiBancontactTemplate `json:"bancontactTemplate,omitempty"`
-	PrefillInfo        *NexiCardPrefillInfo    `json:"prefillInfo,omitempty"`
+	EventToken    CardEventToken         `json:"eventToken,omitempty"`
+	SubType       []string               `json:"subType,omitempty"` // list of allowed card networks - overrides brand selection in merchant account
+	ThreeDsPolicy *NexiCardThreeDsPolicy `json:"threeDsPolicy,omitempty"`
+	Template      *NexiCardTemplate      `json:"template,omitempty"`
+	PrefillInfo   *NexiCardPrefillInfo   `json:"prefillInfo,omitempty"`
 }
 
-type NexiBancontactTemplate struct {
-	Name string `json:"name,omitempty"`
+// --- NexiCreateCheckoutSessionResponse
+
+type NexiCreateCheckoutSessionResponse struct {
+	Links NexiCheckoutSessionResponseLinks `json:"_links,omitempty"`
 }
 
-type DirectDebitMethod string
-
-const (
-	DirectDebitELV DirectDebitMethod = "ELV" // Germany
-	DirectDebitENL DirectDebitMethod = "ENL" // Netherlands
-	DirectDebitEEV DirectDebitMethod = "EEV" // Austria
-)
-
-type NexiDirectDebitAccount struct {
-	Number            string `json:"number,omitempty"` // IBAN
-	Code              string `json:"code,omitempty"`   // Bank Identifier Code
-	BankName          string `json:"bankName,omitempty"`
-	AccountHolderName string `json:"accountHolderName,omitempty"`
-	PseudoBankNumber  string `json:"pseudoBankNumber,omitempty"` // PBAN from Paygate
+type NexiCheckoutSessionResponseLinks struct {
+	Redirect *RedirectLink `json:"redirect,omitempty"`
 }
 
-type NexiDirectDebitMandate struct {
-	MandateId       string `json:"mandateId,omitempty"`
-	DateOfSignature string `json:"dateOfSignature,omitempty"` // DD.MM.YYYY
+type RedirectLink struct {
+	Href string `json:"href,omitempty"`
+	Type string `json:"type,omitempty"`
 }
 
-type NexiDirectDebitCustomFields struct {
-	CustomField1  string `json:"customField1,omitempty"`
-	CustomField2  string `json:"customField2,omitempty"`
-	CustomField3  string `json:"customField3,omitempty"`
-	CustomField4  string `json:"customField4,omitempty"`
-	CustomField5  string `json:"customField5,omitempty"`
-	CustomField6  string `json:"customField6,omitempty"`
-	CustomField7  string `json:"customField7,omitempty"`
-	CustomField8  string `json:"customField8,omitempty"`
-	CustomField9  string `json:"customField9,omitempty"`
-	CustomField10 string `json:"customField10,omitempty"`
-	CustomField11 string `json:"customField11,omitempty"`
-	CustomField12 string `json:"customField12,omitempty"`
-	CustomField13 string `json:"customField13,omitempty"`
-	CustomField14 string `json:"customField14,omitempty"`
-}
+// --- NexiPaymentQueryResponse
 
-type NexiDirectDebitTemplate struct {
-	Name            string                       `json:"name,omitempty"`
-	BackgroundColor string                       `json:"backgroundColor,omitempty"`
-	BackgroundImage string                       `json:"backgroundImage,omitempty"`
-	TextColor       string                       `json:"textColor,omitempty"`
-	FontName        string                       `json:"fontName,omitempty"`
-	FontSize        string                       `json:"fontSize,omitempty"`
-	TableWidth      string                       `json:"tableWidth,omitempty"`
-	TableHeight     string                       `json:"tableHeight,omitempty"`
-	CustomFields    *NexiDirectDebitCustomFields `json:"customFields,omitempty"`
-}
-
-type NexiDirectDebitPrefillInfo struct {
-	Account *NexiDirectDebitAccount `json:"account,omitempty"`
-}
-
-type NexiDirectDebit struct {
-	Method       DirectDebitMethod           `json:"method,omitempty"`
-	DebitDelay   int                         `json:"debitDelay,omitempty"` // bank working days
-	Service      string                      `json:"service,omitempty"`
-	SellingPoint string                      `json:"sellingPoint,omitempty"`
-	Mandate      *NexiDirectDebitMandate     `json:"mandate,omitempty"`
-	Template     *NexiDirectDebitTemplate    `json:"template,omitempty"`
-	PrefillInfo  *NexiDirectDebitPrefillInfo `json:"prefillInfo,omitempty"`
-}
-
-type EasyCollectSignatureAgreementType string
-
-const (
-	EasyCollectSMS   EasyCollectSignatureAgreementType = "SMS"
-	EasyCollectEmail EasyCollectSignatureAgreementType = "EMAIL"
-)
-
-type EasyCollectCustomerType string
-
-const (
-	EasyCollectKnown    EasyCollectCustomerType = "KNOWN"
-	EasyCollectProspect EasyCollectCustomerType = "PROSPECT"
-)
-
-type EasyCollectMandateType string
-
-const (
-	EasyCollectB2B          EasyCollectMandateType = "B2B"
-	EasyCollectCORE         EasyCollectMandateType = "CORE"
-	EasyCollectCOREBusiness EasyCollectMandateType = "CORE_BUSINESS"
-)
-
-type NexiEasyCollectAccount struct {
-	Number string `json:"number,omitempty"` // IBAN
-}
-
-type NexiEasyCollectCustomFields struct {
-	CustomField1  string `json:"customField1,omitempty"`
-	CustomField2  string `json:"customField2,omitempty"`
-	CustomField3  string `json:"customField3,omitempty"`
-	CustomField4  string `json:"customField4,omitempty"`
-	CustomField5  string `json:"customField5,omitempty"`
-	CustomField6  string `json:"customField6,omitempty"`
-	CustomField7  string `json:"customField7,omitempty"`
-	CustomField8  string `json:"customField8,omitempty"`
-	CustomField9  string `json:"customField9,omitempty"`
-	CustomField10 string `json:"customField10,omitempty"`
-	CustomField11 string `json:"customField11,omitempty"`
-	CustomField12 string `json:"customField12,omitempty"`
-	CustomField13 string `json:"customField13,omitempty"`
-	CustomField14 string `json:"customField14,omitempty"`
-}
-
-type NexiEasyCollectTemplate struct {
-	Name         string                       `json:"name,omitempty"`
-	CustomFields *NexiEasyCollectCustomFields `json:"customFields,omitempty"`
-}
-
-type NexiEasyCollect struct {
-	Account                *NexiEasyCollectAccount           `json:"account,omitempty"`
-	AccountId              string                            `json:"accountId,omitempty"`
-	ContractId             string                            `json:"contractId,omitempty"`
-	ContractDescription    string                            `json:"contractDescription,omitempty"`
-	BusinessIdentifier     string                            `json:"businessIdentifier,omitempty"` // SIREN
-	SignatureAgreementType EasyCollectSignatureAgreementType `json:"signatureAgreementType,omitempty"`
-	DocumentSignature      bool                              `json:"documentSignature,omitempty"`
-	GoogleAnalyticsConsent bool                              `json:"googleAnalyticsConsent,omitempty"`
-	SignatureBySca         bool                              `json:"signatureBySca,omitempty"`
-	SPS                    bool                              `json:"sps,omitempty"`
-	Validation             bool                              `json:"validation,omitempty"`
-	CustomerType           EasyCollectCustomerType           `json:"customerType,omitempty"`
-	MandateType            EasyCollectMandateType            `json:"mandateType,omitempty"`
-	DueDate                string                            `json:"dueDate,omitempty"` // YYYY-MM-DD
-	MandateId              string                            `json:"mandateId,omitempty"`
-	SignerPositionOccupied string                            `json:"signerPositionOccupied,omitempty"`
-	Template               *NexiEasyCollectTemplate          `json:"template,omitempty"`
-}
-
-type NexiEPSAccount struct {
-	AccountHolderName string `json:"accountHolderName,omitempty"` // Name of the account holder
-	Number            string `json:"number,omitempty"`            // IBAN
-	Code              string `json:"code,omitempty"`              // Bank Identifier Code
-}
-
-type NexiEPS struct {
-	Account      *NexiEPSAccount `json:"account,omitempty"`      // Bank account information
-	OptionDate   string          `json:"optionDate,omitempty"`   // Desired payment execution date, YYYY-MM-DD
-	SellingPoint string          `json:"sellingPoint,omitempty"` // Selling point
-	Service      string          `json:"service,omitempty"`      // Products or services sold
-}
-
-type NexiGooglePay struct {
-	Token string `json:"token"` // Required: Base64 encoded token received from Google
-}
-
-type NexiIdeal struct {
-	SubType IdealSubType `json:"subType"`
-}
-
-type IdealSubType string
-
-const (
-	IdealDirect   IdealSubType = "IdEAL"     // Processed directly with iDEAL
-	IdealPPRO     IdealSubType = "IdEALPP"   // Processed via PPRO
-	IdealRaboBank IdealSubType = "IdEALRABO" // Processed via Rabo Bank
-)
-
-type NexiInstanea struct {
-	SubType             InstaneaSubType `json:"subType,omitempty"`             // Optional: defaults to SEPA_INSTANT
-	ReturnRefundAccount *bool           `json:"returnRefundAccount,omitempty"` // Optional: return consumer bank account for manual refund
-}
-
-type InstaneaSubType string
-
-const (
-	InstaneaSEPA        InstaneaSubType = "SEPA"
-	InstaneaSEPAInstant InstaneaSubType = "SEPA_INSTANT"
-)
-
-type NexiKlarna struct {
-	Layout       *NexiKlarnaLayout    `json:"layout,omitempty"`       // Optional layout settings
-	AccountId    string               `json:"accountId,omitempty"`    // Klarna account Id, default "0"
-	EnhancedData []NexiKlarnaEnhanced `json:"enhancedData,omitempty"` // Optional array of enhanced data objects
-	Description  string               `json:"description,omitempty"`  // Required for recurring initial payments
-}
-
-type NexiKlarnaLayout struct {
-	ShowSubTotalDetail string `json:"showSubTotalDetail,omitempty"` // "HIdE" to hide item positions
-	LogoURL            string `json:"logoUrl,omitempty"`            // URL for logo
-	PageTitle          string `json:"pageTitle,omitempty"`          // Title of the payment page
-}
-
-type NexiKlarnaEnhanced struct {
-	ProductCategory string `json:"productCategory"` // Category name, e.g. "Computers"
-	ProductName     string `json:"productName"`     // Product name, e.g. "Acer 5400"
-}
-
-type NexiMultiBanco struct {
-	SellingPoint string                 `json:"sellingPoint,omitempty"` // Selling point
-	Service      string                 `json:"service,omitempty"`      // Products or service sold
-	Account      *NexiMultiBancoAccount `json:"account,omitempty"`      // Account details
-}
-
-type NexiMultiBancoAccount struct {
-	AccountHolderName string `json:"accountHolderName,omitempty"` // Name of account holder
-}
-
-type NexiMyBank struct {
-	SellingPoint string             `json:"sellingPoint,omitempty"` // Selling point
-	Service      string             `json:"service,omitempty"`      // Products or service sold
-	Account      *NexiMyBankAccount `json:"account,omitempty"`      // Account details
-}
-
-type NexiMyBankAccount struct {
-	AccountHolderName string `json:"accountHolderName,omitempty"` // Name of account holder
-}
-
-type NexiPayPal struct {
-	AccountId   string `json:"accountId,omitempty"`   // PayPal account Id or email
-	HideAddress bool   `json:"hideAddress,omitempty"` // Whether to hide shipping address
-}
-
-type NexiPrzelewy24 struct {
-	SubType            Przelewy24SubType      `json:"subType,omitempty"`            // Enum: BLIK
-	AuthenticationCode string                 `json:"authenticationCode,omitempty"` // 6-digit one-time code
-	TermsAndConditions bool                   `json:"termsAndConditions,omitempty"`
-	SellingPoint       string                 `json:"sellingPoint,omitempty"`
-	Service            string                 `json:"service,omitempty"`
-	Account            *NexiPrzelewy24Account `json:"account,omitempty"`
-}
-
-type NexiPrzelewy24Account struct {
-	AccountHolderName string `json:"accountHolderName,omitempty"` // Name of account holder
-}
-
-type Przelewy24SubType string
-
-const (
-	Przelewy24BLIK Przelewy24SubType = "BLIK"
-)
-
-type NexiVipps struct {
-	MinAge int `json:"minAge,omitempty"`
-}
-
-type NexiTrustly struct {
-	TemplateUrl string `json:"templateUrl,omitempty"`
-}
-
-type NexiTwint struct {
-	SellingPoint string            `json:"sellingPoint,omitempty"` // Selling point
-	Service      string            `json:"service,omitempty"`      // Products or service sold
-	Account      *NexiTwintAccount `json:"account,omitempty"`      // Account details
-}
-
-type NexiTwintAccount struct {
-	AccountHolderName string `json:"accountHolderName,omitempty"` // Name of account holder
-}
-
-// -- Query response structures --
-
-type PaymentResponse struct {
-	PayId               string                  `json:"payId,omitempty"`
-	MerchantId          string                  `json:"merchantId,omitempty"`
-	TransId             string                  `json:"transId,omitempty"`
-	XId                 string                  `json:"xId,omitempty"`
-	RefNr               string                  `json:"refNr,omitempty"`
-	Status              string                  `json:"status,omitempty"`
-	ResponseCode        string                  `json:"responseCode,omitempty"`
-	ResponseDescription string                  `json:"responseDescription,omitempty"`
-	Metadata            map[string]string       `json:"metadata,omitempty"`
-	PaymentMethods      *PaymentMethodsResponse `json:"paymentMethods,omitempty"`
-}
-
-type PaymentMethodsResponse struct {
-	AmazonPay   *AmazonPayResponse   `json:"amazonPay,omitempty"`
-	ApplePay    *ApplePayResponse    `json:"applePay,omitempty"`
-	Boleto      *BoletoResponse      `json:"boleto,omitempty"`
-	Card        *CardResponse        `json:"card,omitempty"`
-	DirectDebit *DirectDebitResponse `json:"directDebit,omitempty"`
-	EasyCollect *EasyCollectResponse `json:"easyCollect,omitempty"`
-	GooglePay   *GooglePayResponse   `json:"googlePay,omitempty"`
-	Klarna      *KlarnaResponse      `json:"klarna,omitempty"`
-	PayPal      *PayPalResponse      `json:"payPal,omitempty"`
-	PFConnect   *PFConnectResponse   `json:"pfConnect,omitempty"`
-	Przelewy24  *Przelewy24Response  `json:"przelewy24,omitempty"`
-	Ratepay     *RatepayResponse     `json:"ratepay,omitempty"`
-	Swish       *SwishResponse       `json:"swish,omitempty"`
-}
-
-type GooglePayResponse struct {
+type ApplePayResponse struct {
 	SchemeReferenceId string `json:"schemeReferenceId,omitempty"`
-}
-
-type BoletoResponse struct {
-	PaymentSlipLink string `json:"paymentSlipLink,omitempty"`
 }
 
 type CardResponse struct {
@@ -843,174 +506,6 @@ type CardResponse struct {
 	ProviderOrderId         string                      `json:"providerOrderId,omitempty"`
 	IssuerResponseCode      string                      `json:"issuerResponseCode,omitempty"`
 	IssuerResponseMessage   string                      `json:"issuerResponseMessage,omitempty"`
-}
-
-type CardSource string
-
-const (
-	CardDebit         CardSource = "DEBIT"
-	CardCredit        CardSource = "CREDIT"
-	CardDeferredDebit CardSource = "DEFERRED_DEBIT"
-	CardPrepaid       CardSource = "PREPAId"
-	CardCharge        CardSource = "CHARGE"
-)
-
-type CardBin struct {
-	AccountBin       string `json:"accountBin,omitempty"`
-	AccountRangeLow  string `json:"accountRangeLow,omitempty"`
-	AccountRangeHigh string `json:"accountRangeHigh,omitempty"`
-}
-
-type CardVersioningData struct {
-	ThreeDSServerTransId    string               `json:"threeDSServerTransId,omitempty"`
-	AcsStartProtocolVersion string               `json:"acsStartProtocolVersion,omitempty"`
-	AcsEndProtocolVersion   string               `json:"acsEndProtocolVersion,omitempty"`
-	DsStartProtocolVersion  string               `json:"dsStartProtocolVersion,omitempty"`
-	DsEndProtocolVersion    string               `json:"dsEndProtocolVersion,omitempty"`
-	ThreeDSMethodDataForm   string               `json:"threeDSMethodDataForm,omitempty"`
-	ThreeDSMethodURL        string               `json:"threeDSMethodUrl,omitempty"`
-	ThreeDSMethodData       *ThreeDSMethodData   `json:"threeDSMethodData,omitempty"`
-	ErrorDetails            *ThreeDSErrorDetails `json:"errorDetails,omitempty"`
-}
-
-type ThreeDSMethodData struct {
-	ThreeDSMethodNotificationURL string `json:"threeDSMethodNotificationUrl,omitempty"`
-	ThreeDSServerTransId         string `json:"threeDSServerTransId,omitempty"`
-}
-
-type ThreeDSErrorDetails struct {
-	ThreeDSServerTransId string `json:"threeDSServerTransId,omitempty"`
-	ErrorCode            string `json:"errorCode,omitempty"`
-	ErrorComponent       string `json:"errorComponent,omitempty"`
-	ErrorDescription     string `json:"errorDescription,omitempty"`
-}
-
-type CardFraudData struct {
-	Zone        string `json:"zone,omitempty"`
-	IPZone      string `json:"ipZone,omitempty"`
-	IPZoneA2    string `json:"ipZoneA2,omitempty"`
-	IPState     string `json:"ipState,omitempty"`
-	IPCity      string `json:"ipCity,omitempty"`
-	IPLongitude string `json:"ipLongitude,omitempty"`
-	IPLatitude  string `json:"ipLatitude,omitempty"`
-	FSStatus    string `json:"fsStatus,omitempty"`
-	FSCode      string `json:"fsCode,omitempty"`
-}
-
-type CardAuthenticationData struct {
-	ThreeDSServerTransId  string            `json:"threeDSServerTransId,omitempty"`
-	AcsChallengeMandated  bool              `json:"acsChallengeMandated,omitempty"`
-	AcsDecConInd          bool              `json:"acsDecConInd,omitempty"`
-	AcsOperatorId         string            `json:"acsOperatorId,omitempty"`
-	AcsReferenceNumber    string            `json:"acsReferenceNumber,omitempty"`
-	AcsRenderingType      *AcsRenderingType `json:"acsRenderingType,omitempty"`
-	AcsSignedContent      string            `json:"acsSignedContent,omitempty"`
-	AcsTransId            string            `json:"acsTransId,omitempty"`
-	AcsURL                string            `json:"acsURL,omitempty"`
-	AuthenticationType    string            `json:"authenticationType,omitempty"`
-	AuthenticationValue   string            `json:"authenticationValue,omitempty"`
-	BroadInfo             string            `json:"broadInfo,omitempty"`
-	CardholderInfo        string            `json:"cardholderInfo,omitempty"`
-	DsReferenceNumber     string            `json:"dsReferenceNumber,omitempty"`
-	DsTransId             string            `json:"dsTransId,omitempty"`
-	Eci                   string            `json:"eci,omitempty"`
-	MessageType           string            `json:"messageType,omitempty"`
-	MessageVersion        string            `json:"messageVersion,omitempty"`
-	SdkTransId            string            `json:"sdkTransId,omitempty"`
-	TransStatus           string            `json:"transStatus,omitempty"`
-	TransStatusReason     string            `json:"transStatusReason,omitempty"`
-	WhiteListStatus       string            `json:"whiteListStatus,omitempty"`
-	WhiteListStatusSource string            `json:"whiteListStatusSource,omitempty"`
-	ChallengeRequest      *ChallengeRequest `json:"challengeRequest,omitempty"`
-}
-
-type AcsRenderingType struct {
-	AcsInterface  string `json:"acsInterface,omitempty"`
-	AcsUiTemplate string `json:"acsUiTemplate,omitempty"`
-}
-
-type ChallengeRequest struct {
-	ThreeDSServerTransId          string `json:"threeDSServerTransId,omitempty"`
-	AcsTransId                    string `json:"acsTransId,omitempty"`
-	ChallengeWindowSize           string `json:"challengeWindowSize,omitempty"`
-	MessageVersion                string `json:"messageVersion,omitempty"`
-	MessageType                   string `json:"messageType,omitempty"`
-	Base64EncodedChallengeRequest string `json:"base64EncodedChallengeRequest,omitempty"`
-}
-
-type BankAccountResponse struct {
-	Code              string `json:"code,omitempty"`
-	Number            string `json:"number,omitempty"`
-	PseudoBankNumber  string `json:"pseudoBankNumber,omitempty"`
-	AccountHolderName string `json:"accountHolderName,omitempty"`
-	BankName          string `json:"bankName,omitempty"`
-}
-
-type SwishResponse struct {
-	ProviderResponseCode  string `json:"providerResponseCode,omitempty"`
-	ProviderResponseText  string `json:"providerResponseText,omitempty"`
-	ProviderTransactionId string `json:"providerTransactionId,omitempty"`
-	ProviderToken         string `json:"providerToken,omitempty"`
-}
-
-type NexiCheckoutSessionResponseLinks struct {
-	Redirect *RedirectLink `json:"redirect,omitempty"`
-}
-
-type RedirectLink struct {
-	Href string `json:"href,omitempty"`
-	Type string `json:"type,omitempty"`
-}
-
-type NexiCreateCheckoutSessionResponse struct {
-	Links NexiCheckoutSessionResponseLinks `json:"_links,omitempty"`
-}
-
-type NexiAmountResponse struct {
-	Value               int64  `json:"value"`    // required, smallest currency unit
-	Currency            string `json:"currency"` // required
-	TaxTotal            *int64 `json:"taxTotal,omitempty"`
-	NetItemTotal        *int64 `json:"netItemTotal,omitempty"`
-	NetShippingAmount   *int64 `json:"netShippingAmount,omitempty"`
-	GrossShippingAmount *int64 `json:"grossShippingAmount,omitempty"`
-	NetDiscount         *int64 `json:"netDiscount,omitempty"`
-	GrossDiscount       *int64 `json:"grossDiscount,omitempty"`
-	CapturedValue       *int64 `json:"capturedValue,omitempty"`
-	RefundedValue       *int64 `json:"refundedValue,omitempty"`
-}
-
-type AmazonPayResponse struct {
-	BuyerId                 string `json:"buyerId,omitempty"`
-	BuyerName               string `json:"buyerName,omitempty"`
-	BuyerEmail              string `json:"buyerEmail,omitempty"`
-	BuyerPhoneNumber        string `json:"buyerPhoneNumber,omitempty"`
-	MerchantCountryCode     string `json:"merchantCountryCode,omitempty"`
-	AmazonMerchantId        string `json:"amazonMerchantId,omitempty"`
-	ProviderStatus          string `json:"providerStatus,omitempty"`
-	RedirectURL             string `json:"redirectUrl,omitempty"`
-	CheckoutSessionId       string `json:"checkoutSessionId,omitempty"`
-	AmazonPaymentDescriptor string `json:"amazonPaymentDescriptor,omitempty"`
-	ChargeId                string `json:"chargeId,omitempty"`
-	ChargePermissionId      string `json:"chargePermissionId,omitempty"`
-}
-
-type ApplePayResponse struct {
-	SchemeReferenceId string `json:"schemeReferenceId,omitempty"`
-}
-
-type BancontactResponse struct {
-	PaymentPurpose        string                     `json:"paymentPurpose,omitempty"`
-	Account               *BancontactAccountResponse `json:"account,omitempty"`
-	ProviderResponseText  string                     `json:"providerResponseText,omitempty"`
-	ProviderTransactionId string                     `json:"providerTransactionId,omitempty"`
-	First6Digits          string                     `json:"first6Digits,omitempty"`
-	Last4Digits           string                     `json:"last4Digits,omitempty"`
-	ExpiryDate            string                     `json:"expiryDate,omitempty"`
-	CheckoutToken         string                     `json:"checkoutToken,omitempty"`
-}
-
-type BancontactAccountResponse struct {
-	PaymentGuarantee string `json:"paymentGuarantee,omitempty"`
 }
 
 type CardBINResponse struct {
@@ -1092,186 +587,29 @@ type ChallengeRequestResponse struct {
 	ThreeDSCompInd                string `json:"threeDSCompInd,omitempty"`
 }
 
-type DirectDebitResponse struct {
-	Method               string               `json:"method,omitempty"`
-	Service              string               `json:"service,omitempty"`
-	SellingPoint         string               `json:"sellingPoint,omitempty"`
-	MandateId            string               `json:"mandateId,omitempty"`
-	DateOfSignature      string               `json:"dateOfSignature,omitempty"`
-	Account              *BankAccountResponse `json:"account,omitempty"`
-	ProviderResponseCode string               `json:"providerResponseCode,omitempty"`
-	ProviderResponseText string               `json:"providerResponseText,omitempty"`
-}
-
-type EasyCollectResponse = DirectDebitResponse
-
-type EPSBankAccountResponse struct {
-	AccountHolderName string `json:"accountHolderName,omitempty"`
-	Number            string `json:"number,omitempty"`
-	Code              string `json:"code,omitempty"`
-}
-
-type EPSResponse struct {
-	Account               *EPSBankAccountResponse `json:"account,omitempty"`
-	PaymentPurpose        string                  `json:"paymentPurpose,omitempty"`
-	PaymentGuarantee      string                  `json:"paymentGuarantee,omitempty"`
-	ProviderResponseText  string                  `json:"providerResponseText,omitempty"`
-	ProviderTransactionId string                  `json:"providerTransactionId,omitempty"`
-}
-
-type FloapayResponse struct {
-	ProviderResponseCode string `json:"providerResponseCode,omitempty"`
-	ProviderResponseText string `json:"providerResponseText,omitempty"`
-}
-
-type IdealBankAccountResponse struct {
-	BankName          string `json:"bankName,omitempty"`
-	AccountHolderName string `json:"accountHolderName,omitempty"`
-	Number            string `json:"number,omitempty"`
-	Code              string `json:"code,omitempty"`
-	PaymentGuarantee  string `json:"paymentGuarantee,omitempty"`
-}
-
-type IdealResponse struct {
-	Account               *IdealBankAccountResponse `json:"account,omitempty"`
-	PaymentPurpose        string                    `json:"paymentPurpose,omitempty"`
-	ProviderResponseText  string                    `json:"providerResponseText,omitempty"`
-	ProviderTransactionId string                    `json:"providerTransactionId,omitempty"`
-}
-
-type InstaneaResponse struct {
-	ProviderResponseCode  string `json:"providerResponseCode,omitempty"`
-	ProviderResponseText  string `json:"providerResponseText,omitempty"`
-	ProviderTransactionId string `json:"providerTransactionId,omitempty"`
-}
-
-type KlarnaResponse struct {
-	ProviderResponseCode  string `json:"providerResponseCode,omitempty"`
-	ProvideResponseText   string `json:"provideResponseText,omitempty"`
-	BillingAgreementId    string `json:"billingAgreementId,omitempty"`
-	ProviderTransactionId string `json:"providerTransactionId,omitempty"`
-}
-
-type PayPalResponse struct {
-	OrderId              string `json:"orderId,omitempty"`
-	ProviderResponseCode string `json:"providerResponseCode,omitempty"`
-	PayerStatus          string `json:"payerStatus,omitempty"`
-	InfoText             string `json:"infoText,omitempty"`
-	PayerId              string `json:"payerId,omitempty"`
-	GrossAmount          string `json:"grossAmount,omitempty"`
-	FeeAmount            string `json:"feeAmount,omitempty"`
-	SettleAmount         string `json:"settleAmount,omitempty"`
-	TaxAmount            string `json:"taxAmount,omitempty"`
-	ExchangeRate         string `json:"exchangeRate,omitempty"`
-	McFee                string `json:"mcFee,omitempty"`
-	McGross              string `json:"mcGross,omitempty"`
-	ProviderCaptureId    string `json:"providerCaptureId,omitempty"`
-}
-
-type PFConnectResponse struct {
-	ProviderResponseCode string `json:"providerResponseCode,omitempty"`
-	ProviderResponseText string `json:"providerResponseText,omitempty"`
-	ApplicationId        string `json:"applicationId,omitempty"`
-}
-
-type Przelewy24Response struct {
-	SubType               string `json:"subType,omitempty"`
-	PaymentGuarantee      string `json:"paymentGuarantee,omitempty"`
-	PaymentPurpose        string `json:"paymentPurpose,omitempty"`
-	ProviderResponseText  string `json:"providerResponseText,omitempty"`
-	ProviderTransactionId string `json:"providerTransactionId,omitempty"`
-}
-
-type RatepayBankAccountResponse struct {
-	BankName          string `json:"bankName,omitempty"`
-	Code              string `json:"code,omitempty"`
-	Number            string `json:"number,omitempty"`
-	AccountHolderName string `json:"accountHolderName,omitempty"`
-}
-
-type RatepayResponse struct {
-	AuthorizationExpiry     string                      `json:"authorizationExpiry,omitempty"`
-	Account                 *RatepayBankAccountResponse `json:"account,omitempty"`
-	PaymentReference        string                      `json:"paymentReference,omitempty"`
-	ProviderTransactionId   string                      `json:"providerTransactionId,omitempty"`
-	ProviderDeclineCategory string                      `json:"providerDeclineCategory,omitempty"`
-	ProviderResponseText    string                      `json:"providerResponseText,omitempty"`
-	ProviderResponseCode    string                      `json:"providerResponseCode,omitempty"`
-}
-
-type RivertyAccount struct {
-	Code   string `json:"code,omitempty"`
-	Number string `json:"number,omitempty"`
-}
-
-type RivertyOrderRisk struct {
-	ChannelType          string `json:"channelType,omitempty"`
-	DeliveryType         string `json:"deliveryType,omitempty"`
-	TicketDeliveryMethod string `json:"ticketDeliveryMethod,omitempty"`
-}
-
-type RivertyCustomerRisk struct {
-	ExistingCustomer               bool `json:"existingCustomer,omitempty"`
-	VerifiedCustomerIdentification bool `json:"verifiedCustomerIdentification,omitempty"`
-	MarketingOptIn                 bool `json:"marketingOptIn,omitempty"`
-
-	CustomerSince          string `json:"customerSince,omitempty"`
-	CustomerClassification string `json:"customerClassification,omitempty"`
-	AcquistitionChannel    string `json:"acquistitionChannel,omitempty"`
-
-	HasCustomerCard            bool   `json:"hasCustomerCard,omitempty"`
-	CustomerCardSince          string `json:"customerCardSince,omitempty"`
-	CustomerCardClassification string `json:"customerCardClassification,omitempty"`
-
-	ProfileTrackingId       string  `json:"profileTrackingId,omitempty"`
-	NumberOfTransactions    float64 `json:"numberOfTransactions,omitempty"`
-	CustomerIndividualScore float64 `json:"customerIndividualScore,omitempty"`
-	UserAgent               string  `json:"userAgent,omitempty"`
-	AmountOfTransactions    float64 `json:"amountOfTransactions,omitempty"`
-	OtherPaymentMethods     bool    `json:"otherPaymentMethods,omitempty"`
-}
-
-type RivertyResponse struct {
-	ProviderResponseCode int                  `json:"providerResponseCode,omitempty"`
-	ProviderResponseText string               `json:"providerResponseText,omitempty"`
-	SubType              []string             `json:"subType,omitempty"`
-	BillingCareOf        string               `json:"billingCareOf,omitempty"`
-	ShippingCareOf       string               `json:"shippingCareOf,omitempty"`
-	Account              *RivertyAccount      `json:"account,omitempty"`
-	ProfileNumber        string               `json:"profileNumber,omitempty"`
-	OrderRisk            *RivertyOrderRisk    `json:"orderRisk,omitempty"`
-	CustomerRisk         *RivertyCustomerRisk `json:"customerRisk,omitempty"`
-}
-
-type TwintResponse struct {
-	PaymentPurpose        string `json:"paymentPurpose,omitempty"`
-	PaymentGuarantee      string `json:"paymentGuarantee,omitempty"`
-	ProviderTransactionId string `json:"providerTransactionId,omitempty"`
-	ProviderResponseText  string `json:"providerResponseText,omitempty"`
+type GooglePayResponse struct {
+	SchemeReferenceId string `json:"schemeReferenceId,omitempty"`
 }
 
 type NexiPaymentMethodsResponse struct {
 	Type string `json:"type,omitempty"`
 
-	AmazonPay   *AmazonPayResponse   `json:"amazonPay,omitempty"`
-	ApplePay    *ApplePayResponse    `json:"applePay,omitempty"`
-	Bancontact  *BancontactResponse  `json:"bancontact,omitempty"`
-	Boleto      *BoletoResponse      `json:"boleto,omitempty"`
-	Card        *CardResponse        `json:"card,omitempty"`
-	DirectDebit *DirectDebitResponse `json:"directDebit,omitempty"`
-	EasyCollect *EasyCollectResponse `json:"easyCollect,omitempty"`
-	EPS         *EPSResponse         `json:"eps,omitempty"`
-	Floapay     *FloapayResponse     `json:"floapay,omitempty"`
-	GooglePay   *GooglePayResponse   `json:"googlePay,omitempty"`
-	Ideal       *IdealResponse       `json:"ideal,omitempty"`
-	Instanea    *InstaneaResponse    `json:"instanea,omitempty"`
-	Klarna      *KlarnaResponse      `json:"klarna,omitempty"`
-	PayPal      *PayPalResponse      `json:"payPal,omitempty"`
-	PFConnect   *PFConnectResponse   `json:"pfConnect,omitempty"`
-	Przelewy24  *Przelewy24Response  `json:"przelewy24,omitempty"`
-	Ratepay     *RatepayResponse     `json:"ratepay,omitempty"`
-	Riverty     *RivertyResponse     `json:"riverty,omitempty"`
-	Twint       *TwintResponse       `json:"twint,omitempty"`
+	ApplePay  *ApplePayResponse  `json:"applePay,omitempty"`
+	Card      *CardResponse      `json:"card,omitempty"`
+	GooglePay *GooglePayResponse `json:"googlePay,omitempty"`
+}
+
+type NexiAmountResponse struct {
+	Value               int64  `json:"value"`    // required, smallest currency unit
+	Currency            string `json:"currency"` // required
+	TaxTotal            *int64 `json:"taxTotal,omitempty"`
+	NetItemTotal        *int64 `json:"netItemTotal,omitempty"`
+	NetShippingAmount   *int64 `json:"netShippingAmount,omitempty"`
+	GrossShippingAmount *int64 `json:"grossShippingAmount,omitempty"`
+	NetDiscount         *int64 `json:"netDiscount,omitempty"`
+	GrossDiscount       *int64 `json:"grossDiscount,omitempty"`
+	CapturedValue       *int64 `json:"capturedValue,omitempty"`
+	RefundedValue       *int64 `json:"refundedValue,omitempty"`
 }
 
 type NexiPaymentQueryResponse struct {
@@ -1287,7 +625,6 @@ type NexiPaymentQueryResponse struct {
 	Amount                *NexiAmountResponse         `json:"amount,omitempty"`
 	Language              string                      `json:"language,omitempty"`
 	CaptureMethod         *NexiCaptureMethod          `json:"captureMethod,omitempty"`
-	CredentialOnFile      *NexiCredentialOnFile       `json:"credentialOnFile,omitempty"`
 	Order                 *NexiOrder                  `json:"order,omitempty"`
 	SimulationMode        string                      `json:"simulationMode,omitempty"`
 	URLs                  *NexiPaymentUrlsResponse    `json:"urls,omitempty"`

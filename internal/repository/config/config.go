@@ -83,10 +83,6 @@ func NexiDownstreamBaseUrl() string {
 	return Configuration().Service.NexiDownstream
 }
 
-func NexiInstanceName() string {
-	return Configuration().Service.NexiInstance
-}
-
 func NexiMerchantID() string {
 	return Configuration().Service.NexiMerchantID
 }
