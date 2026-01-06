@@ -32,7 +32,7 @@ func TestNexiApiClient(t *testing.T) {
 	// prepare dtos
 
 	// STEP 1: create
-	createRequest := nexi.NexiCreatePaymentRequest{
+	createRequest := nexi.NexiCreateCheckoutSessionRequest{
 		Order: nexi.NexiOrder{
 			Items: []nexi.NexiOrderItem{
 				{
@@ -120,8 +120,8 @@ func TestNexiApiClient(t *testing.T) {
 		Header: http.Header{ // not verified
 			"Content-Type": []string{"application/json"},
 		},
-		Url:  "http://localhost:8000/v1/payments",
-		Body: `{"order":{"items":[{"reference":"EF 2022 REG 000004","name":"Convention Registration","quantity":1,"unit":"qty","unitPrice":10550,"taxRate":1900,"taxAmount":0,"grossTotalAmount":10550,"netTotalAmount":10550}],"amount":10550,"currency":"EUR","reference":"220118-150405-000004"},"checkout":{"integrationType":"HostedPaymentPage","returnUrl":"https://example.com/success","cancelUrl":"https://example.com/failure","consumer":{"email":"test@example.com"},"termsUrl":"https://help.eurofurence.org/legal/terms","charge":true,"publicDevice":false,"merchantHandlesConsumerData":true,"appearance":{"displayOptions":{"showMerchantName":true,"showOrderSummary":true},"textOptions":{"completePaymentButtonText":"pay"}},"countryCode":"DEU"},"notifications":{"webhooks":[{"eventName":"payment.created","url":"http://localhost:8080/api/rest/v1/webhook/1234"},{"eventName":"payment.charge.created.v2","url":"http://localhost:8080/api/rest/v1/webhook/1234"}]}}`,
+		Url:  "http://localhost:8000/v2/payments",
+		Body: `{"transId":"220118-150405-000004","refNr":"220118-150405-000004","amount":{"value":10550,"currency":"EUR"},"language":"en","order":{"merchantReference":"220118-150405-000004","items":[{"sku":"EF 2022 REG 000004","name":"Convention Registration","quantity":1,"taxRate":1900,"taxAmount":0,"netPrice":10550,"grossPrice":10550,"description":"Convention Registration"}]},"urls":{"return":"https://example.com/success","cancel":"https://example.com/failure","webhook":"http://localhost:8080/api/rest/v1/webhook/1234"}}`,
 	}, aurestclientapi.ParsedResponse{
 		Body: &nexi.NexiCreateLowlevelResponseBody{
 			PaymentId:            "42",
@@ -140,7 +140,7 @@ func TestNexiApiClient(t *testing.T) {
 		Url:    "http://localhost:8000/v1/payments/42",
 		Body:   "",
 	}, aurestclientapi.ParsedResponse{
-		Body: &nexi.NexiQueryLowlevelResponseBody{
+		Body: &nexi.NexiPaymentQueryResponse{
 			Payment: nexi.NexiPayment{
 				PaymentId: "42",
 				Summary: nexi.NexiSummary{
@@ -276,7 +276,7 @@ func TestNexiApiClient(t *testing.T) {
 		ReferenceId: "220118-150405-000004",
 		Kind:        "raw",
 		Message:     "nexi create request",
-		Details:     `{"order":{"items":[{"reference":"EF 2022 REG 000004","name":"Convention Registration","quantity":1,"unit":"qty","unitPrice":10550,"taxRate":1900,"taxAmount":0,"grossTotalAmount":10550,"netTotalAmount":10550}],"amount":10550,"currency":"EUR","reference":"220118-150405-000004"},"checkout":{"integrationType":"HostedPaymentPage","returnUrl":"https://example.com/success","cancelUrl":"https://example.com/failure","consumer":{"email":"test@example.com"},"termsUrl":"https://help.eurofurence.org/legal/terms","charge":true,"publicDevice":false,"merchantHandlesConsumerData":true,"appearance":{"displayOptions":{"showMerchantName":true,"showOrderSummary":true},"textOptions":{"completePaymentButtonText":"pay"}},"countryCode":"DEU"},"notifications":{"webhooks":[{"eventName":"payment.created","url":"http://localhost:8080/api/rest/v1/webhook/1234"},{"eventName":"payment.charge.created.v2","url":"http://localhost:8080/api/rest/v1/webhook/1234"}]}}`,
+		Details:     `{"transId":"220118-150405-000004","refNr":"220118-150405-000004","amount":{"value":10550,"currency":"EUR"},"language":"en","order":{"merchantReference":"220118-150405-000004","items":[{"sku":"EF 2022 REG 000004","name":"Convention Registration","quantity":1,"taxRate":1900,"taxAmount":0,"netPrice":10550,"grossPrice":10550,"description":"Convention Registration"}]},"urls":{"return":"https://example.com/success","cancel":"https://example.com/failure","webhook":"http://localhost:8080/api/rest/v1/webhook/1234"}}`,
 	}, entity.ProtocolEntry{
 		ReferenceId: "220118-150405-000004",
 		ApiId:       "42",

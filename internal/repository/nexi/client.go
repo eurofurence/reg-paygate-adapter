@@ -2,6 +2,7 @@ package nexi
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -30,11 +31,12 @@ type Impl struct {
 func requestManipulator(ctx context.Context, r *http.Request) {
 	// New Nexi API uses JSON and headers
 	r.Header.Set(headers.ContentType, aurestclientapi.ContentTypeApplicationJson)
-	if config.CommercePlatformTag() != "" {
-		r.Header.Set("CommercePlatformTag", config.CommercePlatformTag())
-	}
-	if config.NexiInstanceApiSecret() != "" {
-		r.Header.Set(headers.Authorization, config.NexiInstanceApiSecret())
+	merchantID := config.NexiMerchantID()
+	apiKey := config.NexiAPIKey()
+	if merchantID != "" && apiKey != "" {
+		credentials := merchantID + ":" + apiKey
+		encoded := base64.StdEncoding.EncodeToString([]byte(credentials))
+		r.Header.Set(headers.Authorization, "Basic "+encoded)
 	}
 }
 
@@ -74,16 +76,16 @@ type NexiCreateLowlevelResponseBody struct {
 	HostedPaymentPageUrl string `json:"hostedPaymentPageUrl"`
 }
 
-func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentRequest) (NexiPaymentLinkCreated, error) {
-	requestUrl := fmt.Sprintf("%s/v1/payments", i.baseUrl)
+func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreateCheckoutSessionRequest) (NexiCreateCheckoutSessionResponse, error) {
+	requestUrl := fmt.Sprintf("%s/v2/payments/sessions", i.baseUrl)
 	requestBody, err := json.Marshal(request)
 	if err != nil {
-		return NexiPaymentLinkCreated{}, fmt.Errorf("failed to marshal request: %v", err)
+		return NexiCreateCheckoutSessionResponse{}, fmt.Errorf("failed to marshal request: %v", err)
 	}
 	if config.LogFullRequests() {
 		db := database.GetRepository()
 		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-			ReferenceId: request.Order.Reference,
+			ReferenceId: request.TransId,
 			Kind:        "raw",
 			Message:     "nexi create request",
 			Details:     string(requestBody),
@@ -96,10 +98,10 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentR
 		Body: &responseRaw,
 	}
 	if err := i.client.Perform(ctx, http.MethodPost, requestUrl, string(requestBody), &response); err != nil {
-		return NexiPaymentLinkCreated{}, err
+		return NexiCreateCheckoutSessionResponse{}, err
 	}
 	if responseRaw == nil {
-		return NexiPaymentLinkCreated{}, fmt.Errorf("response body is empty")
+		return NexiCreateCheckoutSessionResponse{}, fmt.Errorf("response body is empty")
 	}
 	if response.Status >= 300 {
 		if config.LogFullRequests() {
@@ -109,7 +111,7 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentR
 			bodyStr = strings.ReplaceAll(bodyStr, "\n", "")
 			bodyStr = strings.ReplaceAll(bodyStr, " ", "")
 			_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-				ReferenceId: request.Order.Reference,
+				ReferenceId: request.TransId,
 				Kind:        "raw",
 				Message:     "nexi create error response",
 				Details:     bodyStr,
@@ -117,11 +119,11 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentR
 			})
 			aulogging.Logger.Ctx(ctx).Info().Printf("nexi create error response (status %d): %s", response.Status, string(*responseRaw))
 		}
-		return NexiPaymentLinkCreated{}, fmt.Errorf("unexpected response status %d", response.Status)
+		return NexiCreateCheckoutSessionResponse{}, fmt.Errorf("unexpected response status %d", response.Status)
 	}
-	responseBody := NexiCreateLowlevelResponseBody{}
+	responseBody := NexiCreateCheckoutSessionResponse{}
 	if err := json.Unmarshal(*responseRaw, &responseBody); err != nil {
-		return NexiPaymentLinkCreated{}, fmt.Errorf("failed to unmarshal response body: %v", err)
+		return NexiCreateCheckoutSessionResponse{}, fmt.Errorf("failed to unmarshal response body: %v", err)
 	}
 	if config.LogFullRequests() {
 		// Log response
@@ -134,7 +136,7 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentR
 			bodyStr = strings.ReplaceAll(bodyStr, "\n", "")
 			bodyStr = strings.ReplaceAll(bodyStr, " ", "")
 			_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-				ReferenceId: request.Order.Reference,
+				ReferenceId: request.TransId,
 				ApiId:       responseBody.PaymentId,
 				Kind:        "raw",
 				Message:     "nexi create success response",
@@ -143,7 +145,7 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentR
 			})
 		}
 	}
-	return NexiPaymentLinkCreated{
+	return NexiCreateCheckoutSessionResponse{
 		ID:   responseBody.PaymentId,
 		Link: responseBody.HostedPaymentPageUrl,
 	}, nil
@@ -152,7 +154,7 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentR
 func (i *Impl) QueryPaymentLink(ctx context.Context, paymentId string) (NexiPaymentQueryResponse, error) {
 	requestUrl := fmt.Sprintf("%s/v1/payments/%s", i.baseUrl, paymentId)
 	response := aurestclientapi.ParsedResponse{
-		Body: &NexiQueryLowlevelResponseBody{},
+		Body: &NexiPaymentQueryResponse{},
 	}
 	if err := i.client.Perform(ctx, http.MethodGet, requestUrl, "", &response); err != nil {
 		return NexiPaymentQueryResponse{}, err
@@ -160,24 +162,8 @@ func (i *Impl) QueryPaymentLink(ctx context.Context, paymentId string) (NexiPaym
 	if response.Status >= 300 {
 		return NexiPaymentQueryResponse{}, fmt.Errorf("unexpected response status %d", response.Status)
 	}
-	bodyDto := response.Body.(*NexiQueryLowlevelResponseBody)
-	// Map new API response to NexiPaymentQueryResponse
-	result := NexiPaymentQueryResponse{
-		ID:          bodyDto.Payment.PaymentId,
-		Status:      determineStatusFromSummary(bodyDto.Payment.Summary),
-		ReferenceID: bodyDto.Payment.OrderDetails.Reference,
-		Link:        bodyDto.Payment.Checkout.Url,
-		Amount:      bodyDto.Payment.OrderDetails.Amount,
-		Currency:    bodyDto.Payment.OrderDetails.Currency,
-		CreatedAt:   parseCreatedDate(bodyDto.Payment.Created),
-		Order:       bodyDto.Payment.OrderDetails,
-		Summary:     bodyDto.Payment.Summary,
-		Consumer:    bodyDto.Payment.Consumer,
-		Payments:    []NexiPaymentDetails{bodyDto.Payment.PaymentDetails},
-		Refunds:     bodyDto.Payment.Refunds,
-		Charges:     bodyDto.Payment.Charges,
-	}
-	return result, nil
+	result := response.Body.(*NexiPaymentQueryResponse)
+	return *result, nil
 }
 
 func determineStatusFromSummary(summary NexiSummary) string {

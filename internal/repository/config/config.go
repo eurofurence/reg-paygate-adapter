@@ -87,8 +87,12 @@ func NexiInstanceName() string {
 	return Configuration().Service.NexiInstance
 }
 
-func NexiInstanceApiSecret() string {
-	return Configuration().Service.NexiApiSecret
+func NexiMerchantID() string {
+	return Configuration().Service.NexiMerchantID
+}
+
+func NexiAPIKey() string {
+	return Configuration().Service.NexiApiKey
 }
 
 func WebhookSecret() string {
@@ -117,14 +121,6 @@ func SuccessRedirect() string {
 
 func FailureRedirect() string {
 	return Configuration().Service.FailureRedirect
-}
-
-func CommercePlatformTag() string {
-	return Configuration().Service.NexiCommercePlatformTag
-}
-
-func NexiMerchantNumber() string {
-	return Configuration().Service.NexiMerchantNumber
 }
 
 func TermsURL() string {

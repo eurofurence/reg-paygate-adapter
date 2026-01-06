@@ -102,15 +102,15 @@ func constructSimulatedPaylink(referenceId string) string {
 	}
 }
 
-func (m *mockImpl) CreatePaymentLink(ctx context.Context, request NexiCreatePaymentRequest) (NexiPaymentLinkCreated, error) {
+func (m *mockImpl) CreatePaymentLink(ctx context.Context, request NexiCreateCheckoutSessionRequest) (NexiCreateCheckoutSessionResponse, error) {
 	if m.simulateError != nil {
-		return NexiPaymentLinkCreated{}, m.simulateError
+		return NexiCreateCheckoutSessionResponse{}, m.simulateError
 	}
 	m.recording = append(m.recording, "CreatePaymentLink")
 
 	newIdNum := atomic.AddUint32(&m.idSequence, 1)
 	newId := fmt.Sprintf("mock-%d", newIdNum)
-	response := NexiPaymentLinkCreated{
+	response := NexiCreateCheckoutSessionResponse{
 		ID:   newId,
 		Link: constructSimulatedPaylink(request.Order.Reference),
 	}

@@ -28,8 +28,8 @@ func TestNexiIntegrationFullFlow(t *testing.T) {
 	// Use real Nexi API client (requires proper configuration)
 	config.LoadTestingConfigurationFromPathOrAbort("../resources/integration-testconfig.yaml")
 	require.NotEmpty(t, config.NexiDownstreamBaseUrl(), "Nexi downstream URL must be configured")
-	require.NotEmpty(t, config.NexiInstanceApiSecret(), "Nexi API secret must be configured")
-	require.NotEmpty(t, config.NexiMerchantNumber(), "Nexi merchant number must be configured")
+	require.NotEmpty(t, config.NexiAPIKey(), "Nexi API key must be configured")
+	require.NotEmpty(t, config.NexiMerchantID(), "Nexi merchant ID must be configured")
 
 	// Create the real client
 	require.NoError(t, nexi.Create())
@@ -38,7 +38,7 @@ func TestNexiIntegrationFullFlow(t *testing.T) {
 	ctx := context.Background()
 
 	// Test data
-	paymentLinkRequest := nexi.NexiCreatePaymentRequest{
+	paymentLinkRequest := nexi.NexiCreateCheckoutSessionRequest{
 		Order: nexi.NexiOrder{
 			Items: []nexi.NexiOrderItem{
 				{
@@ -117,17 +117,17 @@ func TestNexiIntegrationFullFlow(t *testing.T) {
 			queried, err := client.QueryPaymentLink(ctx, paymentID)
 			require.NoError(t, err, "Failed to query payment link")
 			require.Equal(t, paymentID, queried.ID)
-			require.Equal(t, paymentLinkRequest.Order.Reference, queried.ReferenceID)
-			require.Equal(t, paymentLinkRequest.Order.Amount, queried.Amount)
-			require.Equal(t, paymentLinkRequest.Order.Currency, queried.Currency)
+			require.Equal(t, paymentLinkrequest.TransId, queried.ReferenceID)
+			require.Equal(t, paymentLinkRequest.Amount.Value, queried.Amount)
+			require.Equal(t, paymentLinkRequest.Amount.Currency, queried.Currency)
 			require.NotEmpty(t, queried.Link)
 
 			t.Logf("Queried payment link: Status=%s, Amount=%d", queried.Status, queried.Amount)
 		})
 
 		t.Run("delete_payment_link", func(t *testing.T) {
-			amount := paymentLinkRequest.Order.Amount
-			err := client.DeletePaymentLink(ctx, paymentID, amount)
+			amount := paymentLinkRequest.Amount.Value
+			err := client.DeletePaymentLink(ctx, paymentID, int32(amount))
 			require.NoError(t, err, "Failed to delete payment link")
 
 			t.Logf("Deleted payment link: ID=%s", paymentID)
@@ -157,7 +157,7 @@ func TestNexiIntegrationErrorHandling(t *testing.T) {
 
 	config.LoadTestingConfigurationFromPathOrAbort("../resources/integration-testconfig.yaml")
 	require.NotEmpty(t, config.NexiDownstreamBaseUrl(), "Nexi downstream URL must be configured")
-	require.NotEmpty(t, config.NexiInstanceApiSecret(), "Nexi API secret must be configured")
+	require.NotEmpty(t, config.NexiAPIKey(), "Nexi API key must be configured")
 
 	require.NoError(t, nexi.Create())
 	client := nexi.Get()

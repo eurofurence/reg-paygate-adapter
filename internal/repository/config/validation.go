@@ -26,15 +26,15 @@ func setConfigurationDefaults(c *Application) {
 }
 
 const (
-	envNexiApiSecret             = "REG_SECRET_NEXI_API_SECRET"
+	envNexiApiKey                = "REG_SECRET_NEXI_API_SECRET"
 	envNexiIncomingWebhookSecret = "REG_SECRET_NEXI_INCOMING_WEBHOOK_SECRET"
 	envApiToken                  = "REG_SECRET_API_TOKEN"
 	envDbPassword                = "REG_SECRET_DB_PASSWORD"
 )
 
 func applyEnvVarOverrides(c *Application) {
-	if nexiApiSecret := os.Getenv(envNexiApiSecret); nexiApiSecret != "" {
-		c.Service.NexiApiSecret = nexiApiSecret
+	if nexiApiKey := os.Getenv(envNexiApiKey); nexiApiKey != "" {
+		c.Service.NexiApiKey = nexiApiKey
 	}
 	if nexiIncomingWebhookSecret := os.Getenv(envNexiIncomingWebhookSecret); nexiIncomingWebhookSecret != "" {
 		c.Security.Fixed.Webhook = nexiIncomingWebhookSecret
@@ -103,7 +103,7 @@ func validateServiceConfiguration(errs url.Values, c ServiceConfig) {
 		errs.Add("service.public_url", "must set public_url (for simulated paylinks) if nexi_downstream (to talk to actual api) is blank")
 	}
 	checkLength(&errs, 1, 256, "service.nexi_instance", c.NexiInstance)
-	checkLength(&errs, 1, 256, "service.nexi_api_secret", c.NexiApiSecret)
+	checkLength(&errs, 1, 256, "service.nexi_api_secret", c.NexiApiKey)
 }
 
 func validateInvoiceConfiguration(errs url.Values, c InvoiceConfig) {

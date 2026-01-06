@@ -51,7 +51,7 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, data nexiapi.PaymentLinkRe
 	if err != nil {
 		db := database.GetRepository()
 		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-			ReferenceId: nexiRequest.Order.Reference,
+			ReferenceId: nexirequest.TransId,
 			Kind:        "error",
 			Message:     "create-pay-link failed",
 			Details:     err.Error(),
@@ -62,7 +62,7 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, data nexiapi.PaymentLinkRe
 	}
 	db := database.GetRepository()
 	_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-		ReferenceId: nexiRequest.Order.Reference,
+		ReferenceId: nexirequest.TransId,
 		ApiId:       nexiResponse.ID,
 		Kind:        "success",
 		Message:     "create-pay-link",
@@ -73,14 +73,14 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, data nexiapi.PaymentLinkRe
 	return output, nexiResponse.ID, nil
 }
 
-func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDto, attendee attendeeservice.AttendeeDto) nexi.NexiCreatePaymentRequest {
+func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDto, attendee attendeeservice.AttendeeDto) nexi.NexiCreateCheckoutSessionRequest {
 	shortenedOrderId := strings.ReplaceAll(data.ReferenceId, "-", "")
 	if len(shortenedOrderId) > 30 {
 		shortenedOrderId = shortenedOrderId[:30]
 	}
 	taxAmountCents := int32(math.Round(float64(data.AmountDue) * data.VatRate / 100.0))
 
-	request := nexi.NexiCreatePaymentRequest{
+	request := nexi.NexiCreateCheckoutSessionRequest{
 		Order: nexi.NexiOrder{
 			Items: []nexi.NexiOrderItem{
 				{
@@ -177,7 +177,7 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 	return request
 }
 
-func (i *Impl) apiResponseFromNexiResponse(response nexi.NexiPaymentLinkCreated, request nexi.NexiCreatePaymentRequest) nexiapi.PaymentLinkDto {
+func (i *Impl) apiResponseFromNexiResponse(response nexi.NexiCreateCheckoutSessionResponse, request nexi.NexiCreateCheckoutSessionRequest) nexiapi.PaymentLinkDto {
 	return nexiapi.PaymentLinkDto{
 		Title:       config.InvoiceTitle(),
 		Description: config.InvoiceDescription(),

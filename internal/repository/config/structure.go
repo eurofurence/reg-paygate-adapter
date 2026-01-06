@@ -38,9 +38,8 @@ type ServiceConfig struct {
 	PaymentService          string `yaml:"payment_service"`            // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
 	NexiDownstream          string `yaml:"nexi_downstream"`            // base url, usually https://api.dibspayment.eu for new API, will use in-memory-mock if unset
 	NexiInstance            string `yaml:"nexi_instance"`              // for new API: NexiApiKey (not used?)
-	NexiApiSecret           string `yaml:"nexi_api_secret"`            // for new API: authorization header (secret api key)
-	NexiCommercePlatformTag string `yaml:"nexi_commerce_platform_tag"` // for new API: CommercePlatformTag header
-	NexiMerchantNumber      string `yaml:"nexi_merchant_number"`       // for new API: merchant number (used?)
+	NexiApiKey              string `yaml:"nexi_api_key"`               // for new API: authorization header (secret api key)
+	NexiMerchantID          string `yaml:"nexi_merchant_id"`           // for new API: merchant id
 	SuccessRedirect         string `yaml:"success_redirect"`
 	FailureRedirect         string `yaml:"failure_redirect"`
 	TransactionIDPrefix     string `yaml:"transaction_id_prefix"`
