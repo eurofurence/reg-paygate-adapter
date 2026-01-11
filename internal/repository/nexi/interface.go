@@ -621,7 +621,7 @@ type NexiPaymentQueryResponse struct {
 	Status                string                      `json:"status,omitempty"`
 	ResponseCode          string                      `json:"responseCode,omitempty"`
 	ResponseDescription   string                      `json:"responseDescription,omitempty"`
-	Metadata              map[string]string           `json:"metadata,omitempty"`
+	Metadata              map[string]any              `json:"metadata,omitempty"`
 	Amount                *NexiAmountResponse         `json:"amount,omitempty"`
 	Language              string                      `json:"language,omitempty"`
 	CaptureMethod         *NexiCaptureMethod          `json:"captureMethod,omitempty"`

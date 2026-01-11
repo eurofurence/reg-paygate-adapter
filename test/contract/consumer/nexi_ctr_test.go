@@ -84,13 +84,19 @@ func TestNexiApiClient(t *testing.T) {
 		Name:   "read-paylink-after-use",
 		Method: http.MethodGet,
 		Header: http.Header{}, // not verified
-		Url:    "http://localhost:8000/v1/payments/42",
+		Url:    "http://localhost:8000/payments/getByPayId/220118-150405-000004",
 		Body:   "",
 	}, aurestclientapi.ParsedResponse{
 		Body: &nexi.NexiPaymentQueryResponse{
-			PayId:   "42",
-			TransId: "220118-150405-000004",
-			Status:  "confirmed",
+			PayId:               "42",
+			TransId:             "220118-150405-000004",
+			Status:              "OK",
+			ResponseCode:        "00000000",
+			ResponseDescription: "success",
+			Amount: &nexi.NexiAmountResponse{
+				Value:    10550,
+				Currency: "EUR",
+			},
 			// TODO better example response
 		},
 		Status: http.StatusOK,
@@ -123,7 +129,7 @@ func TestNexiApiClient(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, "42", read.PayId)
 	require.Equal(t, "220118-150405-000004", read.TransId)
-	require.Equal(t, "confirmed", read.Status)
+	require.Equal(t, "OK", read.Status)
 	require.Equal(t, int64(10550), read.Amount.Value)
 
 	// STEP 3: delete the payment link (wouldn't normally work after use)
@@ -138,13 +144,13 @@ func TestNexiApiClient(t *testing.T) {
 		ReferenceId: "220118-150405-000004",
 		Kind:        "raw",
 		Message:     "nexi create request",
-		Details:     `{"transId":"220118-150405-000004","refNr":"220118-150405-000004","amount":{"value":10550,"currency":"EUR"},"language":"en","order":{"merchantReference":"220118-150405-000004","items":[{"sku":"EF 2022 REG 000004","name":"Convention Registration","quantity":1,"taxRate":1900,"taxAmount":0,"netPrice":10550,"grossPrice":10550,"description":"Convention Registration"}]},"urls":{"return":"https://example.com/success","cancel":"https://example.com/failure","webhook":"http://localhost:8080/api/rest/v1/webhook/1234"}}`,
+		Details:     `{"transId":"220118-150405-000004","amount":{"value":10550,"currency":"EUR"},"language":"de","urls":{"return":"https://example.com/success","cancel":"https://example.com/failure","webhook":"http://localhost:8080/api/rest/v1/webhook/1234"},"statementDescriptor":"Convention Registration"}`,
 	}, entity.ProtocolEntry{
 		ReferenceId: "220118-150405-000004",
-		ApiId:       "42",
+		ApiId:       "",
 		Kind:        "raw",
 		Message:     "nexi create success response",
-		Details:     `{"paymentId":"42","hostedPaymentPageUrl":"http://localhost/some/pay/link"}`,
+		Details:     `{"_links":{"redirect":{"href":"http://localhost/some/pay/link","type":"hosted"}}}`,
 	})
 }
 

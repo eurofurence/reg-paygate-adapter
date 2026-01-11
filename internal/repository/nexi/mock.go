@@ -116,44 +116,24 @@ func (m *mockImpl) CreatePaymentLink(ctx context.Context, request NexiCreateChec
 		}},
 	}
 
-	//webhookData := nexiapi.DataPaymentCheckoutCompleted{}
-	//webhookData.Order.Reference = request.Order.Reference
-	//webhookData.Order.Amount.Amount = request.Order.Amount
-	//webhookData.Order.Amount.Currency = request.Order.Currency
-	//webhookData.Order.OrderItems = []struct {
-	//	GrossTotalAmount int32   `json:"grossTotalAmount"`
-	//	Name             string  `json:"name"`
-	//	NetTotalAmount   int32   `json:"netTotalAmount"`
-	//	Quantity         float64 `json:"quantity"`
-	//	Reference        string  `json:"reference"`
-	//	TaxRate          int32   `json:"taxRate"`
-	//	TaxAmount        int32   `json:"taxAmount"`
-	//	Unit             string  `json:"unit"`
-	//	UnitPrice        int32   `json:"unitPrice"`
-	//}{
-	//	{
-	//		TaxRate: 1900,
-	//	},
-	//}
-	//if len(request.Order.Items) > 0 {
-	//	webhookData.Order.OrderItems[0].TaxRate = request.Order.Items[0].TaxRate // only field actually used
-	//}
-	//webhookData.PaymentId = newId
-	//
-	//webhookDataJson, err := json.Marshal(webhookData)
-	//if err != nil {
-	//	return response, err
-	//}
-	//
-	//webhook := nexiapi.WebhookDto{
-	//	Id:    newId,
-	//	Event: nexiapi.EventPaymentCheckoutCompleted,
-	//	Data:  webhookDataJson,
-	//}
+	webhook := nexiapi.WebhookDto{
+		PayId:               "42",
+		TransId:             request.TransId,
+		Status:              "OK",
+		ResponseCode:        "00000000",
+		ResponseDescription: "success",
+		Amount: nexiapi.WebhookAmount{
+			Value:    request.Amount.Value,
+			Currency: request.Amount.Currency,
+		},
+		PaymentMethods: []nexiapi.WebhookPaymentMethod{
+			{Type: "CARD"},
+		},
+		CreationDate: "2025-09-01T14:00:00Z",
+	}
 
 	aulogging.Logger.Ctx(ctx).Info().Printf("mock creating payment link id=%s amount=%d curr=%s", newId, request.Amount.Value, request.Amount.Currency)
-
-	// m.webhookCache[request.Order.Reference] = webhook
+	m.webhookCache[request.TransId] = webhook
 	return response, nil
 }
 

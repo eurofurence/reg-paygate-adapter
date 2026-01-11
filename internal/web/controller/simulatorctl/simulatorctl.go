@@ -7,13 +7,11 @@ package simulatorctl
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
 	"github.com/eurofurence/reg-paygate-adapter/internal/repository/nexi"
 	"github.com/eurofurence/reg-paygate-adapter/internal/repository/self"
 	"github.com/eurofurence/reg-paygate-adapter/internal/service/paymentlinksrv"
@@ -44,17 +42,7 @@ func useSimulator(w http.ResponseWriter, r *http.Request) {
 		errorHandler(ctx, w, http.StatusNotFound, "not found", fmt.Sprintf("simulator paylink with id %s not found (may be lost from memory after restart)", referenceId))
 		return
 	}
-	var data nexiapi.DataPaymentCheckoutCompleted
-	err = json.Unmarshal(event.Data, &data)
-	if err != nil {
-		errorHandler(ctx, w, http.StatusInternalServerError,
-			"failed to report to local webhook - see log for details",
-			fmt.Sprintf("failed to unmarshal cached webhook for %s: %s", referenceId, err.Error()),
-		)
-	}
-
-	selfCaller := self.Get()
-	err = selfCaller.CallWebhook(ctx, event)
+	err = self.Get().CallWebhook(ctx, event)
 	if err != nil {
 		errorHandler(ctx, w, http.StatusInternalServerError,
 			"failed to report to local webhook - see log for details",
@@ -64,8 +52,8 @@ func useSimulator(w http.ResponseWriter, r *http.Request) {
 	}
 
 	successHandler(ctx, w,
-		fmt.Sprintf("paid refId %s for %0.2f %s", referenceId, float64(data.Order.Amount.Amount)/100.0, data.Order.Amount.Currency),
-		fmt.Sprintf("simulator paid refId %s for %0.2f %s", referenceId, float64(data.Order.Amount.Amount)/100.0, data.Order.Amount.Currency),
+		fmt.Sprintf("paid refId %s for %0.2f %s", referenceId, float64(event.Amount.Value)/100.0, event.Amount.Currency),
+		fmt.Sprintf("simulator paid refId %s for %0.2f %s", referenceId, float64(event.Amount.Value)/100.0, event.Amount.Currency),
 	)
 }
 

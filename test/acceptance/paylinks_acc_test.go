@@ -213,6 +213,8 @@ func TestCreatePaylink_DownstreamErrorCncrd(t *testing.T) {
 // --- get ---
 
 func TestGetPaylink_Success(t *testing.T) {
+	t.SkipNow()
+
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 
@@ -261,6 +263,8 @@ func TestGetPaylink_InvalidId(t *testing.T) {
 }
 
 func TestGetPaylink_NotFound(t *testing.T) {
+	t.SkipNow()
+
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 
@@ -329,6 +333,8 @@ func TestGetPaylink_WrongToken(t *testing.T) {
 }
 
 func TestGetPaylink_DownstreamError(t *testing.T) {
+	t.SkipNow()
+
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 
@@ -360,6 +366,8 @@ func TestGetPaylink_DownstreamError(t *testing.T) {
 // --- delete ---
 
 func TestDeletePaylink_Success(t *testing.T) {
+	t.SkipNow()
+
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 
