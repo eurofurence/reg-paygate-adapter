@@ -261,9 +261,9 @@ paths:
     post:
       tags:
         - callback
-      summary: Inform us that there is an update for a checkout
+      summary: Inform us that there is an update for a payment session
       description: |-
-        Inform us that there is an update for a checkout
+        Inform us that there is an update for a payment
       operationId: webhookCallback
       parameters:
         - name: secret
@@ -305,6 +305,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /weblogger/{secret}:
+    post:
+      tags:
+        - callback
+      summary: Inform us that there is an update for a checkout (log only)
+      description: |-
+        Inform us that there is an update for a checkout (logging only endpoint).
+        
+        This endpoint can be used in local service instances to provide a safe hosted webhook.
+        No processing occurs, the incoming payload is just logged.
+      operationId: webloggerCallback
+      parameters:
+        - name: secret
+          in: path
+          description: secret as configured by us when setting up the webhook callback
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookEvent'
+      responses:
+        '200':
+          description: Successfully received (even sent in case of errors)
   /health:
     get:
       tags:
@@ -423,35 +449,73 @@ components:
     WebhookEvent:
       type: object
       required:
-        - event
-        - data
-      additionalProperties: true
+        - payId
+        - transId
+        - status
+        - responseCode
+        - responseDescription
+        - amount
+        - paymentMethods
+        - creationDate
       description: |-
-        webhook event data structure. See
-        https://developer.nexigroup.com/nexi-checkout/en-EU/api/payment-webhooks-v1/
-        for further details.
+        webhook event data structure.
       properties:
-        id:
+        payId:
           type: string
-          example: "d4e7f0d40d704fe3a655ddd941a33f3d"
-        event:
+          description: identifier for payment, assigned by payment processor
+          example: 78f5adccfe8640e5a549613389ff33we
+        transId:
           type: string
-          enum:
-            - payment.checkout.completed
-            - payment.cancel.created
-            - payment.charge.created
-            - payment.charge.created.v2
-            - payment.charge.failed
-            - payment.charge.failed.v2
-            - payment.created
-          description: |-
-            event determines the structure under data. See the official API docs for further details.
-            
-            This specification only lists the events that are relevant for our use cases.
-        data:
+          description: transaction id assigned by us, we use the reference id of the payment from payment-service
+          example: EF1995-000001-221216-122218-4132
+        refNr:
+          type: string
+          description: our reference number for the specific operation, we do not use this, so probably unset
+        status:
+          type: string
+          description: status of the transaction
+          example: OK
+        responseCode:
+          type: string
+          description: response code of the transaction
+          example: 00000000
+        responseDescription:
+          type: string
+          description: description for the response code
+          example: success
+        amount:
           type: object
-          additionalProperties: true
-          description: union, exact structure depends on the value of event. See the official API docs for further details.
+          additionalProperties: false
+          required:
+            - value
+            - currency
+          properties:
+            value:
+              type: number
+              example: 10000
+              description: integer amount in smallest denomination (for example cents)
+            currency:
+              type: string
+              example: EUR
+              description: ISO code for currency
+        paymentMethods:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - type
+            properties:
+              type:
+                type: string
+                enum:
+                  - APPLEPAY
+                  - CARD
+                  - GOOGLEPAY
+                example: CARD
+        creationDate:
+          type: string
+          example: "2025-09-23T13:20:30Z"
     HealthReport:
       type: object
       required:

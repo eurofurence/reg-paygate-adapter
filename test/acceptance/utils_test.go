@@ -2,7 +2,6 @@ package acceptance
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -203,80 +202,54 @@ func tstBuildValidPaymentLinkGetResponse() nexiapi.PaymentLinkDto {
 	}
 }
 
-func tstBuildValidWebhookRequest(t *testing.T, event string) string {
+func tstBuildValidWebhookRequest(t *testing.T) string {
 	re := regexp.MustCompile(`(\r\s*|\n\s*)`)
-	// for each event, hardcode one realistic webhook body
-	if event == nexiapi.EventPaymentCreated {
-		return re.ReplaceAllString(`
+	// hardcode one realistic webhook body with one extra field to test tolerant reader
+	return re.ReplaceAllString(`
   {
-    "id": "01234567890abcdef0123456789abcde",
-    "merchantId": 123456789,
-    "timestamp": "2025-12-15T13:24:15.9680+00:00",
-    "event": "payment.created",
-    "data": {
-      "order": {
-        "amount": {
-          "amount": 18500,
-          "currency": "EUR",
-          "other": "some extra stuff to test tolerant reader pattern"
-        },
-        "reference": "EF1995-000001-221216-122218-4132"
-      },
-      "paymentId": "ef00000000000000000000000000cafe"
-    }
+    "payId": "ef00000000000000000000000000cafe",
+    "transId": "EF1995-000001-221216-122218-4132",
+    "status": "OK",
+    "responseCode": "00000000",
+    "responseDescription": "success",
+    "amount": {
+      "value": 18500,
+      "currency": "EUR"
+    },
+    "paymentMethods": [
+      {
+        "type": "CARD"
+      }
+    ],
+    "creationDate": "2025-12-15T13:24:23Z",
+    "unexpected": "added"
   }
 `, "")
-	} else if event == nexiapi.EventPaymentChargeCreatedV2 {
-		return re.ReplaceAllString(`
+}
+
+func tstBuildFailedWebhookRequest(t *testing.T) string {
+	re := regexp.MustCompile(`(\r\s*|\n\s*)`)
+	// hardcode one realistic webhook body with one extra field to test tolerant reader
+	// TODO record realistic example
+	return re.ReplaceAllString(`
   {
-    "id": "01234567890abcdef0123456789abcde",
-    "timestamp": "2025-12-15T13:24:23.0175+00:00",
-    "merchantNumber": 123456789,
-    "event": "payment.charge.created.v2",
-    "data": {
-      "paymentMethod": "Visa",
-      "paymentType": "CARD",
-      "amount": {
-        "amount": 18500,
-        "currency": "EUR"
-      },
-      "surchargeAmount": 0,
-      "paymentId": "ef00000000000000000000000000cafe"
-    }
+    "payId": "ef00000000000000000000000000cafe",
+    "transId": "EF1995-000001-221216-122218-4132",
+    "status": "FAIL",
+    "responseCode": "00000020",
+    "responseDescription": "failed",
+    "amount": {
+      "value": 18500,
+      "currency": "EUR"
+    },
+    "paymentMethods": [
+      {
+        "type": "CARD"
+      }
+    ],
+    "creationDate": "2025-12-15T13:24:23Z"
   }
 `, "")
-	} else if event == nexiapi.EventPaymentCheckoutCompleted {
-		return re.ReplaceAllString(`
-  {
-    "id": "01234567890abcdef0123456789abcde",
-    "merchantId": 123456789,
-    "timestamp": "2025-12-15T13:24:23.0175+00:00",
-    "event": "payment.checkout.completed",
-    "data": {
-      "order": {
-        "amount": {
-          "amount": 18500,
-          "currency": "EUR"
-        },
-        "reference": "EF1995-000001-221216-122218-4132"
-      },
-      "paymentId": "ef00000000000000000000000000cafe"
-    }
-  }
-`, "")
-	} else {
-		return re.ReplaceAllString(fmt.Sprintf(`
-  {
-    "id": "01234567890abcdef0123456789abcde",
-    "merchantId": 123456789,
-    "timestamp": "2025-12-15T13:24:23.0175+00:00",
-    "event": "%s",
-    "data": {
-      "paymentId": "ef00000000000000000000000000cafe"
-    }
-  }
-`, event), "")
-	}
 }
 
 func tstExpectedMailNotification(operation string, status string) mailservice.MailSendDto {

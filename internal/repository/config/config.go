@@ -29,6 +29,10 @@ func ServicePublicURL() string {
 	return Configuration().Service.PublicURL
 }
 
+func WebhookOverrideURL() string {
+	return Configuration().Service.WebhookOverrideURL
+}
+
 func ServerIdleTimeout() time.Duration {
 	return time.Second * time.Duration(Configuration().Server.IdleTimeout)
 }
@@ -83,12 +87,16 @@ func NexiDownstreamBaseUrl() string {
 	return Configuration().Service.NexiDownstream
 }
 
-func NexiInstanceName() string {
-	return Configuration().Service.NexiInstance
+func NexiMerchantID() string {
+	return Configuration().Service.NexiMerchantID
 }
 
-func NexiInstanceApiSecret() string {
-	return Configuration().Service.NexiApiSecret
+func NexiAPIKey() string {
+	return Configuration().Service.NexiApiKey
+}
+
+func NexiSimulationMode() bool {
+	return Configuration().Service.NexiSimulationMode
 }
 
 func WebhookSecret() string {
@@ -117,14 +125,6 @@ func SuccessRedirect() string {
 
 func FailureRedirect() string {
 	return Configuration().Service.FailureRedirect
-}
-
-func CommercePlatformTag() string {
-	return Configuration().Service.NexiCommercePlatformTag
-}
-
-func NexiMerchantNumber() string {
-	return Configuration().Service.NexiMerchantNumber
 }
 
 func TermsURL() string {
