@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// --- webhook ---
+
 func TestWebhook_Success_TolerantReader(t *testing.T) {
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
@@ -480,4 +482,33 @@ func tstWebhookSuccessCase(
 		fullExpectedProtocol[i+1] = expectedDBProtocol[i]
 	}
 	tstRequireProtocolEntries(t, fullExpectedProtocol...)
+}
+
+// --- weblogger ---
+
+func TestWeblogger_Success(t *testing.T) {
+	tstSetup(tstConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an anonymous caller who knows the secret url")
+	url := "/api/rest/v1/weblogger/demosecret"
+
+	docs.When("when they trigger our weblogger endpoint")
+	request := tstBuildValidWebhookRequest(t)
+	response := tstPerformPost(url, request, tstNoToken())
+
+	docs.Then("then the request is successful")
+	require.Equal(t, http.StatusOK, response.status)
+
+	docs.Then("and the expected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: "",
+		ApiId:       "",
+		Kind:        "raw",
+		Message:     "webhook request",
+		Details:     request,
+	})
+
+	docs.Then("and no notification emails have been sent")
+	tstRequireMailServiceRecording(t, []mailservice.MailSendDto{})
 }

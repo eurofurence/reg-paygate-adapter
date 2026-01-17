@@ -261,9 +261,9 @@ paths:
     post:
       tags:
         - callback
-      summary: Inform us that there is an update for a checkout
+      summary: Inform us that there is an update for a payment session
       description: |-
-        Inform us that there is an update for a checkout
+        Inform us that there is an update for a payment
       operationId: webhookCallback
       parameters:
         - name: secret
@@ -305,6 +305,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /weblogger/{secret}:
+    post:
+      tags:
+        - callback
+      summary: Inform us that there is an update for a checkout (log only)
+      description: |-
+        Inform us that there is an update for a checkout (logging only endpoint).
+        
+        This endpoint can be used in local service instances to provide a safe hosted webhook.
+        No processing occurs, the incoming payload is just logged.
+      operationId: webloggerCallback
+      parameters:
+        - name: secret
+          in: path
+          description: secret as configured by us when setting up the webhook callback
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookEvent'
+      responses:
+        '200':
+          description: Successfully received (even sent in case of errors)
   /health:
     get:
       tags:

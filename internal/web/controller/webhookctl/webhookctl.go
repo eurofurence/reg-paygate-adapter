@@ -24,6 +24,7 @@ func Create(server chi.Router, paymentLinkSrv paymentlinksrv.PaymentLinkService)
 	paymentLinkService = paymentLinkSrv
 
 	server.Post("/api/rest/v1/webhook/{secret}", webhookHandler)
+	server.Post("/api/rest/v1/weblogger/{secret}", webloggerHandler)
 }
 
 func webhookHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,6 +53,22 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.WriteHeader(http.StatusOK)
 	}
+}
+
+func webloggerHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if secretFromVarsOk(ctx, w, r) {
+		// ignore webhooks that don't know the secret to keep out potential log spammers
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			// log and ignore
+			aulogging.Logger.Ctx(ctx).Error().Printf("failed to read weblogger payload: %s", err.Error())
+		} else if err := paymentLinkService.LogRawWebhook(ctx, string(bodyBytes)); err != nil {
+			// log and ignore
+			aulogging.Logger.Ctx(ctx).Error().Printf("failed to write incoming weblogger payload to database: %s", err.Error())
+		}
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func parseBodyToWebhookDtoTolerant(ctx context.Context, w http.ResponseWriter, r *http.Request) (nexiapi.WebhookDto, error) {

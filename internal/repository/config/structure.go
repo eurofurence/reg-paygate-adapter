@@ -32,13 +32,15 @@ type ServerConfig struct {
 // for service related tasks. E.g. URLs to downstream services
 type ServiceConfig struct {
 	Name                string `yaml:"name"`
-	PublicURL           string `yaml:"public_url"`       // my own public base url, without a trailing slash
-	AttendeeService     string `yaml:"attendee_service"` // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
-	MailService         string `yaml:"mail_service"`     // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
-	PaymentService      string `yaml:"payment_service"`  // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
-	NexiDownstream      string `yaml:"nexi_downstream"`  // base url, usually https://api.dibspayment.eu for new API, will use in-memory-mock if unset
-	NexiApiKey          string `yaml:"nexi_api_key"`     // for new API: authorization header (secret api key)
-	NexiMerchantID      string `yaml:"nexi_merchant_id"` // for new API: merchant id
+	PublicURL           string `yaml:"public_url"`           // my own public base url, without a trailing slash
+	WebhookOverrideURL  string `yaml:"webhook_override_url"` // override webhook base url to point to log only endpoint on another instance
+	AttendeeService     string `yaml:"attendee_service"`     // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
+	MailService         string `yaml:"mail_service"`         // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
+	PaymentService      string `yaml:"payment_service"`      // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
+	NexiDownstream      string `yaml:"nexi_downstream"`      // base url, usually https://www.computop-paygate.com/api/v2, will use in-memory-mock if unset
+	NexiApiKey          string `yaml:"nexi_api_key"`         // authorization header (secret api key), required
+	NexiMerchantID      string `yaml:"nexi_merchant_id"`     // merchant id, required
+	NexiSimulationMode  bool   `yaml:"nexi_simulation_mode"` // enable simulation mode
 	SuccessRedirect     string `yaml:"success_redirect"`
 	FailureRedirect     string `yaml:"failure_redirect"`
 	TransactionIDPrefix string `yaml:"transaction_id_prefix"`

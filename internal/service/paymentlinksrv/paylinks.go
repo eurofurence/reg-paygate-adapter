@@ -95,7 +95,9 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 	}
 
 	webhook := ""
-	if config.ServicePublicURL() != "" {
+	if config.WebhookOverrideURL() != "" {
+		webhook = config.WebhookOverrideURL() + "/api/rest/v1/weblogger/" + config.WebhookSecret()
+	} else if config.ServicePublicURL() != "" {
 		webhook = config.ServicePublicURL() + "/api/rest/v1/webhook/" + config.WebhookSecret()
 	}
 
@@ -116,13 +118,21 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 		StatementDescriptor: config.InvoiceTitle(),
 		// TODO maybe this will confuse the API if set up like this
 		Order: &nexi.NexiOrder{
+			NumberOfArticles: 1,
 			Items: []nexi.NexiOrderItem{
 				{
+					Name:    config.InvoicePurpose(),
 					TaxRate: int64(math.Round(data.VatRate * 100.0)),
 				},
 			},
 		},
-		// TODO email address in customer is mandatory
+		CustomerInfo: &nexi.NexiCustomerInfoRequest{
+			Email: attendee.Email,
+		},
+	}
+
+	if config.NexiSimulationMode() {
+		request.SimulationMode = "0000"
 	}
 
 	return request

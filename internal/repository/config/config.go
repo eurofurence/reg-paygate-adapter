@@ -29,6 +29,10 @@ func ServicePublicURL() string {
 	return Configuration().Service.PublicURL
 }
 
+func WebhookOverrideURL() string {
+	return Configuration().Service.WebhookOverrideURL
+}
+
 func ServerIdleTimeout() time.Duration {
 	return time.Second * time.Duration(Configuration().Server.IdleTimeout)
 }
@@ -89,6 +93,10 @@ func NexiMerchantID() string {
 
 func NexiAPIKey() string {
 	return Configuration().Service.NexiApiKey
+}
+
+func NexiSimulationMode() bool {
+	return Configuration().Service.NexiSimulationMode
 }
 
 func WebhookSecret() string {

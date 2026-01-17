@@ -12,13 +12,19 @@ service:
   payment_service: 'http://localhost:9092' # do not add trailing /
 
   # base url for the Nexi downstream, leave blank to use the local simulator (should set public_url or generated paylinks will not work)
-  # nexi_downstream: 'https://test.api.dibspayment.eu' (Test) or 'https://api.dibspayment.eu' (Live)
+  # nexi_downstream: 'https://test.computop-paygate.com/api/v2' (Test)
 
   # secret api key from nexi portal
   nexi_api_key: 'demosecret'
 
   # nexi merchant id
   nexi_merchant_id: 'GG1234_56789'
+
+  # add simulationMode parameter to requests (testing)
+  nexi_simulation_mode: true
+
+  # public_url of a running instance of this service to use for logging-only webhook. Only useful for localhosts.
+  webhook_override_url: 'https://example.com'
 
   # if set, will add these redirects to the request for the paylink
   success_redirect: 'http://localhost:10000/register'
