@@ -126,8 +126,8 @@ func (m *mockImpl) CreatePaymentLink(ctx context.Context, request NexiCreateChec
 			Value:    request.Amount.Value,
 			Currency: request.Amount.Currency,
 		},
-		PaymentMethods: []nexiapi.WebhookPaymentMethod{
-			{Type: "CARD"},
+		PaymentMethods: nexiapi.WebhookPaymentMethod{
+			Type: "CARD",
 		},
 		CreationDate: "2025-09-01T14:00:00Z",
 	}
