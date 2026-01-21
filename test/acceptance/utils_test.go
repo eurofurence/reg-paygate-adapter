@@ -216,11 +216,9 @@ func tstBuildValidWebhookRequest(t *testing.T) string {
       "value": 18500,
       "currency": "EUR"
     },
-    "paymentMethods": [
-      {
-        "type": "CARD"
-      }
-    ],
+    "paymentMethods": {
+      "type": "CARD"
+    },
     "creationDate": "2025-12-15T13:24:23Z",
     "unexpected": "added"
   }
@@ -242,11 +240,9 @@ func tstBuildFailedWebhookRequest(t *testing.T) string {
       "value": 18500,
       "currency": "EUR"
     },
-    "paymentMethods": [
-      {
-        "type": "CARD"
-      }
-    ],
+    "paymentMethods": {
+      "type": "CARD"
+    },
     "creationDate": "2025-12-15T13:24:23Z"
   }
 `, "")

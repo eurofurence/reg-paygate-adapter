@@ -372,11 +372,9 @@ func TestWebhook_Success_Status_WrongPrefix(t *testing.T) {
       "value": 18500,
       "currency": "EUR"
     },
-    "paymentMethods": [
-      {
-        "type": "CARD"
-      }
-    ],
+    "paymentMethods": {
+      "type": "CARD"
+    },
     "creationDate": "2025-12-15T13:24:23Z"
   }
 `
