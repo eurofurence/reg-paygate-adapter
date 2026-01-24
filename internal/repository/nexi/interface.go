@@ -639,6 +639,7 @@ type NexiPaymentQueryResponse struct {
 	Device                *NexiDevice                 `json:"device,omitempty"`
 	Channel               string                      `json:"channel,omitempty"`
 	PaymentMethods        *NexiPaymentMethodsResponse `json:"paymentMethods,omitempty"`
+	MerchantId            string                      `json:"merchantId,omitempty"`
 }
 
 // -- Legacy Transaction Data Structures --

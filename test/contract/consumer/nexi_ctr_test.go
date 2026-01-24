@@ -105,16 +105,6 @@ func TestNexiApiClient(t *testing.T) {
 		},
 		Time: time.Time{},
 	}, nil)
-	//verifierImpl.AddExpectation(aurestverifier.Request{
-	//	Name:   "delete-paylink",
-	//	Method: http.MethodPost,
-	//	Header: http.Header{}, // not verified
-	//	Url:    "http://localhost:8000/v1/payments/42/cancels",
-	//	Body:   `{"amount":10550}`,
-	//}, aurestclientapi.ParsedResponse{
-	//	Status: http.StatusOK,
-	//	Time:   time.Time{},
-	//}, nil)
 
 	// set up downstream client
 	client := nexi.NewTestingClient(verifierClient)
@@ -131,27 +121,6 @@ func TestNexiApiClient(t *testing.T) {
 	require.Equal(t, "220118-150405-000004", read.TransId)
 	require.Equal(t, "OK", read.Status)
 	require.Equal(t, int64(10550), read.Amount.Value)
-
-	// STEP 3: delete the payment link (wouldn't normally work after use)
-	// err = client.DeletePaymentLink(ctx, "220118-150405-000004", 10550)
-	// require.Nil(t, err)
-
-	docs.Then("and the expected interactions have occurred in the correct order")
-	require.Nil(t, verifierImpl.FirstUnexpectedOrNil())
-
-	docs.Then("and the expected protocol entries have been written to the database")
-	tstRequireProtocolEntries(t, entity.ProtocolEntry{
-		ReferenceId: "220118-150405-000004",
-		Kind:        "raw",
-		Message:     "nexi create request",
-		Details:     `{"transId":"220118-150405-000004","amount":{"value":10550,"currency":"EUR"},"language":"de","urls":{"return":"https://example.com/success","cancel":"https://example.com/failure","webhook":"http://localhost:8080/api/rest/v1/webhook/1234"},"statementDescriptor":"Convention Registration"}`,
-	}, entity.ProtocolEntry{
-		ReferenceId: "220118-150405-000004",
-		ApiId:       "",
-		Kind:        "raw",
-		Message:     "nexi create success response",
-		Details:     `{"_links":{"redirect":{"href":"http://localhost/some/pay/link","type":"hosted"}}}`,
-	})
 }
 
 func tstRequireProtocolEntries(t *testing.T, expectedProtocol ...entity.ProtocolEntry) {

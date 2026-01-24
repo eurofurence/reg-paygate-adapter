@@ -141,6 +141,13 @@ func tstRequirePaymentLinkResponse(t *testing.T, response tstWebResponse, expect
 	require.EqualValues(t, expectedBody, actualBody)
 }
 
+func tstRequirePaymentResponse(t *testing.T, response tstWebResponse, expectedStatus int, expectedBody nexiapi.PaymentDto) {
+	require.Equal(t, expectedStatus, response.status, "unexpected http response status")
+	actualBody := nexiapi.PaymentDto{}
+	tstParseJson(response.body, &actualBody)
+	require.EqualValues(t, expectedBody, actualBody)
+}
+
 func tstRequireNexiRecording(t *testing.T, expectedEntries ...string) {
 	actual := nexiMock.Recording()
 	require.Equal(t, len(expectedEntries), len(actual))
@@ -191,14 +198,16 @@ func tstBuildValidPaymentLink() nexiapi.PaymentLinkDto {
 	}
 }
 
-func tstBuildValidPaymentLinkGetResponse() nexiapi.PaymentLinkDto {
-	return nexiapi.PaymentLinkDto{
-		ReferenceId: "EF1995-000001-221216-122218-4132",
-		Purpose:     "some payment purpose",
-		AmountDue:   390,
-		AmountPaid:  0,
-		Currency:    "EUR",
-		Link:        "http://localhost:1111/some/paylink/42",
+func tstBuildValidPaymentGetResponse() nexiapi.PaymentDto {
+	return nexiapi.PaymentDto{
+		Id:            "42",
+		ReferenceId:   "EF1995-000001-221216-122218-4132",
+		AmountDue:     39000,
+		AmountPaid:    39000,
+		Currency:      "EUR",
+		Status:        "OK",
+		ResponseCode:  "00000000",
+		PaymentMethod: "CARD",
 	}
 }
 

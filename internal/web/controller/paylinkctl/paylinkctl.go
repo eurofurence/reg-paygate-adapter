@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
+	"regexp"
+	"strings"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
 	"github.com/eurofurence/reg-paygate-adapter/internal/repository/attendeeservice"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/config"
 	"github.com/eurofurence/reg-paygate-adapter/internal/repository/nexi"
 	"github.com/eurofurence/reg-paygate-adapter/internal/service/paymentlinksrv"
 	"github.com/eurofurence/reg-paygate-adapter/internal/web/util/ctlutil"
@@ -22,12 +24,15 @@ import (
 
 var paymentLinkService paymentlinksrv.PaymentLinkService
 
+var refIdRegex *regexp.Regexp
+
 func Create(server chi.Router, paymentLinkSrv paymentlinksrv.PaymentLinkService) {
 	paymentLinkService = paymentLinkSrv
 
 	server.Post("/api/rest/v1/paylinks", createPaylinkHandler)
-	server.Get("/api/rest/v1/paylinks/{id}", getPaylinkHandler)
-	server.Delete("/api/rest/v1/paylinks/{id}", deletePaylinkHandler)
+	server.Get("/api/rest/v1/paylinks/{refid}", getPaymentHandler)
+
+	refIdRegex = regexp.MustCompile("^[A-Z0-9][A-Z0-9-]+[A-Z0-9]$")
 }
 
 func createPaylinkHandler(w http.ResponseWriter, r *http.Request) {
@@ -65,24 +70,24 @@ func createPaylinkHandler(w http.ResponseWriter, r *http.Request) {
 	ctlutil.WriteJson(ctx, w, dto)
 }
 
-func getPaylinkHandler(w http.ResponseWriter, r *http.Request) {
+func getPaymentHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if !ctxvalues.HasApiToken(ctx) {
 		ctlutil.UnauthenticatedError(ctx, w, r, "you must be logged in for this operation", "anonymous access attempt")
 		return
 	}
 
-	id, err := idFromVars(ctx, w, r)
+	id, err := refidFromVars(ctx, w, r)
 	if err != nil {
 		return
 	}
 
-	dto, err := paymentLinkService.GetPaymentLink(ctx, id)
+	dto, err := paymentLinkService.GetPayment(ctx, id)
 	if err != nil {
 		if errors.Is(err, nexi.DownstreamError) {
 			downstreamErrorHandler(ctx, w, r, "paylink", err)
 		} else if errors.Is(err, nexi.NoSuchID404Error) {
-			paylinkNotFoundErrorHandler(ctx, w, r, id)
+			paymentNotFoundErrorHandler(ctx, w, r, id)
 		} else {
 			ctlutil.UnexpectedError(ctx, w, r, err)
 		}
@@ -90,33 +95,6 @@ func getPaylinkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctlutil.WriteJson(ctx, w, dto)
-}
-
-func deletePaylinkHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	if !ctxvalues.HasApiToken(ctx) {
-		ctlutil.UnauthenticatedError(ctx, w, r, "you must be logged in for this operation", "anonymous access attempt")
-		return
-	}
-
-	id, err := idFromVars(ctx, w, r)
-	if err != nil {
-		return
-	}
-
-	err = paymentLinkService.DeletePaymentLink(ctx, id)
-	if err != nil {
-		if errors.Is(err, nexi.DownstreamError) {
-			downstreamErrorHandler(ctx, w, r, "paylink", err)
-		} else if errors.Is(err, nexi.NoSuchID404Error) {
-			paylinkNotFoundErrorHandler(ctx, w, r, id)
-		} else {
-			ctlutil.UnexpectedError(ctx, w, r, err)
-		}
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
 }
 
 func parseBodyToPaymentLinkRequestDto(ctx context.Context, w http.ResponseWriter, r *http.Request) (nexiapi.PaymentLinkRequestDto, error) {
@@ -130,16 +108,12 @@ func parseBodyToPaymentLinkRequestDto(ctx context.Context, w http.ResponseWriter
 	return dto, err
 }
 
-func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, error) {
-	idStr := chi.URLParam(r, "id")
-	if idStr == "" {
-		invalidPaylinkIdErrorHandler(ctx, w, r, idStr)
-		return "", fmt.Errorf("empty id")
-	}
-	// Validate that id looks like a valid uint for backward compatibility
-	if _, err := strconv.ParseUint(idStr, 10, 32); err != nil {
-		invalidPaylinkIdErrorHandler(ctx, w, r, idStr)
-		return "", fmt.Errorf("invalid id")
+func refidFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, error) {
+	idStr := chi.URLParam(r, "refid")
+	// minimal validation to make sure the downstream api request will be valid
+	if !refIdRegex.MatchString(idStr) || !strings.HasPrefix(idStr, config.TransactionIDPrefix()) || len(idStr) > 63 {
+		invalidPaymentRefIdErrorHandler(ctx, w, r, idStr)
+		return "", fmt.Errorf("invalid or empty id")
 	}
 	return idStr, nil
 }
@@ -159,12 +133,12 @@ func downstreamErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.
 	ctlutil.ErrorHandler(ctx, w, r, fmt.Sprintf("%s.downstream.error", sysname), http.StatusBadGateway, nil)
 }
 
-func invalidPaylinkIdErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, id string) {
+func invalidPaymentRefIdErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, id string) {
 	aulogging.Logger.Ctx(ctx).Warn().Printf("received invalid paylink id '%s'", url.QueryEscape(id))
-	ctlutil.ErrorHandler(ctx, w, r, "paylink.id.invalid", http.StatusBadRequest, url.Values{})
+	ctlutil.ErrorHandler(ctx, w, r, "payment.refid.invalid", http.StatusBadRequest, url.Values{})
 }
 
-func paylinkNotFoundErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, id string) {
+func paymentNotFoundErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, id string) {
 	aulogging.Logger.Ctx(ctx).Warn().Printf("paylink id %s not found", id)
-	ctlutil.ErrorHandler(ctx, w, r, "paylink.id.notfound", http.StatusNotFound, url.Values{})
+	ctlutil.ErrorHandler(ctx, w, r, "payment.refid.notfound", http.StatusNotFound, url.Values{})
 }

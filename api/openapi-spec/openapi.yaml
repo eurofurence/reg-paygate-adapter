@@ -86,45 +86,43 @@ paths:
                 $ref: '#/components/schemas/Error'
       security:
         - ApiKeyAuth: []
-  /paylinks/{id}:
+  /paylinks/{refid}:
     get:
       tags:
         - paylinks
-      summary: Find payment link by id (NOT YET IMPLEMENTED)
+      summary: Find payment by reference id
       description: |-
         Returns a single link, fetching the current status from
-        the downstream Nexi checkout backend.
-      operationId: getPaymentLinkById
+        the downstream Nexi Paygate backend. Only works once a payment has been attempted.
+      operationId: getPaymentByRefId
       parameters:
-        - name: id
+        - name: refid
           in: path
-          description: Id of the payment link to return
+          description: Reference Id (aka transId) of the payment link to return
           required: true
           schema:
-            type: integer
-            minimum: 1
-            format: int64
+            type: string
       responses:
         '200':
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaymentLink'
+                $ref: '#/components/schemas/Payment'
         '400':
-          description: Invalid ID supplied
+          description: Invalid ID supplied, for example did not start with assigned reference id prefix
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '401':
-          description: Authorization required
+          description: Authorization required (API Key missing?)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '404':
-          description: Payment link not found
+          description: Payment not found - note that this will also happen before a session has been used.
           content:
             application/json:
               schema:
@@ -136,86 +134,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '502':
-          description: The Nexi backend could not be reached or returned an unexpected error.
+          description: The Paygate backend could not be reached or returned an unexpected error.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
       security:
         - ApiKeyAuth: []
-    delete:
-      tags:
-        - paylinks
-      summary: Delete a payment link by id (NOT YET IMPLEMENTED)
-      description: Removes a checkout from the upstream Nexi backend
-      operationId: deletePaymentLinkById
-      parameters:
-        - name: id
-          in: path
-          description: Id of the payment link to return
-          required: true
-          schema:
-            type: integer
-            minimum: 1
-            format: int64
-      responses:
-        '204':
-          description: successful operation
-        '400':
-          description: Invalid ID supplied
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Authorization required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: You do not have permission to delete this payment link
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Payment link not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: An unexpected error occurred. A best effort attempt is made to return details in the body.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '502':
-          description: The Nexi backend could not be reached.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - ApiKeyAuth: []
-  /paylinks/{id}/refund:
+  /paylinks/{refid}/refund:
     post:
       tags:
         - paylinks
       summary: Refund payments by paylink id (NOT YET IMPLEMENTED)
       description: |-
-        Refund all payments made using the references paylink.
-      operationId: refundPaymentLinkById
+        Refund payment.
+      operationId: refundPaymentByRefId
       parameters:
-        - name: id
+        - name: refid
           in: path
-          description: Id of the payment link to refund
+          description: Reference id of the payment to refund
           required: true
           schema:
-            type: integer
-            minimum: 1
-            format: int64
+            type: string
       responses:
         '204':
           description: successful operation
@@ -446,6 +386,58 @@ components:
           maxLength: 255
           description: The payment link.
           example: https://instancename.pay-link.eu/?payment=382c85eab7a86278e3c3b06a23af2358
+    Payment:
+      type: object
+      description: |
+        Payment as read from Paygate.        
+        Note that Paygate does not let you read information about sessions, just about attempted / made payments.
+      required:
+        - id
+        - reference_id
+        - amount_due
+        - currency
+        - status
+      properties:
+        id:
+          type: string
+          description: Paygate payment id
+          example: 41630000000011112222ffffeeeeabcd
+        reference_id:
+          type: string
+          minLength: 1
+          maxLength: 80
+          description: Internal reference number for this payment process.
+          example: ab23-1870ffe6-ca1778de7-0167
+        amount_due:
+          type: integer
+          format: int64
+          minimum: 1
+          description: The amount billed in smallest denomination (cents).
+          example: 95
+        amount_paid:
+          type: integer
+          format: int64
+          minimum: 0
+          description: The amount actually captured in smallest denomination (cents).
+          example: 95
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: The currency (3-letter code).
+          example: EUR
+        status:
+          type: string
+          example: OK
+          description: Status as received from Paygate. OK, AUTHORIZED, FAILED, ...
+        response_code:
+          type: string
+          example: 00000000
+          description: 8 digit response code, 00000000 for success, other codes see documentation. As received from Paygate.
+        payment_method:
+          type: string
+          example: CARD
+          description: code for the payment method, see documentation. As received from Paygate
     WebhookEvent:
       type: object
       required:
@@ -555,6 +547,8 @@ components:
             - paylink.id.notfound (no such paylink number in the Nexi service)
             - paylink.id.invalid (syntactically invalid paylink id, must be positive integer)
             - paylink.downstream.error (downstream api failure)
+            - payment.refid.invalid (malformed reference id, must start with prefix and only contain valid characters)
+            - payment.refid.notfound (no such payment - this can mean the session was not used yet)
             - attsrv.downstream.error (failed to call attendee service, and it isn't not found)
             - auth.unauthorized (token missing completely or invalid)
             - auth.forbidden (permissions missing)

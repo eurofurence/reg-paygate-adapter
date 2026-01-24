@@ -37,50 +37,42 @@ func newMock() Mock {
 	// not actually queried, but currently used by some test cases
 	simData := make(map[string]NexiPaymentQueryResponse)
 	// used by some testcases
-	//simData["42"] = NexiPaymentQueryResponse{
-	//	ID:          "42",
-	//	Status:      "confirmed",
-	//	ReferenceID: "EF1995-000001-221216-122218-4132",
-	//	Link:        constructSimulatedPaylink("42"),
-	//	Amount:      390,
-	//	Currency:    "EUR",
-	//	CreatedAt:   1673136000, // 2023-01-08
-	//	VatRate:     19.0,
-	//	Order: NexiOrderDetails{
-	//		Reference: "EF1995-000001-221216-122218-4132",
-	//		Amount:    390,
-	//		Currency:  "EUR",
-	//	},
-	//	Summary: NexiSummary{
-	//		ChargedAmount: 390,
-	//	},
-	//	Consumer: NexiConsumerFull{},
-	//	Payments: []NexiPaymentDetails{},
-	//	Refunds:  []NexiRefund{},
-	//	Charges:  []NexiCharge{},
-	//}
-	//simData["4242"] = NexiPaymentQueryResponse{
-	//	ID:          "4242",
-	//	Status:      "confirmed",
-	//	ReferenceID: "EF1995-000001-230001-122218-5555",
-	//	Link:        constructSimulatedPaylink("5555"),
-	//	Amount:      390,
-	//	Currency:    "EUR",
-	//	CreatedAt:   1418392958,
-	//	VatRate:     19.0,
-	//	Order: NexiOrderDetails{
-	//		Reference: "EF1995-000001-230001-122218-5555",
-	//		Amount:    390,
-	//		Currency:  "EUR",
-	//	},
-	//	Summary: NexiSummary{
-	//		ChargedAmount: 390,
-	//	},
-	//	Consumer: NexiConsumerFull{},
-	//	Payments: []NexiPaymentDetails{},
-	//	Refunds:  []NexiRefund{},
-	//	Charges:  []NexiCharge{},
-	//}
+	simData["EF1995-000001-221216-122218-4132"] = NexiPaymentQueryResponse{
+		PayId:               "42",
+		TransId:             "EF1995-000001-221216-122218-4132",
+		Status:              "OK",
+		ResponseCode:        "00000000",
+		ResponseDescription: "Transaktion erfolgreich",
+		Amount: &NexiAmountResponse{
+			Value:         39000,
+			Currency:      "EUR",
+			CapturedValue: p(int64(39000)),
+			RefundedValue: p(int64(0)),
+		},
+		Language: "de",
+		PaymentMethods: &NexiPaymentMethodsResponse{
+			Type: "CARD",
+		},
+		MerchantId: "mymerchant",
+	}
+	simData["EF1995-000001-230001-122218-5555"] = NexiPaymentQueryResponse{
+		PayId:               "4242",
+		TransId:             "EF1995-000001-230001-122218-5555",
+		Status:              "OK",
+		ResponseCode:        "00000000",
+		ResponseDescription: "Transaktion erfolgreich",
+		Amount: &NexiAmountResponse{
+			Value:         39000,
+			Currency:      "EUR",
+			CapturedValue: p(int64(39000)),
+			RefundedValue: p(int64(0)),
+		},
+		Language: "de",
+		PaymentMethods: &NexiPaymentMethodsResponse{
+			Type: "CARD",
+		},
+		MerchantId: "mymerchant",
+	}
 
 	webhookCache := make(map[string]nexiapi.WebhookDto)
 	return &mockImpl{
@@ -215,4 +207,8 @@ func (m *mockImpl) ManipulateStatus(paylinkId string, status string) {
 	}
 	copiedData.Status = status
 	m.simulatorData[paylinkId] = copiedData
+}
+
+func p[T any](v T) *T {
+	return &v
 }
