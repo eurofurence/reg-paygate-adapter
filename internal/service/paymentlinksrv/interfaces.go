@@ -20,11 +20,8 @@ type PaymentLinkService interface {
 	// id under which to manage the payment link.
 	CreatePaymentLink(ctx context.Context, request nexiapi.PaymentLinkRequestDto) (nexiapi.PaymentLinkDto, string, error)
 
-	// GetPaymentLink obtains the payment link information from the downstream api.
-	GetPaymentLink(ctx context.Context, id string) (nexiapi.PaymentLinkDto, error)
-
-	// DeletePaymentLink asks the downstream api to delete the given payment link.
-	DeletePaymentLink(ctx context.Context, id string) error
+	// GetPayment obtains the payment information from the downstream api.
+	GetPayment(ctx context.Context, id string) (nexiapi.PaymentDto, error)
 
 	// LogRawWebhook logs the payload of an incoming webhook both in the DB and the service log
 	LogRawWebhook(ctx context.Context, payload string) error

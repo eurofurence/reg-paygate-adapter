@@ -213,23 +213,21 @@ func TestCreatePaylink_DownstreamErrorCncrd(t *testing.T) {
 // --- get ---
 
 func TestGetPaylink_Success(t *testing.T) {
-	t.SkipNow()
-
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 
 	docs.Given("given a caller who supplies a correct api token")
 	token := tstValidApiToken()
 
-	docs.When("when they attempt to get an existing payment link")
-	response := tstPerformGet("/api/rest/v1/paylinks/42", token)
+	docs.When("when they attempt to get an existing payment link by its reference id")
+	response := tstPerformGet("/api/rest/v1/paylinks/EF1995-000001-221216-122218-4132", token)
 
 	docs.Then("then the request is successful and the response is as expected")
-	tstRequirePaymentLinkResponse(t, response, http.StatusOK, tstBuildValidPaymentLinkGetResponse())
+	tstRequirePaymentResponse(t, response, http.StatusOK, tstBuildValidPaymentGetResponse())
 
-	docs.Then("and the expected request for a payment link has been made")
+	docs.Then("and the expected request for a payment has been made")
 	tstRequireNexiRecording(t,
-		"QueryPaymentLink 42",
+		"QueryPaymentLink EF1995-000001-221216-122218-4132",
 	)
 
 	docs.Then("and the expected protocol entries have been written")
@@ -237,8 +235,8 @@ func TestGetPaylink_Success(t *testing.T) {
 		ReferenceId: "EF1995-000001-221216-122218-4132",
 		ApiId:       "42",
 		Kind:        "success",
-		Message:     "get-pay-link",
-		Details:     "http://localhost:1111/some/paylink/42",
+		Message:     "get-payment",
+		Details:     "",
 	})
 }
 
@@ -249,11 +247,11 @@ func TestGetPaylink_InvalidId(t *testing.T) {
 	docs.Given("given a caller who supplies a correct api token")
 	token := tstValidApiToken()
 
-	docs.When("when they attempt to get a payment link but supply an invalid id")
+	docs.When("when they attempt to get a payment link but supply an invalid reference id")
 	response := tstPerformGet("/api/rest/v1/paylinks/%2f%4c", token)
 
 	docs.Then("then the request fails with the appropriate error message")
-	tstRequireErrorResponse(t, response, http.StatusBadRequest, "paylink.id.invalid", nil)
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "payment.refid.invalid", nil)
 
 	docs.Then("and no requests to the payment provider have been made")
 	require.Empty(t, nexiMock.Recording())
@@ -263,8 +261,6 @@ func TestGetPaylink_InvalidId(t *testing.T) {
 }
 
 func TestGetPaylink_NotFound(t *testing.T) {
-	t.SkipNow()
-
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 
@@ -272,22 +268,22 @@ func TestGetPaylink_NotFound(t *testing.T) {
 	token := tstValidApiToken()
 
 	docs.When("when they attempt to get a payment link but supply an id that does not exist")
-	response := tstPerformGet("/api/rest/v1/paylinks/13", token)
+	response := tstPerformGet("/api/rest/v1/paylinks/EF1995-000017-000000-000000-0000", token)
 
 	docs.Then("then the request fails with the appropriate error message")
-	tstRequireErrorResponse(t, response, http.StatusNotFound, "paylink.id.notfound", nil)
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "payment.refid.notfound", nil)
 
-	docs.Then("and the expected request for a payment link has been made")
+	docs.Then("and the expected request for a payment has been made")
 	tstRequireNexiRecording(t,
-		"QueryPaymentLink 13",
+		"QueryPaymentLink EF1995-000017-000000-000000-0000",
 	)
 
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
-		ReferenceId: "",
-		ApiId:       "13",
+		ReferenceId: "EF1995-000017-000000-000000-0000",
+		ApiId:       "",
 		Kind:        "error",
-		Message:     "get-pay-link failed",
+		Message:     "get-payment failed",
 		Details:     "payment link id not found",
 	})
 }
@@ -299,8 +295,8 @@ func TestGetPaylink_Anonymous(t *testing.T) {
 	docs.Given("given an unauthenticated caller")
 	token := tstNoToken()
 
-	docs.When("when they attempt to get a payment link")
-	response := tstPerformGet("/api/rest/v1/paylinks/42", token)
+	docs.When("when they attempt to get information about an existing payment")
+	response := tstPerformGet("/api/rest/v1/paylinks/EF1995-000001-221216-122218-4132", token)
 
 	docs.Then("then the request is denied as unauthenticated (401) with the appropriate error message")
 	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
@@ -319,8 +315,8 @@ func TestGetPaylink_WrongToken(t *testing.T) {
 	docs.Given("given a caller who supplies a wrong api token")
 	token := tstInvalidApiToken()
 
-	docs.When("when they attempt to get a payment link")
-	response := tstPerformGet("/api/rest/v1/paylinks/42", token)
+	docs.When("when they attempt to get information about an existing payment")
+	response := tstPerformGet("/api/rest/v1/paylinks/EF1995-000001-221216-122218-4132", token)
 
 	docs.Then("then the request is denied as unauthenticated (401) with the appropriate error message")
 	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "invalid api token")
@@ -333,183 +329,30 @@ func TestGetPaylink_WrongToken(t *testing.T) {
 }
 
 func TestGetPaylink_DownstreamError(t *testing.T) {
-	t.SkipNow()
-
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 
 	docs.Given("given a caller who supplies a correct api token")
 	token := tstValidApiToken()
 
-	docs.When("when they attempt to get a payment link while the paylink api is down")
+	docs.When("when they attempt to get payment information while the paygate api is down")
 	nexiMock.SimulateError(nexi.DownstreamError)
-	response := tstPerformGet("/api/rest/v1/paylinks/42", token)
+	response := tstPerformGet("/api/rest/v1/paylinks/EF1995-000001-221216-122218-4132", token)
 
 	docs.Then("then the request fails with the appropriate error")
 	tstRequireErrorResponse(t, response, http.StatusBadGateway, "paylink.downstream.error", nil)
 
 	docs.Then("and the expected email notifications have been sent")
-	expNotif := tstExpectedMailNotification("get-pay-link", "downstream unavailable - see log for details")
-	expNotif.Variables["referenceId"] = "paylink id 42"
+	expNotif := tstExpectedMailNotification("get-payment", "downstream unavailable - see log for details")
+	expNotif.Variables["referenceId"] = "reference id EF1995-000001-221216-122218-4132"
 	tstRequireMailServiceRecording(t, []mailservice.MailSendDto{expNotif})
 
 	docs.Then("and the expected protocol entries have been written")
 	tstRequireProtocolEntries(t, entity.ProtocolEntry{
-		ReferenceId: "",
-		ApiId:       "42",
+		ReferenceId: "EF1995-000001-221216-122218-4132",
+		ApiId:       "",
 		Kind:        "error",
-		Message:     "get-pay-link failed",
-		Details:     "downstream unavailable - see log for details",
-	})
-}
-
-// --- delete ---
-
-func TestDeletePaylink_Success(t *testing.T) {
-	t.SkipNow()
-
-	tstSetup(tstConfigFile)
-	defer tstShutdown()
-
-	docs.Given("given a caller who supplies a correct api token")
-	token := tstValidApiToken()
-
-	docs.When("when they attempt to delete an existing payment link")
-	response := tstPerformDelete("/api/rest/v1/paylinks/42", token)
-
-	docs.Then("then the request is successful and the response is as expected")
-	require.Equal(t, http.StatusNoContent, response.status)
-	require.Equal(t, "", response.body)
-
-	docs.Then("and the expected request for payment link deletion has been made")
-	tstRequireNexiRecording(t,
-		"QueryPaymentLink 42",
-		"DeletePaymentLink 42",
-	)
-
-	docs.Then("and the expected protocol entries have been written")
-	tstRequireProtocolEntries(t, entity.ProtocolEntry{
-		ReferenceId: "",
-		ApiId:       "42",
-		Kind:        "success",
-		Message:     "delete-pay-link",
-		Details:     "",
-	})
-}
-
-func TestDeletePaylink_InvalidId(t *testing.T) {
-	tstSetup(tstConfigFile)
-	defer tstShutdown()
-
-	docs.Given("given a caller who supplies a correct api token")
-	token := tstValidApiToken()
-
-	docs.When("when they attempt to delete a payment link but supply an invalid id")
-	response := tstPerformDelete("/api/rest/v1/paylinks/%2f%4c", token)
-
-	docs.Then("then the request fails with the appropriate error message")
-	tstRequireErrorResponse(t, response, http.StatusBadRequest, "paylink.id.invalid", nil)
-
-	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, nexiMock.Recording())
-
-	docs.Then("and no protocol entries have been written")
-	tstRequireProtocolEntries(t)
-}
-
-func TestDeletePaylink_NotFound(t *testing.T) {
-	tstSetup(tstConfigFile)
-	defer tstShutdown()
-
-	docs.Given("given a caller who supplies a correct api token")
-	token := tstValidApiToken()
-
-	docs.When("when they attempt to delete a payment link but supply an id that does not exist")
-	response := tstPerformDelete("/api/rest/v1/paylinks/13", token)
-
-	docs.Then("then the request fails with the appropriate error message")
-	tstRequireErrorResponse(t, response, http.StatusNotFound, "paylink.id.notfound", nil)
-
-	docs.Then("and the expected request for payment link deletion has been made")
-	tstRequireNexiRecording(t,
-		"QueryPaymentLink 13",
-	)
-
-	docs.Then("and the expected protocol entries have been written")
-	tstRequireProtocolEntries(t, entity.ProtocolEntry{
-		ReferenceId: "",
-		ApiId:       "13",
-		Kind:        "error",
-		Message:     "delete-pay-link failed",
-		Details:     "payment link id not found",
-	})
-}
-
-func TestDeletePaylink_Anonymous(t *testing.T) {
-	tstSetup(tstConfigFile)
-	defer tstShutdown()
-
-	docs.Given("given an unauthenticated caller")
-	token := tstNoToken()
-
-	docs.When("when they attempt to delete a payment link")
-	response := tstPerformDelete("/api/rest/v1/paylinks/42", token)
-
-	docs.Then("then the request is denied as unauthenticated (401) with the appropriate error message")
-	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
-
-	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, nexiMock.Recording())
-
-	docs.Then("and no protocol entries have been written")
-	tstRequireProtocolEntries(t)
-}
-
-func TestDeletePaylink_WrongToken(t *testing.T) {
-	tstSetup(tstConfigFile)
-	defer tstShutdown()
-
-	docs.Given("given a caller who supplies a wrong api token")
-	token := tstInvalidApiToken()
-
-	docs.When("when they attempt to delete a payment link")
-	response := tstPerformDelete("/api/rest/v1/paylinks/42", token)
-
-	docs.Then("then the request is denied as unauthenticated (401) with the appropriate error message")
-	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "invalid api token")
-
-	docs.Then("and no requests to the payment provider have been made")
-	require.Empty(t, nexiMock.Recording())
-
-	docs.Then("and no protocol entries have been written")
-	tstRequireProtocolEntries(t)
-}
-
-func TestDeletePaylink_DownstreamError(t *testing.T) {
-	tstSetup(tstConfigFile)
-	defer tstShutdown()
-
-	docs.Given("given a caller who supplies a correct api token")
-	token := tstValidApiToken()
-
-	docs.When("when they attempt to delete a payment link while the paylink api is down")
-	nexiMock.SimulateError(nexi.DownstreamError)
-	response := tstPerformDelete("/api/rest/v1/paylinks/42", token)
-
-	docs.Then("then the request fails with the appropriate error")
-	tstRequireErrorResponse(t, response, http.StatusBadGateway, "paylink.downstream.error", nil)
-
-	docs.Then("and the expected email notifications have been sent")
-	expNotif := tstExpectedMailNotification("delete-pay-link", "downstream unavailable - see log for details")
-	expNotif.Variables["referenceId"] = "paylink id 42"
-	tstRequireMailServiceRecording(t, []mailservice.MailSendDto{expNotif})
-
-	docs.Then("and the expected protocol entries have been written")
-	tstRequireProtocolEntries(t, entity.ProtocolEntry{
-		ReferenceId: "",
-		ApiId:       "42",
-		Kind:        "error",
-		Message:     "delete-pay-link failed",
+		Message:     "get-payment failed",
 		Details:     "downstream unavailable - see log for details",
 	})
 }

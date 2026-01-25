@@ -2,7 +2,6 @@ package paymentlinksrv
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"net/url"
 
@@ -155,97 +154,6 @@ func (i *Impl) apiResponseFromNexiResponse(response nexi.NexiCreateCheckoutSessi
 		VatRate:     vatRate,
 		Link:        response.Links.Redirect.Href,
 	}
-}
-
-func (i *Impl) GetPaymentLink(ctx context.Context, id string) (nexiapi.PaymentLinkDto, error) {
-	data, err := nexi.Get().QueryPaymentLink(ctx, id)
-	if err != nil {
-		db := database.GetRepository()
-		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-			ReferenceId: id,
-			Kind:        "error",
-			Message:     "get-pay-link failed",
-			Details:     err.Error(),
-			RequestId:   ctxvalues.RequestId(ctx),
-		})
-		_ = i.SendErrorNotifyMail(ctx, "get-pay-link", fmt.Sprintf("paylink id %s", id), err.Error())
-		return nexiapi.PaymentLinkDto{}, err
-	}
-
-	db := database.GetRepository()
-	_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-		ReferenceId: id,
-		ApiId:       data.PayId,
-		Kind:        "success",
-		Message:     "get-pay-link",
-		Details:     "",
-		RequestId:   ctxvalues.RequestId(ctx),
-	})
-
-	// TODO lots of missing fields, can we get them from downstream?
-
-	result := nexiapi.PaymentLinkDto{
-		ReferenceId: id,
-		Purpose:     config.InvoicePurpose(),
-		AmountDue:   data.Amount.Value,
-		AmountPaid:  0, // TODO calculate paid amount from summary
-		Currency:    data.Amount.Currency,
-		Link:        "", // TODO can we even get the link again?
-	}
-	if len(data.Order.Items) > 0 {
-		result.VatRate = float64(data.Order.Items[0].TaxRate) / 100.0
-		result.Title = data.Order.Items[0].Name
-		result.Description = "" // TODO
-	}
-
-	return result, nil
-}
-
-func (i *Impl) DeletePaymentLink(ctx context.Context, id string) error {
-	// Query to get the amount for cancel
-	data, err := nexi.Get().QueryPaymentLink(ctx, id)
-	if err != nil {
-		db := database.GetRepository()
-		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-			ReferenceId: "",
-			ApiId:       id,
-			Kind:        "error",
-			Message:     "delete-pay-link failed",
-			Details:     err.Error(),
-			RequestId:   ctxvalues.RequestId(ctx),
-		})
-		_ = i.SendErrorNotifyMail(ctx, "delete-pay-link", fmt.Sprintf("paylink id %s", id), err.Error())
-		return err
-	}
-
-	if data.Amount != nil && data.Amount.Value != 0 {
-		err = nexi.Get().DeletePaymentLink(ctx, id, data.Amount.Value)
-		if err != nil {
-			db := database.GetRepository()
-			_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-				ReferenceId: "",
-				ApiId:       id,
-				Kind:        "error",
-				Message:     "delete-pay-link failed",
-				Details:     err.Error(),
-				RequestId:   ctxvalues.RequestId(ctx),
-			})
-			_ = i.SendErrorNotifyMail(ctx, "delete-pay-link", fmt.Sprintf("paylink id %s", id), err.Error())
-			return err
-		}
-
-		db := database.GetRepository()
-		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-			ReferenceId: "",
-			ApiId:       id,
-			Kind:        "success",
-			Message:     "delete-pay-link",
-			Details:     "",
-			RequestId:   ctxvalues.RequestId(ctx),
-		})
-	}
-
-	return nil
 }
 
 func p[T comparable](t T) *T {

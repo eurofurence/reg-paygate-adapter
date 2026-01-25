@@ -38,7 +38,7 @@ func TestWebhook_Success_TolerantReader(t *testing.T) {
 		EffectiveDate: "2022-12-10",            // will update to 2022-12-16 (mocked Now() date)
 		DueDate:       "2022-12-10",
 	})
-	request := tstBuildValidWebhookRequest(t)
+	request := tstBuildValidWebhookRequest(t, "EF1995-000001-221216-122218-4132", "OK", 18500)
 	response := tstPerformPost(url, request, tstNoToken())
 
 	docs.Then("then the extra fields are ignored and the request is successful")
@@ -66,6 +66,9 @@ func TestWebhook_Success_TolerantReader(t *testing.T) {
 func TestWebhook_Success_TentativeNoDiff(t *testing.T) {
 	docs.Description("webhook with status OK sets existing tentative tx to valid")
 	tstWebhookSuccessCase(t,
+		"EF1995-000001-221216-122218-4132",
+		"OK",
+		18500,
 		paymentservice.Transaction{
 			DebitorID: 1,
 			ID:        "EF1995-000001-221216-122218-4132",
@@ -92,7 +95,7 @@ func TestWebhook_Success_TentativeNoDiff(t *testing.T) {
 					GrossCent: 18500,
 					VatRate:   19.0,
 				},
-				Comment:       "CC paymentId ef00000000000000000000000000cafe",
+				Comment:       "CC paymentId ef00000000000000000000000000cafe - status OK",
 				Status:        "valid",
 				EffectiveDate: "2022-12-16",
 				DueDate:       "2022-12-10",
@@ -111,9 +114,63 @@ func TestWebhook_Success_TentativeNoDiff(t *testing.T) {
 	)
 }
 
-func TestWebhook_Success_CheckoutCompleted_TentativeDiff(t *testing.T) {
+func TestWebhook_Success_TentativeAuthorizedOKNoDiff(t *testing.T) {
+	docs.Description("webhook with status AUTHORIZED but upstream OK sets existing tentative tx to valid")
+	tstWebhookSuccessCase(t,
+		"EF1995-000001-221216-122218-4132",
+		"AUTHORIZED",
+		18500,
+		paymentservice.Transaction{
+			DebitorID: 1,
+			ID:        "EF1995-000001-221216-122218-4132",
+			Type:      "payment",
+			Method:    "credit",
+			Amount: paymentservice.Amount{
+				Currency:  "EUR",
+				GrossCent: 18500,
+				VatRate:   19.0,
+			},
+			Comment:       "CC previously created", // will update to include paymentId
+			Status:        "tentative",             // will update to valid
+			EffectiveDate: "2022-12-10",            // will update to 2022-12-16 (mocked Now() date)
+			DueDate:       "2022-12-10",
+		},
+		[]paymentservice.Transaction{
+			{
+				DebitorID: 1,
+				ID:        "EF1995-000001-221216-122218-4132",
+				Type:      "payment",
+				Method:    "credit",
+				Amount: paymentservice.Amount{
+					Currency:  "EUR",
+					GrossCent: 18500,
+					VatRate:   19.0,
+				},
+				Comment:       "CC paymentId ef00000000000000000000000000cafe - status OK",
+				Status:        "valid",
+				EffectiveDate: "2022-12-16",
+				DueDate:       "2022-12-10",
+			},
+		},
+		[]mailservice.MailSendDto{},
+		[]entity.ProtocolEntry{
+			{
+				ReferenceId: "EF1995-000001-221216-122218-4132",
+				ApiId:       "ef00000000000000000000000000cafe",
+				Kind:        "success",
+				Message:     "transaction updated successfully",
+				Details:     "amount=18500 currency=EUR",
+			},
+		},
+	)
+}
+
+func TestWebhook_Success_TentativeDiff(t *testing.T) {
 	docs.Description("webhook with status OK sets existing tentative tx to pending and warns about differing amounts")
 	tstWebhookSuccessCase(t,
+		"EF1995-000001-221216-122218-4132",
+		"OK",
+		18500,
 		paymentservice.Transaction{
 			DebitorID: 1,
 			ID:        "EF1995-000001-221216-122218-4132",
@@ -140,7 +197,7 @@ func TestWebhook_Success_CheckoutCompleted_TentativeDiff(t *testing.T) {
 					GrossCent: 18500,
 					VatRate:   19.0,
 				},
-				Comment:       "CC paymentId ef00000000000000000000000000cafe",
+				Comment:       "CC paymentId ef00000000000000000000000000cafe - status OK",
 				Status:        "pending", // !!!
 				EffectiveDate: "2022-12-16",
 				DueDate:       "2022-12-10",
@@ -168,9 +225,156 @@ func TestWebhook_Success_CheckoutCompleted_TentativeDiff(t *testing.T) {
 	)
 }
 
-func TestWebhook_Error_CheckoutCompleted_Pending(t *testing.T) {
+func TestWebhook_Success_AuthorizedWarns(t *testing.T) {
+	docs.Description("webhook with status AUTHORIZED upstream AUTHORIZED sets existing tentative tx to pending and warns about status")
+	tstWebhookSuccessCase(t,
+		"EF1995-000001-230001-122218-5555",
+		"AUTHORIZED",
+		39000,
+		paymentservice.Transaction{
+			DebitorID: 1,
+			ID:        "EF1995-000001-230001-122218-5555",
+			Type:      "payment",
+			Method:    "credit",
+			Amount: paymentservice.Amount{
+				Currency:  "EUR",
+				GrossCent: 39000,
+				VatRate:   19.0,
+			},
+			Comment:       "CC previously created", // will update to include paymentId
+			Status:        "tentative",             // will update to pending due to differenct amount
+			EffectiveDate: "2022-12-10",            // will update to 2022-12-16 (mocked Now() date)
+			DueDate:       "2022-12-10",
+		},
+		[]paymentservice.Transaction{
+			{
+				DebitorID: 1,
+				ID:        "EF1995-000001-230001-122218-5555",
+				Type:      "payment",
+				Method:    "credit",
+				Amount: paymentservice.Amount{
+					Currency:  "EUR",
+					GrossCent: 39000,
+					VatRate:   19.0,
+				},
+				Comment:       "CC paymentId ef00000000000000000000000000cafe - status AUTHORIZED",
+				Status:        "pending", // !!!
+				EffectiveDate: "2022-12-16",
+				DueDate:       "2022-12-10",
+			},
+		},
+		[]mailservice.MailSendDto{
+			{
+				CommonID: "payment-nexi-adapter-error",
+				Lang:     "en-US",
+				To: []string{
+					"errors@example.com",
+				},
+				Variables: map[string]string{
+					"status":      "upstream-status-not-OK-kept-pending-please-check",
+					"operation":   "webhook",
+					"referenceId": "EF1995-000001-230001-122218-5555",
+				},
+				Async: true,
+			},
+		},
+		[]entity.ProtocolEntry{
+			{
+				ReferenceId: "EF1995-000001-230001-122218-5555",
+				ApiId:       "ef00000000000000000000000000cafe",
+				Kind:        "warning",
+				Message:     "verified status not OK",
+				Details:     "webhook=AUTHORIZED verified=AUTHORIZED",
+			},
+			{
+				ReferenceId: "EF1995-000001-230001-122218-5555",
+				ApiId:       "ef00000000000000000000000000cafe",
+				Kind:        "success",
+				Message:     "transaction updated successfully",
+				Details:     "amount=39000 currency=EUR",
+			},
+		},
+	)
+}
+
+func TestWebhook_Success_OkAuthorizedWarns(t *testing.T) {
+	docs.Description("webhook with status OK upstream AUTHORIZED sets existing tentative tx to pending and warns about status")
+	tstWebhookSuccessCase(t,
+		"EF1995-000001-230001-122218-5555",
+		"OK",
+		39000,
+		paymentservice.Transaction{
+			DebitorID: 1,
+			ID:        "EF1995-000001-230001-122218-5555",
+			Type:      "payment",
+			Method:    "credit",
+			Amount: paymentservice.Amount{
+				Currency:  "EUR",
+				GrossCent: 39000,
+				VatRate:   19.0,
+			},
+			Comment:       "CC previously created", // will update to include paymentId
+			Status:        "tentative",             // will update to pending due to differenct amount
+			EffectiveDate: "2022-12-10",            // will update to 2022-12-16 (mocked Now() date)
+			DueDate:       "2022-12-10",
+		},
+		[]paymentservice.Transaction{
+			{
+				DebitorID: 1,
+				ID:        "EF1995-000001-230001-122218-5555",
+				Type:      "payment",
+				Method:    "credit",
+				Amount: paymentservice.Amount{
+					Currency:  "EUR",
+					GrossCent: 39000,
+					VatRate:   19.0,
+				},
+				Comment:       "CC paymentId ef00000000000000000000000000cafe - status AUTHORIZED",
+				Status:        "pending", // !!!
+				EffectiveDate: "2022-12-16",
+				DueDate:       "2022-12-10",
+			},
+		},
+		[]mailservice.MailSendDto{
+			{
+				CommonID: "payment-nexi-adapter-error",
+				Lang:     "en-US",
+				To: []string{
+					"errors@example.com",
+				},
+				Variables: map[string]string{
+					"status":      "upstream-status-not-OK-kept-pending-please-check",
+					"operation":   "webhook",
+					"referenceId": "EF1995-000001-230001-122218-5555",
+				},
+				Async: true,
+			},
+		},
+		[]entity.ProtocolEntry{
+			{
+				ReferenceId: "EF1995-000001-230001-122218-5555",
+				ApiId:       "ef00000000000000000000000000cafe",
+				Kind:        "warning",
+				Message:     "verified status not OK",
+				Details:     "webhook=OK verified=AUTHORIZED",
+			},
+			{
+				ReferenceId: "EF1995-000001-230001-122218-5555",
+				ApiId:       "ef00000000000000000000000000cafe",
+				Kind:        "success",
+				Message:     "transaction updated successfully",
+				Details:     "amount=39000 currency=EUR",
+			},
+		},
+	)
+}
+
+func TestWebhook_Error_Pending(t *testing.T) {
 	docs.Description("webhook with status OK warns about trying to update pending tx and does not touch tx")
 	tstWebhookSuccessCase(t,
+		"EF1995-000001-221216-122218-4132",
+		"OK",
+		18500,
 		paymentservice.Transaction{
 			DebitorID: 1,
 			ID:        "EF1995-000001-221216-122218-4132",
@@ -188,7 +392,7 @@ func TestWebhook_Error_CheckoutCompleted_Pending(t *testing.T) {
 		},
 		[]paymentservice.Transaction{}, // NO update occurs!
 		[]mailservice.MailSendDto{
-			tstExpectedMailNotification("webhook", "abort-update-for-pending"),
+			tstExpectedMailNotification("webhook", "abort-update-for-pending-OK"),
 		},
 		[]entity.ProtocolEntry{
 			{
@@ -196,15 +400,18 @@ func TestWebhook_Error_CheckoutCompleted_Pending(t *testing.T) {
 				ApiId:       "ef00000000000000000000000000cafe",
 				Kind:        "warning",
 				Message:     "webhook payment already in status pending",
-				Details:     "existing_amount=22500 ignored_amount=18500 existing_currency=EUR ignored_currency=EUR",
+				Details:     "existing_amount=22500 ignored_amount=18500 existing_currency=EUR ignored_currency=EUR webhook_status=OK upstream_status=OK",
 			},
 		},
 	)
 }
 
-func TestWebhook_Error_CheckoutCompleted_Valid(t *testing.T) {
+func TestWebhook_Error_Valid(t *testing.T) {
 	docs.Description("webhook with status OK warns about trying to update valid tx and does not touch tx")
 	tstWebhookSuccessCase(t,
+		"EF1995-000001-221216-122218-4132",
+		"OK",
+		18500,
 		paymentservice.Transaction{
 			DebitorID: 1,
 			ID:        "EF1995-000001-221216-122218-4132",
@@ -222,7 +429,7 @@ func TestWebhook_Error_CheckoutCompleted_Valid(t *testing.T) {
 		},
 		[]paymentservice.Transaction{}, // NO update occurs!
 		[]mailservice.MailSendDto{
-			tstExpectedMailNotification("webhook", "abort-update-for-valid"),
+			tstExpectedMailNotification("webhook", "abort-update-for-valid-OK"),
 		},
 		[]entity.ProtocolEntry{
 			{
@@ -230,7 +437,7 @@ func TestWebhook_Error_CheckoutCompleted_Valid(t *testing.T) {
 				ApiId:       "ef00000000000000000000000000cafe",
 				Kind:        "warning",
 				Message:     "webhook payment already in status valid",
-				Details:     "existing_amount=10500 ignored_amount=18500 existing_currency=USD ignored_currency=EUR",
+				Details:     "existing_amount=10500 ignored_amount=18500 existing_currency=USD ignored_currency=EUR webhook_status=OK upstream_status=OK",
 			},
 		},
 	)
@@ -264,7 +471,7 @@ func TestWebhook_FailureStatus(t *testing.T) {
 			Variables: map[string]string{
 				"status":      "unexpected-status",
 				"operation":   "webhook",
-				"referenceId": "unknown status: FAIL",
+				"referenceId": "unknown status: FAILED",
 			},
 			Async: true,
 		},
@@ -283,7 +490,7 @@ func TestWebhook_FailureStatus(t *testing.T) {
 		ReferenceId: "EF1995-000001-221216-122218-4132",
 		ApiId:       "ef00000000000000000000000000cafe",
 		Kind:        "error",
-		Message:     "webhook FAIL unknown status",
+		Message:     "webhook FAILED unknown status",
 		Details:     "code=00000020 desc=failed",
 	}
 	tstRequireProtocolEntries(t, fullExpectedProtocol...)
@@ -311,7 +518,8 @@ func TestWebhook_WrongSecret(t *testing.T) {
 	url := "/api/rest/v1/webhook/wrongsecret"
 
 	docs.When("when they attempt to trigger our webhook endpoint")
-	response := tstPerformPost(url, tstBuildValidWebhookRequest(t), tstNoToken())
+	request := tstBuildValidWebhookRequest(t, "EF1995-000001-221216-122218-4132", "OK", 18500)
+	response := tstPerformPost(url, request, tstNoToken())
 
 	docs.Then("then the request fails with the appropriate error")
 	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", nil)
@@ -325,7 +533,7 @@ func TestWebhook_PaySrvDownstreamError(t *testing.T) {
 	url := "/api/rest/v1/webhook/demosecret"
 
 	docs.When("when they attempt to trigger our webhook endpoint while the downstream api is down")
-	request := tstBuildValidWebhookRequest(t)
+	request := tstBuildValidWebhookRequest(t, "EF1995-000001-221216-122218-4132", "OK", 18500)
 	paymentMock.SimulateAddError(paymentservice.DownstreamError)
 	response := tstPerformPost(url, request, tstNoToken())
 
@@ -423,6 +631,9 @@ func TestWebhook_Success_Status_WrongPrefix(t *testing.T) {
 
 func tstWebhookSuccessCase(
 	t *testing.T,
+	txId string,
+	webhookStatus string,
+	amount int64,
 	injectedTx paymentservice.Transaction,
 	expectedPaymentServiceRecording []paymentservice.Transaction,
 	expectedMailRecording []mailservice.MailSendDto,
@@ -443,7 +654,7 @@ func tstWebhookSuccessCase(
 	}
 
 	docs.When("when they trigger our webhook endpoint with valid information")
-	request := tstBuildValidWebhookRequest(t)
+	request := tstBuildValidWebhookRequest(t, txId, webhookStatus, amount)
 	response := tstPerformPost(url, request, tstNoToken())
 
 	docs.Then("then the request is successful")
@@ -492,7 +703,7 @@ func TestWeblogger_Success(t *testing.T) {
 	url := "/api/rest/v1/weblogger/demosecret"
 
 	docs.When("when they trigger our weblogger endpoint")
-	request := tstBuildValidWebhookRequest(t)
+	request := tstBuildValidWebhookRequest(t, "EF1995-000001-221216-122218-4132", "OK", 18500)
 	response := tstPerformPost(url, request, tstNoToken())
 
 	docs.Then("then the request is successful")
