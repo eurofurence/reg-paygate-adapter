@@ -84,7 +84,7 @@ func TestNexiApiClient(t *testing.T) {
 		Name:   "read-paylink-after-use",
 		Method: http.MethodGet,
 		Header: http.Header{}, // not verified
-		Url:    "http://localhost:8000/payments/getByPayId/220118-150405-000004",
+		Url:    "http://localhost:8000/payments/getByTransId/220118-150405-000004",
 		Body:   "",
 	}, aurestclientapi.ParsedResponse{
 		Body: &nexi.NexiPaymentQueryResponse{

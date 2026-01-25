@@ -44,9 +44,9 @@ func newMock() Mock {
 		ResponseCode:        "00000000",
 		ResponseDescription: "Transaktion erfolgreich",
 		Amount: &NexiAmountResponse{
-			Value:         39000,
+			Value:         18500,
 			Currency:      "EUR",
-			CapturedValue: p(int64(39000)),
+			CapturedValue: p(int64(18500)),
 			RefundedValue: p(int64(0)),
 		},
 		Language: "de",
@@ -58,7 +58,7 @@ func newMock() Mock {
 	simData["EF1995-000001-230001-122218-5555"] = NexiPaymentQueryResponse{
 		PayId:               "4242",
 		TransId:             "EF1995-000001-230001-122218-5555",
-		Status:              "OK",
+		Status:              "AUTHORIZED",
 		ResponseCode:        "00000000",
 		ResponseDescription: "Transaktion erfolgreich",
 		Amount: &NexiAmountResponse{
@@ -137,13 +137,13 @@ func (m *mockImpl) GetCachedWebhook(referenceId string) (nexiapi.WebhookDto, err
 	return webhook, nil
 }
 
-func (m *mockImpl) QueryPaymentLink(ctx context.Context, id string) (NexiPaymentQueryResponse, error) {
+func (m *mockImpl) QueryPaymentLink(ctx context.Context, transactionId string) (NexiPaymentQueryResponse, error) {
 	if m.simulateError != nil {
 		return NexiPaymentQueryResponse{}, m.simulateError
 	}
-	m.recording = append(m.recording, fmt.Sprintf("QueryPaymentLink %s", id))
+	m.recording = append(m.recording, fmt.Sprintf("QueryPaymentLink %s", transactionId))
 
-	copiedData, ok := m.simulatorData[id]
+	copiedData, ok := m.simulatorData[transactionId]
 	if !ok {
 		return NexiPaymentQueryResponse{}, NoSuchID404Error
 	}

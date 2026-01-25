@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -202,8 +203,8 @@ func tstBuildValidPaymentGetResponse() nexiapi.PaymentDto {
 	return nexiapi.PaymentDto{
 		Id:            "42",
 		ReferenceId:   "EF1995-000001-221216-122218-4132",
-		AmountDue:     39000,
-		AmountPaid:    39000,
+		AmountDue:     18500,
+		AmountPaid:    18500,
 		Currency:      "EUR",
 		Status:        "OK",
 		ResponseCode:  "00000000",
@@ -211,18 +212,18 @@ func tstBuildValidPaymentGetResponse() nexiapi.PaymentDto {
 	}
 }
 
-func tstBuildValidWebhookRequest(t *testing.T) string {
+func tstBuildValidWebhookRequest(t *testing.T, txId string, status string, amount int64) string {
 	re := regexp.MustCompile(`(\r\s*|\n\s*)`)
 	// hardcode one realistic webhook body with one extra field to test tolerant reader
-	return re.ReplaceAllString(`
+	return re.ReplaceAllString(fmt.Sprintf(`
   {
     "payId": "ef00000000000000000000000000cafe",
-    "transId": "EF1995-000001-221216-122218-4132",
-    "status": "OK",
+    "transId": "%s",
+    "status": "%s",
     "responseCode": "00000000",
-    "responseDescription": "success",
+    "responseDescription": "Transaktion erfolgreich",
     "amount": {
-      "value": 18500,
+      "value": %d,
       "currency": "EUR"
     },
     "paymentMethods": {
@@ -231,7 +232,7 @@ func tstBuildValidWebhookRequest(t *testing.T) string {
     "creationDate": "2025-12-15T13:24:23Z",
     "unexpected": "added"
   }
-`, "")
+`, txId, status, amount), "")
 }
 
 func tstBuildFailedWebhookRequest(t *testing.T) string {
@@ -242,7 +243,7 @@ func tstBuildFailedWebhookRequest(t *testing.T) string {
   {
     "payId": "ef00000000000000000000000000cafe",
     "transId": "EF1995-000001-221216-122218-4132",
-    "status": "FAIL",
+    "status": "FAILED",
     "responseCode": "00000020",
     "responseDescription": "failed",
     "amount": {

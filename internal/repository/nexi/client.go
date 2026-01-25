@@ -144,19 +144,58 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request NexiCreateCheckout
 	return responseBody, nil
 }
 
-func (i *Impl) QueryPaymentLink(ctx context.Context, paymentId string) (NexiPaymentQueryResponse, error) {
-	requestUrl := fmt.Sprintf("%s/payments/getByPayId/%s", i.baseUrl, paymentId)
+func (i *Impl) QueryPaymentLink(ctx context.Context, transactionId string) (NexiPaymentQueryResponse, error) {
+	requestUrl := fmt.Sprintf("%s/payments/getByTransId/%s", i.baseUrl, transactionId)
+	var responseRaw *[]byte
 	response := aurestclientapi.ParsedResponse{
-		Body: &NexiPaymentQueryResponse{},
+		Body: &responseRaw,
 	}
 	if err := i.client.Perform(ctx, http.MethodGet, requestUrl, "", &response); err != nil {
 		return NexiPaymentQueryResponse{}, err
 	}
+	if responseRaw == nil {
+		return NexiPaymentQueryResponse{}, fmt.Errorf("response body is empty")
+	}
 	if response.Status >= 300 {
+		if config.LogFullRequests() {
+			db := database.GetRepository()
+			bodyStr := string(*responseRaw)
+			bodyStr = strings.ReplaceAll(bodyStr, "\r", "")
+			bodyStr = strings.ReplaceAll(bodyStr, "\n", "")
+			bodyStr = strings.ReplaceAll(bodyStr, " ", "")
+			_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
+				ReferenceId: transactionId,
+				Kind:        "raw",
+				Message:     "nexi get error response",
+				Details:     bodyStr,
+				RequestId:   ctxvalues.RequestId(ctx),
+			})
+			aulogging.Logger.Ctx(ctx).Info().Printf("nexi get error response (status %d): %s", response.Status, string(*responseRaw))
+		}
 		return NexiPaymentQueryResponse{}, fmt.Errorf("unexpected response status %d", response.Status)
 	}
-	result := response.Body.(*NexiPaymentQueryResponse)
-	return *result, nil
+	responseBody := NexiPaymentQueryResponse{}
+	if err := json.Unmarshal(*responseRaw, &responseBody); err != nil {
+		return NexiPaymentQueryResponse{}, fmt.Errorf("failed to unmarshal response body: %v", err)
+	}
+	if config.LogFullRequests() {
+		// Log response
+		aulogging.Logger.Ctx(ctx).Info().Print("nexi get success response: " + string(*responseRaw))
+		// Also write to protocol with ApiId
+		db := database.GetRepository()
+		bodyStr := string(*responseRaw)
+		bodyStr = strings.ReplaceAll(bodyStr, "\r", "")
+		bodyStr = strings.ReplaceAll(bodyStr, "\n", "")
+		bodyStr = strings.ReplaceAll(bodyStr, " ", "")
+		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
+			ReferenceId: transactionId,
+			Kind:        "raw",
+			Message:     "nexi get success response",
+			Details:     bodyStr,
+			RequestId:   ctxvalues.RequestId(ctx),
+		})
+	}
+	return responseBody, nil
 }
 
 func (i *Impl) DeletePaymentLink(ctx context.Context, paymentId string, amount int64) error {
