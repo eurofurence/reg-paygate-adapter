@@ -2,6 +2,7 @@ package paymentlinksrv
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"net/url"
 
@@ -115,7 +116,6 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 			Webhook: webhook,
 		},
 		StatementDescriptor: config.InvoiceTitle(),
-		// TODO maybe this will confuse the API if set up like this
 		Order: &nexi.NexiOrder{
 			NumberOfArticles: 1,
 			Items: []nexi.NexiOrderItem{
@@ -127,6 +127,17 @@ func (i *Impl) nexiCreateRequestFromApiRequest(data nexiapi.PaymentLinkRequestDt
 		},
 		CustomerInfo: &nexi.NexiCustomerInfoRequest{
 			Email: attendee.Email,
+		},
+		PaymentMethods: &nexi.NexiPaymentMethodsRequest{
+			Card: &nexi.NexiCard{
+				Template: &nexi.NexiCardTemplate{
+					CustomFields: &nexi.NexiCardTemplateCustomFields{
+						CustomField1: fmt.Sprintf("%.2f %s", float64(amountDue)/100.0, data.Currency), // Amount and currency of the transaction
+						// CustomField3:  "",                      // Merchant’s logo, URL of the logo. Format: .png (any size)
+						CustomField4: config.InvoicePurpose(), // order's descriptions
+					},
+				},
+			},
 		},
 	}
 
