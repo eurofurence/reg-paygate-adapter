@@ -228,7 +228,7 @@ func (i *Impl) createTransaction(ctx context.Context, data nexiapi.WebhookDto, u
 }
 
 func (i *Impl) updateTransaction(ctx context.Context, data nexiapi.WebhookDto, transaction paymentservice.Transaction, upstream nexi.NexiPaymentQueryResponse) error {
-	if transaction.Status == paymentservice.Valid || transaction.Status == paymentservice.Pending {
+	if transaction.Status == paymentservice.Valid {
 		aulogging.Logger.Ctx(ctx).Warn().Printf(
 			"aborting transaction update - already in status %s! reference_id=%s",
 			transaction.Status, data.TransId,

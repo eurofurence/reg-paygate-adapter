@@ -370,7 +370,7 @@ func TestWebhook_Success_OkAuthorizedWarns(t *testing.T) {
 }
 
 func TestWebhook_Error_Pending(t *testing.T) {
-	docs.Description("webhook with status OK warns about trying to update pending tx and does not touch tx")
+	docs.Description("webhook with status OK can update pending tx")
 	tstWebhookSuccessCase(t,
 		"EF1995-000001-221216-122218-4132",
 		"OK",
@@ -382,7 +382,7 @@ func TestWebhook_Error_Pending(t *testing.T) {
 			Method:    "credit",
 			Amount: paymentservice.Amount{
 				Currency:  "EUR",
-				GrossCent: 22500, // will NOT update to webhook amount, but send warning email
+				GrossCent: 18500,
 				VatRate:   19.0,
 			},
 			Comment:       "CC previously created",
@@ -390,17 +390,31 @@ func TestWebhook_Error_Pending(t *testing.T) {
 			EffectiveDate: "2022-12-10",
 			DueDate:       "2022-12-10",
 		},
-		[]paymentservice.Transaction{}, // NO update occurs!
-		[]mailservice.MailSendDto{
-			tstExpectedMailNotification("webhook", "abort-update-for-pending-OK"),
-		},
+		[]paymentservice.Transaction{
+			{
+				DebitorID: 1,
+				ID:        "EF1995-000001-221216-122218-4132",
+				Type:      "payment",
+				Method:    "credit",
+				Amount: paymentservice.Amount{
+					Currency:  "EUR",
+					GrossCent: 18500,
+					VatRate:   19.0,
+				},
+				Comment:       "CC paymentId ef00000000000000000000000000cafe - status OK",
+				Status:        "valid", // !!!
+				EffectiveDate: "2022-12-16",
+				DueDate:       "2022-12-10",
+			},
+		}, // update occurs!
+		[]mailservice.MailSendDto{},
 		[]entity.ProtocolEntry{
 			{
 				ReferenceId: "EF1995-000001-221216-122218-4132",
 				ApiId:       "ef00000000000000000000000000cafe",
-				Kind:        "warning",
-				Message:     "webhook payment already in status pending",
-				Details:     "existing_amount=22500 ignored_amount=18500 existing_currency=EUR ignored_currency=EUR webhook_status=OK upstream_status=OK",
+				Kind:        "success",
+				Message:     "transaction updated successfully",
+				Details:     "amount=18500 currency=EUR",
 			},
 		},
 	)
