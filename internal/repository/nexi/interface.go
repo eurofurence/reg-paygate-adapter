@@ -360,8 +360,8 @@ const (
 )
 
 type NexiPaymentMethodsRequest struct {
-	IntegrationType IntegrationType   `json:"integrationType"`
-	Type            PaymentMethodType `json:"type"`
+	IntegrationType IntegrationType   `json:"integrationType,omitempty"`
+	Type            PaymentMethodType `json:"type,omitempty"`
 	Card            *NexiCard         `json:"card,omitempty"`
 }
 
