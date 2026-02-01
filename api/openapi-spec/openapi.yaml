@@ -141,6 +141,72 @@ paths:
                 $ref: '#/components/schemas/Error'
       security:
         - ApiKeyAuth: []
+  /paylinks/{refid}/status-check:
+    post:
+      tags:
+        - paylinks
+      summary: Check transaction status against Paygate payment, set valid if all ok
+      description: |-
+        Compares the transaction in the payment-service to the payment in Nexi Paygate.
+        
+        If amount and currency match, and the payment is in status OK, then the tentative or pending
+        transaction is set to valid.
+        
+        This allows fixing missed webhooks. Also, Paygate does not send webhooks for status changes
+        after AUTHORIZED, so this can also be fixed with this endpoint.
+      operationId: checkAndFixPaymentStatus
+      parameters:
+        - name: refid
+          in: path
+          description: Reference Id (aka transId) of the payment info to return
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          description: Invalid ID supplied, for example did not start with assigned reference id prefix
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required (API Key missing?)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Payment not found - note that this will also happen before a session has been used.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Payment update skipped due to data differences or status mismatch.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: The Paygate backend could not be reached or returned an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - ApiKeyAuth: []
   /paylinks/{refid}/refund:
     post:
       tags:
@@ -432,7 +498,7 @@ components:
           description: Status as received from Paygate. OK, AUTHORIZED, FAILED, ...
         response_code:
           type: string
-          example: 00000000
+          example: '00000000'
           description: 8 digit response code, 00000000 for success, other codes see documentation. As received from Paygate.
         payment_method:
           type: string

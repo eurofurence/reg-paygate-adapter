@@ -353,16 +353,29 @@ func (i *Impl) updateTransaction(ctx context.Context, data nexiapi.WebhookDto, t
 		return err
 	}
 
-	aulogging.Logger.Ctx(ctx).Info().Printf("successfully updated upstream transaction to valid. reference_id=%s", data.TransId)
-	db := database.GetRepository()
-	_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
-		ReferenceId: data.TransId,
-		ApiId:       data.PayId,
-		Kind:        "success",
-		Message:     "transaction updated successfully",
-		Details:     fmt.Sprintf("amount=%d currency=%s", data.Amount.Value, data.Amount.Currency),
-		RequestId:   ctxvalues.RequestId(ctx),
-	})
+	if forcePending {
+		aulogging.Logger.Ctx(ctx).Info().Printf("successfully updated upstream transaction to PENDING. reference_id=%s", data.TransId)
+		db := database.GetRepository()
+		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
+			ReferenceId: data.TransId,
+			ApiId:       data.PayId,
+			Kind:        "pending",
+			Message:     "transaction updated to PENDING",
+			Details:     fmt.Sprintf("amount=%d currency=%s", data.Amount.Value, data.Amount.Currency),
+			RequestId:   ctxvalues.RequestId(ctx),
+		})
+	} else {
+		aulogging.Logger.Ctx(ctx).Info().Printf("successfully updated upstream transaction to valid. reference_id=%s", data.TransId)
+		db := database.GetRepository()
+		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
+			ReferenceId: data.TransId,
+			ApiId:       data.PayId,
+			Kind:        "success",
+			Message:     "transaction updated successfully",
+			Details:     fmt.Sprintf("amount=%d currency=%s", data.Amount.Value, data.Amount.Currency),
+			RequestId:   ctxvalues.RequestId(ctx),
+		})
+	}
 
 	return nil
 }

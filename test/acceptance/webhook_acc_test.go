@@ -217,8 +217,8 @@ func TestWebhook_Success_TentativeDiff(t *testing.T) {
 			{
 				ReferenceId: "EF1995-000001-221216-122218-4132",
 				ApiId:       "ef00000000000000000000000000cafe",
-				Kind:        "success",
-				Message:     "transaction updated successfully",
+				Kind:        "pending",
+				Message:     "transaction updated to PENDING",
 				Details:     "amount=18500 currency=EUR",
 			},
 		},
@@ -289,8 +289,8 @@ func TestWebhook_Success_AuthorizedWarns(t *testing.T) {
 			{
 				ReferenceId: "EF1995-000001-230001-122218-5555",
 				ApiId:       "ef00000000000000000000000000cafe",
-				Kind:        "success",
-				Message:     "transaction updated successfully",
+				Kind:        "pending",
+				Message:     "transaction updated to PENDING",
 				Details:     "amount=39000 currency=EUR",
 			},
 		},
@@ -361,15 +361,15 @@ func TestWebhook_Success_OkAuthorizedWarns(t *testing.T) {
 			{
 				ReferenceId: "EF1995-000001-230001-122218-5555",
 				ApiId:       "ef00000000000000000000000000cafe",
-				Kind:        "success",
-				Message:     "transaction updated successfully",
+				Kind:        "pending",
+				Message:     "transaction updated to PENDING",
 				Details:     "amount=39000 currency=EUR",
 			},
 		},
 	)
 }
 
-func TestWebhook_Error_Pending(t *testing.T) {
+func TestWebhook_Success_Pending(t *testing.T) {
 	docs.Description("webhook with status OK can update pending tx")
 	tstWebhookSuccessCase(t,
 		"EF1995-000001-221216-122218-4132",
