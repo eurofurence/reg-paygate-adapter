@@ -228,7 +228,7 @@ func (i *Impl) createTransaction(ctx context.Context, data nexiapi.WebhookDto, u
 }
 
 func (i *Impl) updateTransaction(ctx context.Context, data nexiapi.WebhookDto, transaction paymentservice.Transaction, upstream nexi.NexiPaymentQueryResponse) error {
-	if transaction.Status == paymentservice.Valid {
+	if transaction.Status == paymentservice.Valid || transaction.Status == paymentservice.Deleted {
 		aulogging.Logger.Ctx(ctx).Warn().Printf(
 			"aborting transaction update - already in status %s! reference_id=%s",
 			transaction.Status, data.TransId,
@@ -283,7 +283,7 @@ func (i *Impl) updateTransaction(ctx context.Context, data nexiapi.WebhookDto, t
 				Details:     fmt.Sprintf("webhook=%s verified=%s", data.Status, upstream.Status),
 				RequestId:   ctxvalues.RequestId(ctx),
 			})
-			if upstream.Status != "CAPTURE_REQUEST" && upstream.Status != "AUTHORIZED" || transaction.Status == paymentservice.Pending {
+			if upstream.Status != "CAPTURE_REQUEST" && upstream.Status != "AUTHORIZED" || transaction.Status != paymentservice.Tentative {
 				_ = i.SendErrorNotifyMail(ctx, "webhook", data.TransId, "upstream-status-not-OK-kept-pending-please-check")
 			}
 
