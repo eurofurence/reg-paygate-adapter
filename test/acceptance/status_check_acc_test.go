@@ -1,13 +1,17 @@
 package acceptance
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/eurofurence/reg-paygate-adapter/docs"
+	"github.com/eurofurence/reg-paygate-adapter/internal/api/v1/nexiapi"
 	"github.com/eurofurence/reg-paygate-adapter/internal/entity"
 	"github.com/eurofurence/reg-paygate-adapter/internal/repository/mailservice"
 	"github.com/eurofurence/reg-paygate-adapter/internal/repository/nexi"
+	"github.com/eurofurence/reg-paygate-adapter/internal/repository/paymentservice"
 	"github.com/stretchr/testify/require"
 )
 
@@ -182,4 +186,81 @@ func TestStatusCheck_DownstreamError(t *testing.T) {
 		Message:     "get-payment failed",
 		Details:     "downstream unavailable - see log for details",
 	})
+}
+
+func TestStatusCheck_NonPaygateOKNoChange(t *testing.T) {
+	tstSetup(tstConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given a transaction in status pending and matching payment in status AUTHORIZED")
+	id := "EF1995-000001-230001-122218-5555" // set up in paygate mock as AUTHORIZED 390.00 EUR
+	_, payment := tstInjectCreditPaymentTransaction(t, id, 39000, "pending")
+
+	docs.When("when a status check is triggered")
+	response := tstTriggerStatusCheck(t, id, tstValidApiToken())
+
+	docs.Then("then the request is successful")
+	tstRequirePaymentResponse(t, response, http.StatusOK, payment)
+
+	docs.Then("and no unexpected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: id,
+		ApiId:       payment.Id,
+		Kind:        "success",
+		Message:     "get-payment",
+		Details:     "",
+	})
+
+	docs.Then("and no error notification emails have been sent")
+	tstRequireMailServiceRecording(t, nil)
+
+	docs.Then("and the transaction is unchanged")
+	tstRequirePaymentServiceRecording(t, nil)
+}
+
+// --- helpers ---
+
+func tstInjectCreditPaymentTransaction(t *testing.T, refId string, amount int64, status paymentservice.TransactionStatus) (paymentservice.Transaction, nexiapi.PaymentDto) {
+	t.Helper()
+
+	injectedTx := paymentservice.Transaction{
+		DebitorID: 1,
+		ID:        refId,
+		Type:      "payment",
+		Method:    "credit",
+		Amount: paymentservice.Amount{
+			Currency:  "EUR",
+			GrossCent: amount,
+			VatRate:   19.0,
+		},
+		Comment:       "CC previously created",
+		Status:        status,
+		EffectiveDate: "2022-12-10", // may update to 2022-12-16 (mocked Now() date)
+		DueDate:       "2022-12-10",
+	}
+	err := paymentMock.InjectTransaction(context.TODO(), injectedTx)
+	require.NoError(t, err)
+
+	payment, err := nexiMock.QueryPaymentLink(context.TODO(), refId)
+	require.NoError(t, err)
+
+	result := nexiapi.PaymentDto{
+		Id:            payment.PayId,
+		ReferenceId:   refId,
+		AmountDue:     payment.Amount.Value,
+		AmountPaid:    *payment.Amount.CapturedValue,
+		Currency:      payment.Amount.Currency,
+		Status:        payment.Status,
+		ResponseCode:  payment.ResponseCode,
+		PaymentMethod: payment.PaymentMethods.Type,
+	}
+
+	return injectedTx, result
+}
+
+func tstTriggerStatusCheck(t *testing.T, refId string, token string) tstWebResponse {
+	t.Helper()
+
+	url := fmt.Sprintf("/api/rest/v1/paylinks/%s/status-check", refId)
+	return tstPerformPost(url, "", token)
 }
