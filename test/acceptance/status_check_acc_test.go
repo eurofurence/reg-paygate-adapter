@@ -218,6 +218,144 @@ func TestStatusCheck_NonPaygateOKNoChange(t *testing.T) {
 	tstRequirePaymentServiceRecording(t, nil)
 }
 
+func TestStatusCheck_Error_PaygateOKOnValid(t *testing.T) {
+	tstSetup(tstConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given a transaction in status valid and matching payment in status OK")
+	id := "EF1995-000001-221216-122218-4132" // set up in paygate mock as OK 185.00 EUR
+	_, payment := tstInjectCreditPaymentTransaction(t, id, 18500, "valid")
+
+	docs.When("when a status check is triggered")
+	response := tstTriggerStatusCheck(t, id, tstValidApiToken())
+
+	docs.Then("then the request fails with the expected error")
+	tstRequireErrorResponse(t, response, http.StatusConflict, "payment.update.conflict", "transaction status blocks update")
+
+	docs.Then("and the expected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: id,
+		ApiId:       payment.Id,
+		Kind:        "success",
+		Message:     "get-payment",
+		Details:     "",
+	}, entity.ProtocolEntry{
+		ReferenceId: id,
+		ApiId:       payment.Id,
+		Kind:        "warning",
+		Message:     "status-check: payment in status valid - skipping update",
+		Details:     "transaction_status=valid upstream_status=OK",
+	})
+
+	docs.Then("and the expected error notification emails have been sent")
+	tstRequireMailServiceRecording(t, []mailservice.MailSendDto{
+		{
+			CommonID: "payment-nexi-adapter-error",
+			Lang:     "en-US",
+			To: []string{
+				"errors@example.com",
+			},
+			Variables: map[string]string{
+				"status":      "abort-update-for-valid-OK",
+				"operation":   "status-check",
+				"referenceId": id,
+			},
+			Async: true,
+		},
+	})
+
+	docs.Then("and the transaction is unchanged")
+	tstRequirePaymentServiceRecording(t, nil)
+}
+
+func TestStatusCheck_Error_PaygateOKOnDifferences(t *testing.T) {
+	tstSetup(tstConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given a transaction in status pending and non-matching payment in status OK")
+	id := "EF1995-000001-221216-122218-4132" // set up in paygate mock as OK 185.00 EUR
+	_, payment := tstInjectCreditPaymentTransaction(t, id, 20500, "pending")
+
+	docs.When("when a status check is triggered")
+	response := tstTriggerStatusCheck(t, id, tstValidApiToken())
+
+	docs.Then("then the request fails with the expected error")
+	tstRequireErrorResponse(t, response, http.StatusConflict, "payment.update.conflict", "transaction data mismatch")
+
+	docs.Then("and the expected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: id,
+		ApiId:       payment.Id,
+		Kind:        "success",
+		Message:     "get-payment",
+		Details:     "",
+	}, entity.ProtocolEntry{
+		ReferenceId: id,
+		ApiId:       payment.Id,
+		Kind:        "warning",
+		Message:     "status-check: amount or currency differs - skipping update",
+		Details:     "tx_amount=20500 upstream_amount=18500 tx_currency=EUR upstream_currency=EUR transaction_status=pending upstream_status=OK",
+	})
+
+	docs.Then("and the expected error notification emails have been sent")
+	tstRequireMailServiceRecording(t, []mailservice.MailSendDto{
+		{
+			CommonID: "payment-nexi-adapter-error",
+			Lang:     "en-US",
+			To: []string{
+				"errors@example.com",
+			},
+			Variables: map[string]string{
+				"status":      "abort-update-values-differ",
+				"operation":   "status-check",
+				"referenceId": id,
+			},
+			Async: true,
+		},
+	})
+
+	docs.Then("and the transaction is unchanged")
+	tstRequirePaymentServiceRecording(t, nil)
+}
+
+func TestStatusCheck_Success_PaygateOKOnPending(t *testing.T) {
+	tstSetup(tstConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given a transaction in status pending and matching payment in status OK")
+	id := "EF1995-000001-221216-122218-4132" // set up in paygate mock as OK 185.00 EUR
+	tx, payment := tstInjectCreditPaymentTransaction(t, id, 18500, "pending")
+
+	docs.When("when a status check is triggered")
+	response := tstTriggerStatusCheck(t, id, tstValidApiToken())
+
+	docs.Then("then the request is successful")
+	tstRequirePaymentResponse(t, response, http.StatusOK, payment)
+
+	docs.Then("and the expected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: id,
+		ApiId:       payment.Id,
+		Kind:        "success",
+		Message:     "get-payment",
+		Details:     "",
+	}, entity.ProtocolEntry{
+		ReferenceId: id,
+		ApiId:       payment.Id,
+		Kind:        "success",
+		Message:     "transaction updated successfully by status-check",
+		Details:     "amount=18500 currency=EUR upstream=OK",
+	})
+
+	docs.Then("and no error notification emails have been sent")
+	tstRequireMailServiceRecording(t, nil)
+
+	docs.Then("and the transaction has been changed to valid")
+	tx.Status = "valid"
+	tx.Comment = "CC paymentId 42"
+	tstRequirePaymentServiceRecording(t, []paymentservice.Transaction{tx})
+}
+
 // --- helpers ---
 
 func tstInjectCreditPaymentTransaction(t *testing.T, refId string, amount int64, status paymentservice.TransactionStatus) (paymentservice.Transaction, nexiapi.PaymentDto) {

@@ -283,7 +283,9 @@ func (i *Impl) updateTransaction(ctx context.Context, data nexiapi.WebhookDto, t
 				Details:     fmt.Sprintf("webhook=%s verified=%s", data.Status, upstream.Status),
 				RequestId:   ctxvalues.RequestId(ctx),
 			})
-			_ = i.SendErrorNotifyMail(ctx, "webhook", data.TransId, "upstream-status-not-OK-kept-pending-please-check")
+			if upstream.Status != "CAPTURE_REQUEST" && upstream.Status != "AUTHORIZED" || transaction.Status == paymentservice.Pending {
+				_ = i.SendErrorNotifyMail(ctx, "webhook", data.TransId, "upstream-status-not-OK-kept-pending-please-check")
+			}
 
 			forcePending = true
 		}

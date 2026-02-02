@@ -104,7 +104,7 @@ func (i *Impl) CheckPaymentStatus(ctx context.Context, id string) (nexiapi.Payme
 			ApiId:       nexiDto.Id,
 			Kind:        "success",
 			Message:     "transaction updated successfully by status-check",
-			Details:     fmt.Sprintf("amount=%d currency=%s", transaction.Amount.GrossCent, transaction.Amount.Currency),
+			Details:     fmt.Sprintf("amount=%d currency=%s upstream=%s", transaction.Amount.GrossCent, transaction.Amount.Currency, nexiDto.Status),
 			RequestId:   ctxvalues.RequestId(ctx),
 		})
 	}

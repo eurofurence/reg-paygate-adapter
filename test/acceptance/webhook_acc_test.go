@@ -264,6 +264,78 @@ func TestWebhook_Success_AuthorizedWarns(t *testing.T) {
 			},
 		},
 		[]mailservice.MailSendDto{
+			//{
+			//	CommonID: "payment-nexi-adapter-error",
+			//	Lang:     "en-US",
+			//	To: []string{
+			//		"errors@example.com",
+			//	},
+			//	Variables: map[string]string{
+			//		"status":      "upstream-status-not-OK-kept-pending-please-check",
+			//		"operation":   "webhook",
+			//		"referenceId": "EF1995-000001-230001-122218-5555",
+			//	},
+			//	Async: true,
+			//},
+		},
+		[]entity.ProtocolEntry{
+			{
+				ReferenceId: "EF1995-000001-230001-122218-5555",
+				ApiId:       "ef00000000000000000000000000cafe",
+				Kind:        "warning",
+				Message:     "verified status not OK",
+				Details:     "webhook=AUTHORIZED verified=AUTHORIZED",
+			},
+			{
+				ReferenceId: "EF1995-000001-230001-122218-5555",
+				ApiId:       "ef00000000000000000000000000cafe",
+				Kind:        "pending",
+				Message:     "transaction updated to PENDING",
+				Details:     "amount=39000 currency=EUR",
+			},
+		},
+	)
+}
+
+func TestWebhook_Success_AuthorizedWarnsAlreadyPending(t *testing.T) {
+	docs.Description("webhook with status AUTHORIZED upstream AUTHORIZED keeps existing pending tx on pending and warns about status with mail")
+	tstWebhookSuccessCase(t,
+		"EF1995-000001-230001-122218-5555",
+		"AUTHORIZED",
+		39000,
+		paymentservice.Transaction{
+			DebitorID: 1,
+			ID:        "EF1995-000001-230001-122218-5555",
+			Type:      "payment",
+			Method:    "credit",
+			Amount: paymentservice.Amount{
+				Currency:  "EUR",
+				GrossCent: 39000,
+				VatRate:   19.0,
+			},
+			Comment:       "CC previously created", // will update to include paymentId
+			Status:        "pending",               // causes warning so we can check for double payment
+			EffectiveDate: "2022-12-10",            // will update to 2022-12-16 (mocked Now() date)
+			DueDate:       "2022-12-10",
+		},
+		[]paymentservice.Transaction{
+			{
+				DebitorID: 1,
+				ID:        "EF1995-000001-230001-122218-5555",
+				Type:      "payment",
+				Method:    "credit",
+				Amount: paymentservice.Amount{
+					Currency:  "EUR",
+					GrossCent: 39000,
+					VatRate:   19.0,
+				},
+				Comment:       "CC paymentId ef00000000000000000000000000cafe - status AUTHORIZED",
+				Status:        "pending", // !!!
+				EffectiveDate: "2022-12-16",
+				DueDate:       "2022-12-10",
+			},
+		},
+		[]mailservice.MailSendDto{
 			{
 				CommonID: "payment-nexi-adapter-error",
 				Lang:     "en-US",
@@ -336,19 +408,19 @@ func TestWebhook_Success_OkAuthorizedWarns(t *testing.T) {
 			},
 		},
 		[]mailservice.MailSendDto{
-			{
-				CommonID: "payment-nexi-adapter-error",
-				Lang:     "en-US",
-				To: []string{
-					"errors@example.com",
-				},
-				Variables: map[string]string{
-					"status":      "upstream-status-not-OK-kept-pending-please-check",
-					"operation":   "webhook",
-					"referenceId": "EF1995-000001-230001-122218-5555",
-				},
-				Async: true,
-			},
+			//{
+			//	CommonID: "payment-nexi-adapter-error",
+			//	Lang:     "en-US",
+			//	To: []string{
+			//		"errors@example.com",
+			//	},
+			//	Variables: map[string]string{
+			//		"status":      "upstream-status-not-OK-kept-pending-please-check",
+			//		"operation":   "webhook",
+			//		"referenceId": "EF1995-000001-230001-122218-5555",
+			//	},
+			//	Async: true,
+			//},
 		},
 		[]entity.ProtocolEntry{
 			{
