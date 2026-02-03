@@ -23,6 +23,11 @@ type PaymentLinkService interface {
 	// GetPayment obtains the payment information from the downstream api.
 	GetPayment(ctx context.Context, id string) (nexiapi.PaymentDto, error)
 
+	// CheckPaymentStatus can be used to process an existing pending payment as if a webhook was received
+	//
+	// id is a reference id. First it gets the payment from payment service to ensure it exists, then it
+	CheckPaymentStatus(ctx context.Context, id string) (nexiapi.PaymentDto, error)
+
 	// LogRawWebhook logs the payload of an incoming webhook both in the DB and the service log
 	LogRawWebhook(ctx context.Context, payload string) error
 
@@ -34,7 +39,9 @@ type PaymentLinkService interface {
 }
 
 var (
-	ReceivedEmptyPaylink    = errors.New("received empty paylink")
-	WebhookValidationErr    = errors.New("webhook referenced invalid invoice id, must be positive integer")
-	WebhookRefIdMismatchErr = errors.New("webhook reference_id differes from paylink reference_id")
+	ReceivedEmptyPaylink         = errors.New("received empty paylink")
+	WebhookValidationErr         = errors.New("webhook referenced invalid invoice id, must be positive integer")
+	WebhookRefIdMismatchErr      = errors.New("webhook reference_id differes from paylink reference_id")
+	TransactionStatusError       = errors.New("transaction status blocks update")
+	TransactionDataMismatchError = errors.New("transaction data mismatch")
 )

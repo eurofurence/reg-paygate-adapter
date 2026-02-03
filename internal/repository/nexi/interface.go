@@ -18,6 +18,7 @@ var (
 	NoSuchID404Error = errors.New("payment link id not found")
 	DownstreamError  = errors.New("downstream unavailable - see log for details")
 	NotSuccessful    = errors.New("response body status field did not indicate success")
+	NotConfigured    = errors.New("paygate API not configured in simulator mode")
 )
 
 // -- New Nexi PayGate API Structures --
