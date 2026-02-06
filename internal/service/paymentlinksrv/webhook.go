@@ -124,7 +124,7 @@ func (i *Impl) unexpected(ctx context.Context, webhook nexiapi.WebhookDto) error
 		Details:     fmt.Sprintf("code=%s desc=%s", webhook.ResponseCode, webhook.ResponseDescription),
 		RequestId:   ctxvalues.RequestId(ctx),
 	})
-	_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("unknown status: %s", webhook.Status), "unexpected-status")
+	_ = i.SendErrorNotifyMail(ctx, "webhook", webhook.TransId, fmt.Sprintf("unexpected-status-%s", webhook.Status))
 
 	// confirm with 200 so we do not keep receiving the event - we've done all we can
 	return nil

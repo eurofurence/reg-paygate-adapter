@@ -555,9 +555,9 @@ func TestWebhook_FailureStatus(t *testing.T) {
 				"errors@example.com",
 			},
 			Variables: map[string]string{
-				"status":      "unexpected-status",
+				"status":      "unexpected-status-FAILED",
 				"operation":   "webhook",
-				"referenceId": "unknown status: FAILED",
+				"referenceId": "EF1995-000001-221216-122218-4132",
 			},
 			Async: true,
 		},
