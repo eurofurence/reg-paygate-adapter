@@ -1,6 +1,6 @@
 .idea/**
 *.exe
-config.yaml
+config*.yaml
 test/contract/*/logs/**
 payment-nexi-adapter
 main
